@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — Задания v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Segoe UI",-apple-system,Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:28px; max-width:760px; line-height:1.5; }
+  .wrap { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:300px; }
+  .col-name { font-size:13.5px; font-weight:600; margin-bottom:3px; }
+  .col-desc { font-size:11.5px; color:#9d92b3; margin-bottom:10px; line-height:1.45; }
+  .phone { border-radius:28px; border:2px solid #3a2f52; overflow:hidden; background:#191423; height:560px; display:flex; flex-direction:column; position:relative; }
+  .tab-head { padding:16px 16px 8px; }
+  .tab-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:20px; }
+  .seg { display:flex; gap:6px; padding:6px 16px 10px; }
+  .seg span { font-size:11.5px; padding:6px 12px; border-radius:999px; background:#231b33; color:#9d92b3; border:1px solid #342a4d; }
+  .seg span.on { background:rgba(198,226,107,.12); border-color:rgba(198,226,107,.5); color:#c6e26b; }
+  .pr-body { flex:1; padding:4px 16px 14px; overflow:hidden; }
+  .bottomnav { display:flex; justify-content:space-around; padding:10px 8px 14px; background:#141020; font-size:10px; color:#7d7194; }
+  .bottomnav .on { color:#c6e26b; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:15px; display:block; margin-bottom:2px; }
+
+  .task-note { font-size:12px; color:#b3a6c9; line-height:1.55; background:#231b33; border-radius:12px; padding:11px 13px; margin-bottom:10px; }
+
+  .task-active { background:rgba(198,226,107,.08); border:1px solid rgba(198,226,107,.35); border-radius:13px; padding:10px 12px; margin-bottom:12px; }
+  .ta-label { display:inline-block; font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#c6e26b; background:rgba(198,226,107,.14); border-radius:999px; padding:3px 8px; margin-bottom:7px; }
+  .task-active .tt { font-size:12.5px; font-weight:700; color:#efeaf7; font-family:"Nunito",sans-serif; }
+  .task-active .ts { font-size:10.5px; color:#9d92b3; margin:3px 0 9px; line-height:1.4; }
+  .btn-mini { display:inline-block; font-size:11px; padding:7px 14px; border-radius:999px; font-weight:700; margin-right:6px; }
+  .btn-ok { background:#c6e26b; color:#22290a; }
+  .btn-ghost { background:transparent; color:#9d92b3; border:1px solid #4a3f66; }
+
+  /* явные кнопки действий: сплошные, центрованные */
+  .task-actions { display:flex; gap:10px; margin-bottom:12px; }
+  .task-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:#2c2248; border:1.5px solid #54457a; border-radius:14px; padding:13px 8px; font-size:11.5px; font-weight:700; color:#efeaf7; text-align:center; box-shadow:0 3px 0 rgba(0,0,0,.25); }
+  .task-btn .i { font-size:19px; }
+
+  .sec-head { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#8d83a6; margin:4px 0 8px; }
+  .numlist .row { display:flex; justify-content:space-between; font-size:11.5px; color:#b3a6c9; padding:6px 2px; border-bottom:1px solid #231b33; }
+  .numlist .row b { color:#efeaf7; font-weight:600; }
+
+  /* случайное задание: быстрая раздача карты */
+  #deal { display:none; }
+  .backbar { display:flex; align-items:center; gap:8px; padding:14px 16px 0; }
+  .backbar .bk { width:30px; height:30px; border-radius:50%; background:#231b33; border:1px solid #342a4d; color:#c9bade; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .backbar .bt { font-family:"Nunito",sans-serif; font-weight:800; font-size:16px; }
+  .deal-zone { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 16px 90px; }
+  .dice-btn { background:#2c2248; border:1.5px solid #54457a; border-radius:16px; padding:16px 26px; font-size:13px; font-weight:700; color:#efeaf7; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.25); }
+  .dice-btn .i { font-size:22px; display:block; text-align:center; margin-bottom:6px; }
+  .qcard { background:linear-gradient(160deg,#2a2044,#231b33); border:1.5px solid rgba(198,226,107,.4); border-radius:18px; padding:22px 18px; text-align:center; display:none; opacity:0; transform:translateY(46px) rotate(3deg) scale(.92); }
+  #deal:checked ~ .deal-zone .dice-btn { display:none; }
+  #deal:checked ~ .deal-zone .qcard { display:block; animation:deal .38s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes deal { to { opacity:1; transform:translateY(0) rotate(0) scale(1); } }
+  .qcard .qi { font-size:38px; margin-bottom:10px; }
+  .qcard .qt { font-family:"Nunito",sans-serif; font-weight:800; font-size:16px; color:#efeaf7; margin-bottom:6px; }
+  .qcard .qs { font-size:11.5px; color:#9d92b3; line-height:1.5; margin-bottom:16px; }
+  .qbtns { display:flex; gap:8px; }
+  .qbtns .a { flex:1; background:#c6e26b; color:#22290a; font-weight:700; font-size:12.5px; padding:11px; border-radius:11px; text-align:center; }
+  .qbtns .d { flex:1; background:transparent; border:1px solid #4a3f66; color:#9d92b3; font-size:12.5px; padding:11px; border-radius:11px; text-align:center; }
+
+  /* выбор из 6: карточки с описаниями */
+  .grid6 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .g6 { background:#231b33; border:1.5px solid #342a4d; border-radius:13px; padding:11px 10px; }
+  .g6 .i { font-size:19px; margin-bottom:5px; }
+  .g6 .t { font-size:11px; color:#efeaf7; font-weight:700; line-height:1.3; font-family:"Nunito",sans-serif; }
+  .g6 .d { font-size:9.5px; color:#9d92b3; line-height:1.4; margin-top:4px; }
+  .g6.sel { border-color:#c6e26b; background:rgba(198,226,107,.08); }
+  .ob-cta { width:100%; background:#c6e26b; color:#22290a; font-weight:700; font-size:13.5px; text-align:center; padding:12px; border-radius:13px; margin-top:12px; }
+  .ob-link { margin-top:9px; font-size:11.5px; color:#7d7194; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Задания — v4</h1>
+<p class="sub">Новая подпись-инструкция, метка «Активное задание», явные центрованные кнопки, заголовок «Выполненные», живая анимация раздачи карты (нажмите кубик), карточки «1 из 6» с описаниями.</p>
+
+<div class="wrap">
+
+<div class="col">
+  <div class="col-name">Вкладка «Задания»</div>
+  <div class="col-desc">Одно активное задание за раз — метка сверху карточки.</div>
+  <div class="phone">
+    <div class="tab-head"><div class="tab-title">Прогресс</div></div>
+    <div class="seg"><span>Статистика</span><span>Достижения</span><span class="on">Задания</span></div>
+    <div class="pr-body">
+      <div class="task-note">Задания помогут разнообразить вашу прогулку. Их выполнение необязательно :)</div>
+      <div class="task-active">
+        <span class="ta-label">Активное задание</span>
+        <div class="tt">🟣 Пять фиолетовых вещей</div>
+        <div class="ts">За время прогулки найдите 5 вещей фиолетового цвета. Знаки, двери, витрины — город полон сюрпризов.</div>
+        <span class="btn-mini btn-ok">Выполнено</span><span class="btn-mini btn-ghost">Отказаться</span>
+      </div>
+      <div class="task-actions">
+        <div class="task-btn"><span class="i">🎲</span>Случайное задание</div>
+        <div class="task-btn"><span class="i">🃏</span>Выбрать из 6</div>
+      </div>
+      <div class="sec-head">Выполненные · 3</div>
+      <div class="numlist">
+        <div class="row"><span>🏛 Присмотреться к архитектуре</span><b>18 сент</b></div>
+        <div class="row"><span>🏃 3 раза чередовать шаг</span><b>12 сент</b></div>
+        <div class="row"><span>💬 Комплимент прохожему</span><b>5 сент</b></div>
+      </div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Случайное задание — анимация раздачи</div>
+  <div class="col-desc">Нажмите «Вытянуть карту» 👆 — карточка вылетает снизу за ~350 мс. Кнопка по центру, «назад» и «Не сейчас» — для передумавших.</div>
+  <div class="phone">
+    <input type="checkbox" id="deal">
+    <div class="tab-head"><div class="tab-title">Случайное задание</div></div>
+    <div class="deal-zone">
+      <label class="dice-btn" for="deal"><span class="i">🃏</span>Вытянуть карту</label>
+      <div class="qcard">
+        <div class="qi">🟣</div>
+        <div class="qt">Пять фиолетовых вещей</div>
+        <div class="qs">За время прогулки найдите 5 вещей фиолетового цвета. Знаки, двери, витрины — город полон сюрпризов.</div>
+        <div class="qbtns"><div class="d">🎲 Ещё раз</div><div class="a">Принять</div></div>
+      </div>
+      <div class="ob-link" style="margin-top:14px">Не сейчас</div>
+    </div>
+    <div class="bottomnav" style="margin-top:auto">
+      <div class="bn-item"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Выбор из 6 — карточки с описаниями</div>
+  <div class="col-desc">У каждой — название и 1–2 предложения сути. Выбранная подсвечена.</div>
+  <div class="phone">
+    <div class="tab-head"><div class="tab-title">Выберите задание</div></div>
+    <div class="pr-body">
+      <div class="grid6">
+        <div class="g6 sel"><div class="i">🟣</div><div class="t">5 фиолетовых вещей</div><div class="d">Найдите за прогулку 5 вещей фиолетового цвета — от дверей до витрин.</div></div>
+        <div class="g6"><div class="i">🏛</div><div class="t">Лицо города</div><div class="d">Присмотритесь к архитектуре: найдите 3 детали, которых раньше не замечали.</div></div>
+        <div class="g6"><div class="i">💬</div><div class="t">Тёплое слово</div><div class="d">Сделайте комплимент любому прохожему. Искренне.</div></div>
+        <div class="g6"><div class="i">🏃</div><div class="t">Интервалы</div><div class="d">3 раза смените спокойный шаг на быстрый на 1–2 минуты.</div></div>
+        <div class="g6"><div class="i">🌳</div><div class="t">Старожил</div><div class="d">Найдите самое старое или самое большое дерево на маршруте.</div></div>
+        <div class="g6"><div class="i">🪟</div><div class="t">Витринист</div><div class="d">Загляните в 3 витрины и выберите самый странный предмет.</div></div>
+      </div>
+      <div class="ob-cta">Принять задание</div>
+      <div class="ob-link">Не сейчас</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Сеть нужна только для скачивания пакетов регионов (AD-2, AD-6); базовый цикл офлайн. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Запись трека (1.7, AD-5): локация + foreground-сервис с постоянным уведомлением. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- AD-3: треки и история не покидают устройство НИКАК — включая Android-автобэкап
+         на Google Drive. Полный перенос — только явный экспорт/импорт файла (FR-21). -->
+    <application
+        android:name=".WalkQuestApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.WalkQuest">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".tracking.TrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- Вечерняя проверка умного напоминания по цели (3.5, FR-14). -->
+        <receiver
+            android:name=".reminder.GoalReminderReceiver"
+            android:exported="false" />
+
+        <!-- Напоминание о запланированной прогулке (3.6, FR-17). -->
+        <receiver
+            android:name=".reminder.PlanReminderReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

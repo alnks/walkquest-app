@@ -1,0 +1,21 @@
+# Gradle / Android
+.gradle/
+build/
+**/build/
+local.properties
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.cxx/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# QA-артефакты прогонов (скриншоты/zip/треки — сотни МБ, не для git)
+_qa/emulator-run/
+_qa/phone-run/
+_qa/*$f.png
+ui.xml

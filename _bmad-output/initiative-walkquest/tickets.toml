@@ -1,0 +1,42 @@
+# tickets.toml — эпики WalkQuest в порядке сборки. Порядок таблиц = порядок работ.
+
+[[epic]]
+id = 1
+slug = "epic-map-foundation"
+title = "Карта, туман и пакет региона"
+covers = ["FR-1", "FR-2", "FR-3", "FR-4", "FR-18"]
+
+[[epic]]
+id = 2
+slug = "epic-walk-tracking"
+title = "Трекинг прогулки"
+covers = ["FR-5", "FR-6", "FR-7", "FR-8", "FR-9", "FR-10"]
+after = [{ epic = 1, needs = "карта с туманом, пакет региона, запись трека и подтверждённые пороги AD-8" }]
+
+[[epic]]
+id = 3
+slug = "epic-habits"
+title = "Онбординг, цель и привычка"
+covers = ["FR-11", "FR-12", "FR-13", "FR-14", "FR-17"]
+after = [{ epic = 2, needs = "завершённая прогулка как источник серий, статистики и напоминаний" }]
+
+[[epic]]
+id = 4
+slug = "epic-achievements-quests"
+title = "Достижения и задания"
+covers = ["FR-15", "FR-16"]
+after = [{ epic = 2, needs = "завершённая прогулка с треками и открытыми тайлами для проверки условий" }]
+
+[[epic]]
+id = 5
+slug = "epic-leaderboard"
+title = "Лидерборд"
+covers = ["FR-19"]
+after = [{ epic = 2, needs = "агрегаты прогулок и процента открытия для синхронизации" }]
+
+[[epic]]
+id = 6
+slug = "epic-data-release"
+title = "Перенос данных и публикация"
+covers = ["FR-20", "FR-21"]
+after = [{ epic = 4, needs = "полная локальная модель данных: прогулки, достижения, задания, настройки" }, { epic = 5, needs = "лидерборд в проде для полного релизного чек-листа" }]

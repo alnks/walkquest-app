@@ -1,0 +1,80 @@
+# tickets.toml — истории эпика epic-data-release в порядке сборки. Порядок таблиц = порядок работ.
+#
+# Нарезка — 2026-10-11 (инсепшн эпика 6, после code complete epic-achievements-quests
+# и epic-leaderboard). Источники: PRD FR-20/FR-21, AD-3, AD-5, UX-прототип
+# (экраны «Профиль», «Настройки» в mockups/remaining-screens.html).
+# Покрытие данных экспорта: fog/*.fog, walks/walks.jsonl, achievements/earned.json,
+# quests/quests.json, plans/plans.json, poicards.json, settings/settings.json,
+# tracks/ (журналы «свечи»). Пакеты регионов и leaderboard/outbox в экспорт НЕ входят
+# (Decision: пакеты — скачиваемый контент, outbox — восстанавливается синком).
+
+[[entry]]
+id = 1
+type = "story"
+title = "Формат архива экспорта (data)"
+description = "data/transfer: версионируемый zip-архив (java.util.zip, чистый JVM, корни хранилищ инжектируются). Манифест manifest.json: formatVersion=1, exportedAt (epoch millis UTC), appVersion, installedRegionIds (список — пакеты не входят, но импорту нужно знать, что докачать). Секции: settings/settings.json, fog/<regionId>.fog (бинарные биткарты), walks/walks.jsonl, achievements/earned.json, quests/quests.json, plans/plans.json, poicards.json, tracks/** (журналы треков «свечи»). ExportArchiveWriter: собирает из корней. ExportArchiveReader: читает манифест, проверяет formatVersion (чужая/новее — typed-ошибка UnsupportedFormat), CRC zip как проверка целостности. Неизвестные секции — игнор с предупреждением в отчёте."
+verify = "JVM: round-trip (запись → чтение побайтово идентично для всех секций, включая бинарные биткарты), повреждённый zip и чужой formatVersion → typed-ошибка без частичного применения, пустые хранилища → валидный архив без секций."
+covers = ["FR-21"]
+after = []
+hitl = false
+risk = "medium"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-3, AD-5 (formatVersion с первого релиза)", "prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, FR-21"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Импорт: restore в хранилища"
+description = "data/transfer: ImportApplier — применение распарсенного архива к хранилищам через их существующие сторы (FogRepository/WalkHistoryStore/EarnedStore/QuestStateStore/PlannedWalksStore/PoiCardStore/SettingsRepository/TrackHistory): атомарная запись каждой секции во временный файл + rename (как в сторах). Отчёт по секциям: Ok/Skipped(повреждена)/Failed; частичный импорт возможен, текущие данные секции не портятся при ошибке её парсинга. Перед импортом: удаление активной сессии (session/session.json — прогулка не переносится). После импорта: сброс кэшей пакетов и полная перепроверка достижений (runAchievementCheck — выдача задним числом по восстановленной истории, FR-15)."
+verify = "JVM: импорт архива из 6.1 в пустые хранилища → агрегаты истории, проценты тумана, серия и выданные достижения идентичны источнику; архив с одной повреждённой секцией → остальные применены, отчёт честен; старые данные секции переживают ошибку парсинга этой секции."
+covers = ["FR-21", "FR-15"]
+after = [1]
+hitl = false
+risk = "high"
+references = ["architecture — AD-5 (append-only журналы, атомарные записи)", "prd — FR-21 (Consequences)"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Вкладка «Профиль»: перенос прогресса, предупреждение о потере, «О приложении»"
+description = "Шестая вкладка MainActivity «Профиль» по макету remaining-screens (тёмная/светлая): карточка «Перенос прогресса» — «Экспорт» (SAF ACTION_CREATE_DOCUMENT, имя walkquest-export-<дата>.zip) и «Импорт» (SAF ACTION_OPEN_DOCUMENT + подтверждающий диалог «Текущие данные будут заменены копией от <дата>?»; по результату — snackbar/карточка с отчётом секций 6.2); постоянная карточка-предупреждение «Данные живут только на этом устройстве: удаление приложения без экспорта безвозвратно удалит весь прогресс» (Done when 2 — платформа не даёт перехватить удаление, предупреждение живёт в интерфейсе); блок «О приложении»: версия (BuildConfig) и ссылка на политику конфиденциальности (URL из ресурсов — до публикации 6.5 ведёт на заглушку/локальную страницу). В профиле — блок «Недостающие регионы»: если импорт принёс regionIds без пакетов — кнопка «Скачать» (через InstallRegionPackage)."
+verify = "Ручной прогон на эмуляторе: экспорт → сброс данных приложения → импорт → карта тумана, статистика, награды и настройки совпадают с до-экспортным состоянием (FR-21, источник истины — устройство); диалог подтверждения импорта показан; предупреждение о потере видно на экране. JVM: логика отчёта и тексты."
+covers = ["FR-21", "FR-20"]
+after = [2]
+hitl = false
+risk = "medium"
+references = ["ux — _bmad-output/initiative-walkquest/ux-walkquest/mockups/remaining-screens.html, экраны «Профиль»", "prd — FR-20 (Consequences: предупреждён о безвозвратной потере)"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Релизная приватность и подписанная сборка"
+description = "Приватность релиза (AD-3): android:allowBackup=false в манифесте (треки и история не утекают даже в Android-автобэкап на Google Drive — проверка через adb bmgr/манифест); аудит логов: grep-прогон по коду на координаты в Log-вызовах — пусто. Релизная сборка: versionName 1.0 / versionCode 1, signingConfigs.release из local.properties (wqReleaseKeystore/пароли — плейсхолдер-инструкция в docs/release-signing.md; keystore генерирует владелец, hitl-часть), minifyEnabled/R8 — включить, если регресс тестов и запуска нет (решение зафиксировать по итогу прогона), assembleRelease PASS с подписью."
+verify = "assembleRelease PASS, APK подписан (apksigner verify), версия 1.0; манифест: allowBackup=false; grep-аудит: ни одного Log.* с координатами; все JVM-тесты зелёные."
+covers = ["FR-20"]
+after = [1]
+hitl = false
+risk = "medium"
+references = ["architecture — AD-3 (треки не покидают устройство), Deferred (релизный контур)", "prd — FR-20, Constraints/Privacy"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Публикация в Google Play (hitl): политика, декларации, релизный трек"
+description = "Контент и действия человека: политика конфиденциальности — текст в docs/privacy-policy.md, соответствующий реальным потокам (собирается: ник + агрегаты лидерборда; НЕ собирается: координаты, треки, история — AD-3), опубликована по постоянному URL, URL вшит в ресурсы и открывается из Профиля. Декларация background location в Play Console (трекинг в фоне — тип использования). Возрастной опросник (PRD OQ-6). Листинг: короткое/полное описание по голосу продукта, иконка/графика из DESIGN. Подписанный AAB (6.4) → internal → production; ревью пройдено."
+verify = "Чек-лист пройден полностью: политика открывается по ссылке из приложения; декларация и рейтинг заполнены; приложение опубликовано/на ревью в Play Console."
+covers = ["FR-20", "FR-21"]
+after = [4]
+hitl = true
+risk = "high"
+references = ["prd — Constraints/Compliance, OQ-6, OQ-8 (название)", "architecture — AD-3"]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Refactor sweep"
+description = "Финальная чистка эпика: разбираются находки ревью и замечания, отложенные в ходе историй 6.1–6.4; только cleanup — новый объём уходит в отдельные тикеты."
+verify = "Проект собирается, все JVM-тесты зелёные после чистки; отложенных находок не осталось или вынесены в новые тикеты."
+covers = []
+after = [3, 4]
+hitl = false
+risk = "low"

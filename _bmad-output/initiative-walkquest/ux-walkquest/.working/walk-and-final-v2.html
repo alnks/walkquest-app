@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — прогулка и финал, v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=Rubik+Bubbles&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Segoe UI",-apple-system,Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:28px; max-width:760px; line-height:1.5; }
+  .wrap { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:340px; }
+  .col-name { font-size:15px; font-weight:600; margin-bottom:3px; }
+  .col-desc { font-size:12.5px; color:#9d92b3; margin-bottom:12px; line-height:1.5; }
+  .phone { border-radius:32px; border:2px solid #3a2f52; overflow:hidden; background:#191423; height:640px; display:flex; flex-direction:column; position:relative; }
+  .bub { font-family:"Rubik Bubbles",sans-serif; }
+  .hero-num { font-family:"Nunito",sans-serif; font-weight:1000; }
+
+  /* Активная прогулка v2: карта доминирует */
+  .walk-map { position:relative; flex:1; background:linear-gradient(160deg,#241c36,#2c2240); overflow:hidden; }
+  .foglayer { position:absolute; inset:0; background:rgba(178,158,209,.26); }
+  .revealed { position:absolute; border-radius:50%; background:#241c36; }
+  /* трек — мягкая извилистая линия по фактическому пути */
+  .track { position:absolute; left:18%; top:14%; width:70%; height:64%; }
+  .me { position:absolute; width:14px; height:14px; border-radius:50%; background:#efeaf7; border:3px solid #7a5fc0; box-shadow:0 0 12px rgba(239,234,247,.6); }
+  .live { position:absolute; top:14px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:7px; font-size:11.5px; color:#c6e26b; background:rgba(25,20,35,.85); padding:6px 12px; border-radius:999px; backdrop-filter:blur(4px); white-space:nowrap; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:#c6e26b; box-shadow:0 0 8px #c6e26b; }
+  .quest-fab { position:absolute; right:14px; bottom:14px; background:rgba(35,27,51,.9); border:1.5px dashed #6a5b8f; color:#b3a6c9; font-size:11.5px; padding:8px 12px; border-radius:999px; backdrop-filter:blur(4px); }
+  .walk-bar { background:rgba(25,20,35,.96); padding:10px 16px 14px; position:relative; z-index:6; }
+  .walk-stats { display:flex; justify-content:space-between; font-size:12px; color:#b3a6c9; padding:0 4px 10px; }
+  .walk-stats b { color:#efeaf7; font-weight:600; }
+  .walk-actions { display:flex; gap:10px; }
+  .btn-pause { flex:1; padding:13px; border-radius:14px; background:#231b33; color:#efeaf7; font-weight:600; font-size:14px; text-align:center; border:1px solid #342a4d; }
+  .btn-stop { flex:1; padding:13px; border-radius:14px; background:#c6e26b; color:#22290a; font-weight:700; font-size:14px; text-align:center; }
+
+  /* Главный экран: тогл режима слева сверху */
+  .topbar { position:absolute; top:0; left:0; right:0; padding:14px; display:flex; justify-content:space-between; align-items:flex-start; z-index:5; }
+  .mode-toggle { display:flex; background:rgba(35,27,51,.88); border-radius:999px; padding:3px; border:1px solid #342a4d; backdrop-filter:blur(4px); }
+  .mt { font-size:11px; padding:6px 11px; border-radius:999px; color:#9d92b3; }
+  .mt.on { background:#c6e26b; color:#22290a; font-weight:700; }
+  .icon-btn { width:34px; height:34px; border-radius:50%; background:rgba(35,27,51,.88); color:#c9bade; display:flex; align-items:center; justify-content:center; font-size:16px; border:1px solid #342a4d; }
+  .sheet { background:rgba(30,23,45,.94); border-radius:20px 20px 0 0; padding:10px 16px 12px; z-index:6; }
+  .sheet-grab { width:36px; height:4px; border-radius:999px; background:#4a3f66; margin:0 auto 10px; }
+  .stat-row { display:flex; gap:8px; }
+  .s-chip { font-size:11.5px; padding:5px 10px; border-radius:999px; background:rgba(25,20,35,.9); color:#b3a6c9; }
+  .s-chip b { color:#c6e26b; }
+  .cta-wide { margin-top:10px; background:#c6e26b; color:#22290a; font-weight:700; font-size:15px; text-align:center; padding:14px; border-radius:14px; }
+  .bottomnav { display:flex; justify-content:space-around; padding:10px 8px 16px; background:#141020; font-size:10.5px; color:#7d7194; }
+  .bottomnav .on { color:#c6e26b; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:16px; display:block; margin-bottom:3px; }
+
+  /* Финал v2: без названия района, статистика нейтральным шрифтом */
+  .fin-body { flex:1; padding:26px 22px 18px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .fin-title { font-family:"Rubik Bubbles",sans-serif; font-size:26px; color:#c6e26b; margin-bottom:4px; }
+  .fin-sub { font-size:13px; color:#9d92b3; margin-bottom:18px; }
+  .fin-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:56px; color:#efeaf7; line-height:1; }
+  .fin-pct-l { font-size:12px; color:#9d92b3; margin:4px 0 16px; }
+  .fin-grid { display:flex; gap:10px; width:100%; }
+  .fstat { flex:1; background:#231b33; border-radius:14px; padding:12px; }
+  .fstat .v { font-size:17px; font-weight:600; color:#efeaf7; font-family:"Segoe UI",sans-serif; }
+  .fstat .l { font-size:10.5px; color:#9d92b3; margin-top:2px; }
+  .ach-unlock { width:100%; margin-top:14px; background:rgba(198,226,107,.08); border:1px solid rgba(198,226,107,.3); border-radius:16px; padding:12px; display:flex; align-items:center; gap:12px; text-align:left; }
+  .ach-ic { width:44px; height:44px; border-radius:12px; background:#231b33; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; border:1px solid rgba(198,226,107,.4); }
+  .ach-t { font-size:13px; font-weight:700; color:#efeaf7; font-family:"Nunito",sans-serif; }
+  .ach-s { font-size:11.5px; color:#9d92b3; }
+  .fin-actions { margin-top:auto; width:100%; padding-top:16px; }
+  .btn-share { width:100%; padding:14px; border-radius:14px; background:#c6e26b; color:#22290a; font-weight:700; font-size:14px; text-align:center; }
+  .btn-home { width:100%; padding:12px; margin-top:8px; color:#9d92b3; font-size:13px; text-align:center; }
+  .fin-tomorrow { font-size:12px; color:#7d7194; margin-top:12px; font-style:italic; }
+</style>
+</head>
+<body>
+<h1>Прогулка и финал — v2</h1>
+<p class="sub">Учтено: карта больше, цифры прогулки — нейтральным шрифтом, трек — извилистая линия по пути, режим — тоглом на главном экране слева сверху; в финале нет названия района, игривым остался только заголовок и главная цифра.</p>
+
+<div class="wrap">
+
+<div class="col">
+  <div class="col-name">Главный: тогл режима</div>
+  <div class="col-desc">Режим выбирается до старта — тогл «Пешком / Вело» слева сверху, рядом с шестерёнкой. На экране прогулки переключателя больше нет.</div>
+  <div class="phone" style="height:480px">
+    <div class="walk-map">
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:120px;height:120px;left:36%;top:26%"></div>
+      <div class="me" style="left:52%;top:44%"></div>
+      <div class="topbar">
+        <span class="mode-toggle"><span class="mt on">🚶 Пешком</span><span class="mt">🛴 Вело</span></span>
+        <span class="icon-btn">⚙</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="stat-row"><span class="s-chip">Открыто <b>17%</b></span><span class="s-chip">Серия: <b>4 дня</b></span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Активная прогулка v2</div>
+  <div class="col-desc">Карта — почти весь экран; трек — извилистая линия по фактическому пути. Внизу тонкая полоса: цифры нейтральным шрифтом в одну строку.</div>
+  <div class="phone" style="height:480px">
+    <div class="walk-map">
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:34%;top:24%"></div>
+      <svg class="track" viewBox="0 0 240 260" fill="none">
+        <path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#c6e26b" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      </svg>
+      <div class="me" style="left:78%;top:22%"></div>
+      <div class="live"><span class="live-dot"></span>Идёт запись</div>
+      <div class="quest-fab">＋ Задание</div>
+    </div>
+    <div class="walk-bar">
+      <div class="walk-stats"><span><b>48:12</b> время</span><span><b>3,6 км</b></span><span><b>+0,4%</b> открыто</span></div>
+      <div class="walk-actions">
+        <div class="btn-pause">Пауза</div>
+        <div class="btn-stop">Завершить</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Финальный экран v2</div>
+  <div class="col-desc">Название района убрано — скриншот безопасно шерить. Статистика нейтральным шрифтом; игривое — только заголовок Bubbles и главная цифра Nunito.</div>
+  <div class="phone">
+    <div class="fin-body">
+      <div class="fin-title">Отличная прогулка!</div>
+      <div class="fin-sub">вечер · 48 минут</div>
+      <div class="fin-pct">17,4%</div>
+      <div class="fin-pct-l">домашнего региона открыто (+0,4% сегодня)</div>
+      <div class="fin-grid">
+        <div class="fstat"><div class="v">3,6 км</div><div class="l">расстояние</div></div>
+        <div class="fstat"><div class="v">48 мин</div><div class="l">время</div></div>
+        <div class="fstat"><div class="v">5 дней</div><div class="l">серия</div></div>
+      </div>
+      <div class="ach-unlock">
+        <div class="ach-ic">🏔</div>
+        <div>
+          <div class="ach-t">Новое достижение: «Исследователь кварталов»</div>
+          <div class="ach-s">10 дворов открыты изнутри</div>
+        </div>
+      </div>
+      <div class="fin-actions">
+        <div class="btn-share">Поделиться результатом</div>
+        <div class="btn-home">На карту</div>
+        <div class="fin-tomorrow">Возвращайтесь завтра — впереди ещё столько открытий</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

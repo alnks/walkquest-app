@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — онбординг (тёмная + светлая)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  h2 { font-size:16px; margin:34px 0 12px; color:#c9bade; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:24px; max-width:820px; line-height:1.5; }
+  .wrap { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:262px; }
+  .col-name { font-size:13px; font-weight:600; margin-bottom:8px; }
+  .phone { border-radius:26px; overflow:hidden; height:520px; display:flex; flex-direction:column; position:relative; }
+
+  .d { background:#191423; color:#EFEAf7; border:2px solid #3a2f52; }
+  .d .dim { color:#8D83A6; }
+  .d .txt { color:#B3A6C9; }
+  .d .accent-bg { background:#C6E26B; color:#22290A; }
+  .d .opt { background:#231B33; border:1.5px solid #342A4D; }
+  .d .opt.sel { border-color:#C6E26B; background:rgba(198,226,107,.08); }
+  .d .vis { background:#231B33; }
+  .d .fog { background:rgba(178,158,209,.32); }
+  .d .clear { background:#241C36; }
+  .d .dots i { background:#4A3F66; }
+  .d .dots i.on { background:#C6E26B; }
+  .d .pm { background:#191423; border:1px solid #4A3F66; color:#C6E26B; }
+  .l { background:#F6F3FA; color:#241C33; border:2px solid #d3cbe6; }
+  .l .dim { color:#6E6384; }
+  .l .txt { color:#5C506E; }
+  .l .accent-bg { background:#7A9A1F; color:#fff; }
+  .l .opt { background:#fff; border:1.5px solid #E6DFF2; }
+  .l .opt.sel { border-color:#7A9A1F; background:rgba(122,154,31,.06); }
+  .l .vis { background:#EDE7F7; }
+  .l .fog { background:rgba(178,158,209,.42); }
+  .l .clear { background:#EDE7F7; }
+  .l .dots i { background:#D9D0EA; }
+  .l .dots i.on { background:#7A9A1F; }
+  .l .pm { background:#F6F3FA; border:1px solid #D9D0EA; color:#7A9A1F; }
+  .l .ttl { color:#4A3F66; }
+
+  .ob { flex:1; padding:22px 18px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .emoji { font-size:34px; margin-bottom:12px; }
+  .ttl { font-family:"Nunito",sans-serif; font-weight:800; font-size:19px; margin-bottom:8px; }
+  .txt { font-size:12px; line-height:1.55; margin-bottom:12px; }
+  .vis { width:100%; border-radius:14px; height:96px; margin-bottom:12px; position:relative; overflow:hidden; }
+  .fog { position:absolute; inset:0; }
+  .clear { position:absolute; border-radius:50%; }
+  .cta { width:100%; margin-top:auto; font-weight:700; font-size:13.5px; text-align:center; padding:12px; border-radius:13px; }
+  .link { margin-top:9px; font-size:11.5px; }
+  .dots { display:flex; gap:6px; margin:10px 0; }
+  .dots i { width:6px; height:6px; border-radius:50%; }
+  .dots i.on { width:16px; border-radius:999px; }
+  .opt { width:100%; text-align:left; border-radius:12px; padding:10px 12px; margin-bottom:7px; }
+  .opt .t { font-size:12.5px; font-weight:700; font-family:"Nunito",sans-serif; }
+  .opt .s { font-size:10.5px; margin-top:2px; }
+  .stepper { display:flex; align-items:center; gap:11px; margin-top:7px; }
+  .pm { width:26px; height:26px; border-radius:8px; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .val { font-family:"Nunito",sans-serif; font-weight:1000; font-size:18px; }
+  .mappick { width:100%; border-radius:14px; height:106px; position:relative; overflow:hidden; margin-bottom:10px; }
+  .d .mappick { background:linear-gradient(160deg,#241C36,#2C2240); }
+  .l .mappick { background:linear-gradient(160deg,#E3DCF0,#D5CBE8); }
+  .pin { position:absolute; left:46%; top:32%; font-size:20px; }
+</style>
+</head>
+<body>
+<h1>Онбординг — обе темы</h1>
+<p class="sub">Четыре экрана, тёмная слева, светлая справа.</p>
+
+<h2>1. Приветствие</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d"><div class="ob">
+    <div class="emoji">🌫</div><div class="ttl">Город под туманом</div>
+    <div class="vis"><div class="fog"></div><div class="clear" style="width:60px;height:60px;left:55%;top:26%"></div></div>
+    <div class="txt">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</div>
+    <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+    <div class="cta accent-bg">Дальше</div>
+  </div></div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l"><div class="ob">
+    <div class="emoji">🌫</div><div class="ttl">Город под туманом</div>
+    <div class="vis"><div class="fog"></div><div class="clear" style="width:60px;height:60px;left:55%;top:26%"></div></div>
+    <div class="txt">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</div>
+    <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+    <div class="cta accent-bg">Дальше</div>
+  </div></div></div>
+</div>
+
+<h2>2. Домашний регион</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d"><div class="ob">
+    <div class="ttl">Где вы живёте?</div>
+    <div class="txt">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</div>
+    <div class="mappick"><div class="fog" style="opacity:.5"></div><div class="pin">📍</div></div>
+    <div class="opt sel"><div class="t">Санкт-Петербург и Ленобласть</div><div class="s dim">определено по геолокации</div></div>
+    <div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+    <div class="cta accent-bg">Это мой регион</div>
+    <div class="link dim">Выбрать другой</div>
+  </div></div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l"><div class="ob">
+    <div class="ttl">Где вы живёте?</div>
+    <div class="txt">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</div>
+    <div class="mappick"><div class="fog" style="opacity:.5"></div><div class="pin">📍</div></div>
+    <div class="opt sel"><div class="t">Санкт-Петербург и Ленобласть</div><div class="s dim">определено по геолокации</div></div>
+    <div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+    <div class="cta accent-bg">Это мой регион</div>
+    <div class="link dim">Выбрать другой</div>
+  </div></div></div>
+</div>
+
+<h2>3. Цель</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d"><div class="ob">
+    <div class="ttl">Ваша цель</div>
+    <div class="txt">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</div>
+    <div class="opt sel"><div class="t">🚶 Прогулок в неделю</div><div class="stepper"><span class="pm">−</span><span class="val">3</span><span class="pm">＋</span></div></div>
+    <div class="opt"><div class="t">⏱ Минут в день</div></div>
+    <div class="opt"><div class="t">📏 Километров в день</div></div>
+    <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+    <div class="cta accent-bg">Выбрать</div>
+  </div></div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l"><div class="ob">
+    <div class="ttl">Ваша цель</div>
+    <div class="txt">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</div>
+    <div class="opt sel"><div class="t">🚶 Прогулок в неделю</div><div class="stepper"><span class="pm">−</span><span class="val">3</span><span class="pm">＋</span></div></div>
+    <div class="opt"><div class="t">⏱ Минут в день</div></div>
+    <div class="opt"><div class="t">📏 Километров в день</div></div>
+    <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+    <div class="cta accent-bg">Выбрать</div>
+  </div></div></div>
+</div>
+
+<h2>4. Доступ к геолокации</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d"><div class="ob">
+    <div class="emoji">📍</div><div class="ttl">Доступ к геолокации</div>
+    <div class="txt">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».<br><br><b>Информация о ваших передвижениях не покидает телефон.</b> На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</div>
+    <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
+    <div class="cta accent-bg">Разрешить и открыть карту</div>
+  </div></div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l"><div class="ob">
+    <div class="emoji">📍</div><div class="ttl">Доступ к геолокации</div>
+    <div class="txt">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».<br><br><b>Информация о ваших передвижениях не покидает телефон.</b> На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</div>
+    <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
+    <div class="cta accent-bg">Разрешить и открыть карту</div>
+  </div></div></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+# tickets.toml — истории эпика epic-achievements-quests в порядке сборки. Порядок таблиц = порядок работ.
+#
+# Нарезка — 2026-10-09 (инсепшн эпика 4, после code complete epic-habits).
+# Источники: content-catalog.md (40 достижений, 22 задания, правила пула — final),
+# FR-15/FR-16. Фундамент сигналов: история прогулок 3.1 + прогресс тумана 1.8.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Сигналы прогулки v2 и прочтения POI (data)"
+description = "WalkRecord v2 (обратно совместимо): + regionIds (регионы, где прогулка открывала тайлы), + modes (режимы, бывшие активны), + newTilesOpened (новых тайлов за прогулку — для C8). OpenTileAtPoint: OpenResult.Changed/Unchanged несут regionId (сервис собирает regionIds и считает новые тайлы). POI-прочтения: data/poicard/PoiCardStore (poicards.json, множество osm_id прочитанных карточек) — запись из MapViewModel.onPoiTapped; парк = category 'leisure=park' (факт пакета v6)."
+verify = "JVM: старые записи (без новых полей) читаются; round-trip новых; PoiCardStore idемпотентность/счёт. OpenTileAtPointTest зелёный (regionId в Changed/Unchanged)."
+covers = []
+after = []
+hitl = false
+risk = "medium"
+references = ["content — _bmad-output/initiative-walkquest/ux-walkquest/content-catalog.md, достижения A15/A16 (парки), C8 (любимая тропа)", "architecture — AD-9"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Движок достижений (domain): каталог 40 + выдача и задним числом"
+description = "domain/achievements: AchievementDef (id, значок, название, условие-текст, rare, hasProgress) — каталог всех 40 из content-catalog как данные. AchievementState: собирается из WalkHistory (даты/время/дистанции/regionIds/modes), ComputeRegionProgress (доля домашнего города), PoiCardStore (число прочтений, парки), DistrictProgress (4.3), QuestCounters (4.5). AchievementEngine.evaluate(state): список вновь выполненных (условия — data-class'ы условий, тестируемо поодиночке). EarnedStore (achievements/earned.json): полученные id + когда; проверка после каждой завершённой прогулки (сервис) И полная перепроверка по истории (задним числом, FR-15) на старте. D4/D5 (рейтинг/приглашения) НЕ входят — нужен Supabase, отложены в epic-leaderboard (Decision)."
+verify = "JVM: каждое условие (38 в движке v1) — граничные случаи; evaluate идемпотентен против EarnedStore; перепроверка по истории выдаёт задним числом; новые достижения из 'обновления приложения' (добавление def'а) проверяются по истории."
+covers = ["FR-15"]
+after = [1]
+hitl = false
+risk = "high"
+references = ["content — content-catalog.md, весь раздел Достижения", "prd — раздел 4.4 (FR-15)"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Районный и городской прогресс (A2–A6, A8–A10, E2)"
+description = "domain/DistrictProgressCalculator: для региона — по boundaries.geojson (kind=district, что есть в пакете) считает для каждого района долю открытых проходимых клеток (центр клетки в полигоне района, bbox-префильтр + PointInPolygon); полностью открытый = доля 1.0. Город = домашний регион: доля из ComputeRegionProgress. Малые города без kind=district — районные достижения скрываются (спек: в малых городах районных достижений нет). Фикс генератора region-pack (сейчас kind=district — форты Кронштадта вместо 18 районов СПб) — отдельная задача tools, здесь движок generic."
+verify = "JVM: районный подсчёт на синтетической сетке и полигонах (квадратный район, клетки на границе); город без районов → пустой список (достижения скрыты); доля 1.0 засчитывается."
+covers = ["FR-15"]
+after = [1]
+hitl = false
+risk = "high"
+references = ["content — content-catalog.md, модель территории", "architecture — AD-9"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Экран достижений (вкладка «Награды»)"
+description = "Четвёртая вкладка MainActivity: список 40 достижений по категориям (Исследование/Регулярность/Дистанция/Задания/Путешествия): значок, название; полученное — отмечено (дата), неполученное — условие-текст; у имеющих hasProgress — полоска прогресса (текущее/цель из AchievementState); rare — метка/акцент (праздник — поведение на финальном экране 4.6, здесь метка). Прогресс обновляется при входе на вкладку."
+verify = "Вкладка открывается, список 40, полученные/нет верны после прогулок (JVM-часть движка зелёная); условия видны у неполученных (FR-15 Consequences)."
+covers = ["FR-15"]
+after = [2, 3]
+hitl = false
+risk = "medium"
+references = ["ux — прототип progress/achievements", "content — content-catalog.md, правило 'у неполученного видно условие'"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Задания (FR-16): пул 22, раздача, активное, замена, выполнение"
+description = "domain/quests: QuestDef (22 из каталога как данные), QuestPool — случайная раздача и выбор из 6 (без весов v1; балансировка по отказам — после запуска, каталог), QuestStateStore (quests.json: активное задание, выполненные osm_id, счётчик выполненных, счётчик отказов). Одно активное за раз; взятие поверх активного — подтверждающий диалог «У вас уже есть задание» («Взять новое / Оставить текущее»), прежнее снимается без штрафа. Выполнение — нажатием «Выполнено» (честное слово); отказ — «Снять задание» без штрафа. Кнопку задания можно скрыть в настройках (showQuestButton, default true). Карточка активного задания на экране карты во время прогулки."
+verify = "JVM: пул 22 уникален; раздача случайная/из-6 из полного пула; один активный; замена снимает без штрафа (счётчик отказов растёт, выполненные не трогаются); выполнение растит счётчик; настройка скрытия персистится. UI: карточка видна в прогулке, диалог замены работает."
+covers = ["FR-16"]
+after = []
+hitl = false
+risk = "medium"
+references = ["content — content-catalog.md, Задания (22) и правила пула", "prd — раздел 4.5 (FR-16)"]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Интеграция: выдача после прогулки, финальный экран, POI, D1–D3"
+description = "Сервис при финале прогулки: собирает AchievementState → engine → новые достижения в EarnedStore + публикуются для финального экрана (реализация порта WalkAchievements из 2.8 — экран показывает новые ачивки). D1 (первое принятое задание) — при взятии задания; D2/D3 — по счётчику выполненных заданий. A11–A14 — по прочтениям POI (PoiCardStore). Rare-момент: финальный экран отмечает rare достижение акцентом (Rubik Bubbles — шрифт не вводим; метка rare). Полная перепроверка задним числом на старте приложения (новые defs)."
+verify = "JVM: сквозной сценарий — прогулки фикстур → engine → набор earned совпадает с ожиданием; WalkAchievements-реализация возвращает названия новых заданной прогулки. UI: финальный экран показывает новые ачивки (в т.ч. rare-метку)."
+covers = ["FR-15", "FR-16"]
+after = [2, 4, 5]
+hitl = false
+risk = "medium"
+references = ["prd — FR-15 (Consequences: финальный экран, задним числом)", "content — rare-моменты"]
+
+[[entry]]
+id = 7
+type = "story"
+title = "Refactor sweep"
+description = "Финальная чистка эпика: находки ревью 4.1–4.6; только cleanup."
+verify = "Все JVM-тесты зелёные принудительным перезапуском; assembleRelease PASS."
+covers = []
+after = [1, 2, 3, 4, 5, 6]
+hitl = false
+risk = "low"

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тема-хост для Compose; цвета экранов — в ui/theme/Theme.kt по токенам DESIGN. -->
+    <style name="Theme.WalkQuest" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#F6F3FA</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

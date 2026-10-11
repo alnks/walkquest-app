@@ -1,0 +1,196 @@
+# tickets.toml — истории эпика epic-map-foundation в порядке сборки. Порядок таблиц = порядок работ.
+#
+# СТАТУС НА ЗАКРЫТИЕ ЭПИКА — 2026-10-09 (эпик закрыт, см. deferred-work.md, финальный раздел):
+# 1.1–1.10 — done (прогоны 2026-10-04…09: 224 JVM-теста зелёные, эмуляторные и полевые прогоны 1–3).
+# 1.11 — done (полевые итерации 2026-10-05…09: размер тайла 100 м, REVEAL_RADIUS_METERS = 10 м,
+#        пакет region-spb-city-v6.zip = 46,9 МБ ≤ 50 МБ — порог AD-8 по весу пакета PASS).
+# 1.12 — deferred: APK release arm64 15,4 МБ ≤ 30 МБ PASS; измерения fps ≥ 30 и батареи ≤ 5%/час
+#        протоколом не подтверждены — перенесены владельцем как релизный блокер в epic-data-release.
+# 1.13 — done (находки разобраны в deferred-work.md; остатки: ABI-split/релизный keystore → epic-data-release).
+# 1.14, 1.15 — done (debug-оверлей и симуляция трека в коде, покрыты тестами и прогонами wq.py).
+
+[[entry]]
+id = 1
+type = "spike"
+title = "Spike: инструменты генератора region-pack"
+description = "Исследует и выбирает состав инструментов пайплайна region-pack (osmium, tilemaker/pmtiles и др.): на малом участке OSM собирается PoC пакета со всеми файлами формата spine, оцениваются размеры артефактов и время сборки."
+verify = "Состав инструментов записан Decision-строкой в эпик; PoC-артефакты малого участка собраны и открываются; известны размеры и время сборки."
+covers = []
+after = []
+hitl = false
+risk = "low"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, Stack (Пайплайн пакетов) и Deferred (Состав инструментов region-pack)"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Scaffold приложения и трассирующий срез"
+description = "Поднимает Android-проект по spine: Kotlin 2.3.x, Compose BOM 2026.09.00, MapLibre 13.5.x (AD-1), один gradle-модуль с границами пакетов ui/viewmodel/domain/data/tracking/di (AD-10), ручной DI, minSdk 29. Трассирующий срез: экран карты рендерит MapLibre, а тестовая точка проходит путь ui → domain → data и открывает один бит тумана-заглушки (путь открытия тайла только через domain, AD-4)."
+verify = "Приложение собирается и устанавливается на устройство; карта двигается и зумится жестами; тестовая точка через domain открывает один тайл заглушки тумана на экране."
+covers = ["FR-1"]
+after = []
+hitl = false
+risk = "low"
+unknown = "Нужен Android SDK на машине автора; при отсутствии его установка — шаг человека."
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-1, AD-10, Stack, Structural Seed"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Генератор пакета региона (tools/region-pack)"
+description = "Реализует скрипт tools/region-pack по решению spike 1: из OSM и Википедии собирает пакет СПб+Ленобласти формата spine — style.json + tiles.pmtiles, walkability.grid (проходимые тайлы, знаменатель процента, FR-2), boundaries.geojson (город/регион/районы, AD-9), poi.json (OSM + выдержки Википедии, FR-18), meta.json (formatVersion, размер тайла, контрольные суммы). Размер тайла — параметр генератора."
+verify = "Одна команда собирает region-spb-lo-v1.zip со всеми файлами формата; walkability.grid исключает воду и непроходимые зоны и включает парки; meta.json содержит formatVersion, размер тайла и контрольные суммы."
+covers = ["FR-2", "FR-4", "FR-18"]
+after = [1]
+hitl = false
+risk = "medium"
+unknown = "Размер тайла — стартовая гипотеза; финальное значение даёт spike 11, после него пакет перегенерируется."
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-6, AD-9, Structural Seed (формат пакета)"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Публикация пакета на хостинге"
+description = "Выбирает хостинг пакетов (Cloudflare R2, запасной GitHub Releases), настраивает бакет/релиз и публикует первый пакет с версионированным именем; фиксирует URL-схему, которую потребляет data/packages в 1.5."
+verify = "Пакет скачивается по публичной ссылке без авторизации; выбор хостинга записан Decision-строкой; URL-схема задокументирована для 1.5."
+covers = []
+after = [3]
+hitl = true
+risk = "medium"
+notes = ["Регистрация и настройка бакета R2 — действия человека (аккаунт автора)."]
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-6, Deferred (Хостинг пакетов)"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Скачивание и установка пакета региона"
+description = "data/packages: скачивание пакета по URL-схеме 1.4, проверка formatVersion и контрольных сумм, распаковка в локальное хранилище; установленный пакет доступен полностью офлайн (AD-2, AD-6)."
+verify = "Приложение скачивает и устанавливает пакет; пакет с несовместимым formatVersion или битой контрольной суммой отклоняется с понятной ошибкой; после установки карта региона работает без сети."
+covers = ["FR-3", "FR-4"]
+after = [2, 4]
+hitl = false
+risk = "medium"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-2, AD-6, Consistency Conventions (Data & formats)"]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Туман: биткарта региона и слой на карте"
+description = "data/fog: битовая карта открытия региона (бит = тайл сетки пакета, один файл на регион, AD-4); кастомный слой MapLibre с собственной геометрией поверх базовой карты (AD-1), рендер по токенам fog-layer из DESIGN; карта установленного региона изначально полностью в тумане."
+verify = "Офлайн карта СПб/Ленобласти покрыта туманом по токенам DESIGN (лавандовая завеса, 30% тёмная / 40% светлая); пан, зум и поворот плавные; состояние биткарты сохраняется между запусками."
+covers = ["FR-1", "FR-3"]
+after = [5]
+hitl = false
+risk = "medium"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-1, AD-4", "ux — _bmad-output/initiative-walkquest/ux-walkquest/DESIGN.md, токен fog-layer"]
+
+[[entry]]
+id = 7
+type = "story"
+title = "Прототип записи трека и открытие тайлов"
+description = "Минимальная запись трека для прототипа AD-8: foreground-сервис с постоянным уведомлением, точки пишутся append-only по мере поступления (AD-5); фильтрация в tracking — лимит скорости и отсечение телепортаций; валидные точки через domain открывают биты тумана (AD-4). Полировка трекинга (автопауза, батарейный страж, финальный экран) — epic-walk-tracking."
+verify = "Трек, записанный на устройстве полностью офлайн, открывает только тайлы с валидными точками; точки выше лимита скорости и телепортации тайлы не открывают; убийство процесса теряет секунды записи, а не трек."
+covers = ["FR-1", "FR-3"]
+after = [6]
+hitl = false
+risk = "medium"
+unknown = "Лимиты скорости — стартовые гипотезы ~12 км/ч пеший, ~30 км/ч вело; точные значения — полевые тесты (spine Deferred, PRD OQ-1)."
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-4, AD-5", "prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, FR-1 (Consequences)"]
+
+[[entry]]
+id = 8
+type = "story"
+title = "Процент открытия региона в domain"
+description = "domain progress: процент открытия = открытые проходимые биты / все проходимые биты пакета, вычисляется только в domain (AD-4); UI берёт готовое значение; доля хранится как доля, форматирование («17,4%») — только на UI; индикация процента на экране карты."
+verify = "Процент считается только по проходимым тайлам пакета; один и тот же регион даёт одно значение на всех экранах; открытие бита меняет процент предсказуемо."
+covers = ["FR-2"]
+after = [6]
+hitl = false
+risk = "medium"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-4", "prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, FR-2 (Consequences)"]
+
+[[entry]]
+id = 9
+type = "story"
+title = "POI-маяки и карточка места"
+description = "Слой POI из poi.json пакета: маркеры видны сквозь туман (маяки, FR-18) по токену poi-marker; тап открывает карточку с названием и коротким описанием (токен poi-card); карточка работает офлайн после установки региона."
+verify = "POI видны и над закрытыми туманом участками; карточка открывается офлайн и показывает название и описание из пакета."
+covers = ["FR-18"]
+after = [8]
+hitl = false
+risk = "low"
+references = ["prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, FR-18", "ux — _bmad-output/initiative-walkquest/ux-walkquest/DESIGN.md, токены poi-marker и poi-card"]
+
+[[entry]]
+id = 10
+type = "story"
+title = "Модель территории и мульти-регион"
+description = "Модель AD-9: город/регион/районы из boundaries.geojson пакета; домашний регион; обнаружение локации в другом регионе и предложение загрузить его пакет; вкладка посещённых регионов со своим процентом и картой каждого; принадлежность прогулки региону определяется только в domain по границам пакета. Для проверки скриптом 1.3 генерируется второй (малый) регион."
+verify = "Домашний регион выбирается и сохраняется; при локации во втором регионе предлагается его загрузка; вкладка регионов показывает оба региона с раздельными процентами, прогресс не смешивается."
+covers = ["FR-4"]
+after = [8]
+hitl = false
+risk = "medium"
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-9", "content — _bmad-output/initiative-walkquest/ux-walkquest/content-catalog.md, раздел «Модель территории»", "prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, FR-4 (Consequences)"]
+
+[[entry]]
+id = 11
+type = "spike"
+title = "Spike: размер тайла сетки (полевые тесты)"
+description = "Полевые тесты на реальном устройстве подбирают размер тайла сетки (PRD OQ-2, spine Deferred): дворы и внутриквартальные проходы — отдельные зоны (проход по периметру квартала не открывает двор), данные не раздуты, перегенерированный пакет укладывается в ≤ 50 МБ."
+verify = "По результатам обходов на устройстве выбран размер тайла; решение записано Decision-строкой; параметр обновлён в генераторе 1.3 и пакет СПб+Ленобласти перегенерирован с весом ≤ 50 МБ."
+covers = []
+after = [7]
+hitl = true
+risk = "low"
+notes = ["Полевые обходы с устройством — работа человека."]
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, Deferred (Размер тайла сетки)", "prd — _bmad-output/initiative-walkquest/prd-walkquest/prd-walkquest.md, раздел 8 Open Questions, вопрос 2"]
+
+[[entry]]
+id = 12
+type = "story"
+title = "Гейт AD-8: замеры порогов на устройстве"
+description = "Протокол измерений на устройстве среднего сегмента подтверждает пороги AD-8: ≥ 30 fps рендера карты с туманом; расход батареи при фоновой записи с выключенным экраном ≤ 5%/час; APK ≤ 30 МБ без пакетов; пакет региона ≤ 50 МБ (финальный, после 1.11). Результаты записываются в эпик; неподтверждённый порог — блокер, возврат к spine."
+verify = "Все четыре порога AD-8 измерены человеком на реальном устройстве и подтверждены записанным протоколом; эпик не закрывается без протокола."
+covers = []
+after = [9, 10, 11]
+hitl = true
+risk = "medium"
+done_checkpoint = true
+notes = ["Измерения fps и батареи — полевые тесты человека на устройстве среднего сегмента."]
+references = ["architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-8"]
+
+[[entry]]
+id = 13
+type = "story"
+title = "Refactor sweep"
+description = "Финальная чистка эпика: разбираются находки ревью и замечания, отложенные в ходе историй 1.1–1.12; только cleanup — новый объём уходит в отдельные тикеты."
+verify = "Проект собирается, проверки историй проходят после чистки; отложенных находок не осталось или они вынесены в новые тикеты."
+covers = []
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+hitl = false
+risk = "low"
+
+[[entry]]
+id = 14
+type = "story"
+title = "Debug-оверлей карты (QA)"
+description = "Плашка отладочной информации поверх карты, только в debuggable-сборке (флаг ApplicationInfo.FLAG_DEBUGGABLE, как QA-хук base-url): версия пакета в памяти, число открытых тайлов / точек осевой ленты / вершин кольца завесы, последний фикс (провайдер, accuracy, возраст), вердикт PointFilter, baseUrl источника пакетов. Заменяет вычитывание uiautomator-дампов и logcat при прогонах _qa/wq.py; ловит класс багов «старая версия пакета в памяти» (fix4) без JVM-теста."
+verify = "На debug-сборке плашка показывает живые значения и обновляется при записи/установке пакета; в release-сборке плашки нет; прогон _qa/wq.py подтверждает, что чтение состояния не требует uidump."
+covers = []
+after = []
+hitl = false
+risk = "low"
+references = ["qa — _qa/README.md", "qa — _qa/wq.py"]
+
+[[entry]]
+id = 15
+type = "story"
+title = "Симуляция трека в debug-сборке"
+description = "Проигрывание .track-журнала (или bundled-фикстуры) внутри приложения в debuggable-сборке: точки подаются в тот же вход, что фиксы LocationManager, с задаваемыми accuracy/провайдером/темпом — сценарии «грубый первый фикс с вышек», «телепорт», «GPS замолчал, живёт NETWORK», «accuracy > 50 м» становятся детерминированными. Закрывает класс «не проверено на эмуляторе» (emu geo fix не регулирует accuracy и идёт только в GPS-провайдер), который сейчас держится только на JVM-тестах и полевых прогонах владельца."
+verify = "На debug-сборке выбранная фикстура проигрывается через штатный путь фильтрации и открытия тайлов; сценарий с accuracy > 50 м воспроизводит отсечение на устройстве; release-сборка функции не содержит."
+covers = []
+after = [7]
+hitl = false
+risk = "medium"
+references = ["qa — _qa/README.md, раздел «Грабли» (accuracy эмулятором не регулируется)", "architecture — _bmad-output/initiative-walkquest/architecture-walkquest/architecture-walkquest.md, AD-5"]

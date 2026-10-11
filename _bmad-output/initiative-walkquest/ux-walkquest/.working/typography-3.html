@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — дофаминовые округлые варианты</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Segoe UI",-apple-system,Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:28px; max-width:720px; line-height:1.5; }
+  .wrap { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; }
+  .spec { width:340px; border-radius:20px; overflow:hidden; border:1px solid #3a2f52; background:#191423; padding:22px; }
+  .spec-name { font-size:14px; font-weight:600; margin-bottom:2px; }
+  .spec-desc { font-size:12px; color:#9d92b3; margin-bottom:18px; line-height:1.45; }
+  .spec .big { font-size:52px; line-height:1.05; margin-bottom:8px; font-family:"Arial Rounded MT Bold","Century Gothic","Trebuchet MS",sans-serif; }
+  .spec .mid { font-size:15px; margin-bottom:14px; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  .spec .small { font-size:12.5px; color:#b3a6c9; line-height:1.5; padding:10px 12px; background:#231b33; border-radius:12px; font-family:"Segoe UI",Arial,sans-serif; }
+
+  /* D1: конфетти — каждая цифра своим сочным цветом */
+  .d1 .c1 { color:#c6e26b; }  /* фисташка */
+  .d1 .c2 { color:#ff8ab3; }  /* розовая жвачка */
+  .d1 .c3 { color:#6fd8e0; }  /* бирюза */
+  .d1 .big span { display:inline-block; }
+  .d1 .big .c1 { transform:rotate(-3deg) translateY(2px); }
+  .d1 .big .c2 { transform:rotate(2deg); }
+  .d1 .big .c3 { transform:rotate(-2deg) translateY(2px); }
+
+  /* D2: жвачка — основной акцент сочно-розовый + жёлтый, крупные круглые формы */
+  .d2 .big { color:#ff8ab3; letter-spacing:-.02em; }
+  .d2 .big span { color:#ffd23f; }
+  .d2 .pill { display:inline-block; background:rgba(255,138,179,.14); border:1.5px solid rgba(255,138,179,.45); color:#ffabc7; border-radius:999px; padding:5px 12px; font-size:11.5px; margin-bottom:12px; }
+
+  /* D3: пузырь — цифра в пузатой «капле»-бейдже, лайм */
+  .d3 .blob { display:inline-flex; align-items:baseline; background:#c6e26b; color:#22290a; border-radius:26px 30px 24px 32px; padding:10px 22px; transform:rotate(-2deg); }
+  .d3 .big { color:inherit; }
+  .d3 .sun { display:inline-block; width:14px; height:14px; border-radius:50%; background:#ffd23f; margin-left:10px; transform:translateY(-30px); box-shadow:0 0 12px rgba(255,210,63,.7); }
+</style>
+</head>
+<body>
+<h1>Дофаминовые округлые — три степени сочности</h1>
+<p class="sub">Округлый шрифт + яркие «вкусные» цвета. Всё плоское, без 3D и мультяшности — но насыщенно. Рамка та же: дофамин живёт в цифрах и значках, текст спокойный. Настоящие шрифты-кандидаты: Comfortaa, Balsamiq Sans, Marhey (все с кириллицей).</p>
+
+<div class="wrap">
+  <div class="spec d1">
+    <div class="spec-name">D1. Конфетти</div>
+    <div class="spec-desc">Каждая цифра своим сочным цветом: фисташка, жвачка, бирюза. Максимально празднично — хорошо для финального экрана и достижений, на каждый день может утомить.</div>
+    <div class="big"><span class="c1">1</span><span class="c2">7</span><span class="c3">%</span></div>
+    <div class="mid">Санкт-Петербурга и области открыто</div>
+    <div class="small">Неделя подходит к концу, а до плана 2 прогулки. Погуляем?</div>
+  </div>
+
+  <div class="spec d2">
+    <div class="spec-name">D2. Жвачка</div>
+    <div class="spec-desc">Один сочный акцент — розовый, второй — жёлтый. Округлые пузатые цифры, чипы как стикеры. Ярко, но держится двумя цветами, поэтому не разваливается.</div>
+    <div class="pill">Новое достижение!</div>
+    <div class="big">17<span>%</span></div>
+    <div class="mid">Санкт-Петербурга и области открыто</div>
+    <div class="small">Неделя подходит к концу, а до плана 2 прогулки. Погуляем?</div>
+  </div>
+
+  <div class="spec d3">
+    <div class="spec-name">D3. Пузырь</div>
+    <div class="spec-desc">Цифра живёт в пузатом лаймовом «пятне»-бейдже с наклоном. Самый игрушечный из трёх — процент становится наклейкой, которую приятно собирать.</div>
+    <div class="blob"><span class="big">17%</span><span class="sun"></span></div>
+    <div class="mid" style="margin-top:10px">Санкт-Петербурга и области открыто</div>
+    <div class="small">Неделя подходит к концу, а до плана 2 прогулки. Погуляем?</div>
+  </div>
+</div>
+
+</body>
+</html>

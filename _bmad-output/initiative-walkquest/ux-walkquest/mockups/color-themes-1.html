@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — цветовые темы</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:#1a1a1e; color:#eee; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  .sub { color:#999; font-size:14px; margin-bottom:32px; }
+  .theme { margin-bottom:48px; }
+  .theme-head { margin-bottom:12px; }
+  .theme-name { font-size:18px; font-weight:600; }
+  .theme-reg { font-size:13px; color:#999; margin-top:2px; }
+  .pair { display:flex; gap:16px; flex-wrap:wrap; }
+  .mode { flex:1; min-width:300px; border-radius:20px; overflow:hidden; border:1px solid rgba(128,128,128,.25); }
+  .mode-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; padding:10px 14px 0; opacity:.6; }
+  .screen { padding:14px; }
+  .mapmock { border-radius:14px; height:150px; position:relative; overflow:hidden; }
+  .fog { position:absolute; inset:0; }
+  .clear-patch { position:absolute; border-radius:50%; filter:blur(10px); }
+  .poi { position:absolute; width:8px; height:8px; border-radius:50%; }
+  .maplabel { position:absolute; bottom:10px; left:12px; font-size:11px; opacity:.75; }
+  .row { display:flex; gap:10px; align-items:center; margin-top:12px; }
+  .chip { font-size:12px; padding:6px 10px; border-radius:999px; }
+  .cta { margin-top:12px; text-align:center; padding:13px; border-radius:14px; font-size:15px; font-weight:600; }
+  .toast { margin-top:12px; padding:10px 12px; border-radius:12px; font-size:12.5px; display:flex; gap:8px; align-items:center; }
+  .tokens { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding:0 14px 14px; }
+  .tok { font-size:10.5px; padding:5px 8px; border-radius:8px; border:1px solid rgba(128,128,128,.3); display:flex; align-items:center; gap:6px; }
+  .sw { width:12px; height:12px; border-radius:4px; display:inline-block; border:1px solid rgba(128,128,128,.35); }
+
+  /* ============ ТЕМА 1: Северный вечер ============
+     dark: bg #12161f surface #1b2230 fog rgba(70,86,110,.55) text #e8ecf4 accent(фонарь) #f2a94b ok #58b09c
+     light: bg #f4f6fa surface #ffffff fog rgba(120,138,166,.38) text #1d2433 accent #d98a2b ok #2f8f7a */
+  .t1d { background:#12161f; color:#e8ecf4; }
+  .t1d .mapmock { background:linear-gradient(135deg,#1b2230,#232d40); }
+  .t1d .fog { background:rgba(70,86,110,.55); }
+  .t1d .clear-patch { background:rgba(232,236,244,.16); }
+  .t1d .poi { background:#f2a94b; box-shadow:0 0 8px #f2a94b; }
+  .t1d .chip { background:#1b2230; color:#9fb0cc; }
+  .t1d .chip b { color:#f2a94b; }
+  .t1d .cta { background:#f2a94b; color:#1d1405; }
+  .t1d .toast { background:#1b2230; color:#b8c4da; }
+  .t1d .toast i { color:#58b09c; font-style:normal; }
+  .t1l { background:#f4f6fa; color:#1d2433; }
+  .t1l .mapmock { background:linear-gradient(135deg,#dde5f0,#cfd9e8); }
+  .t1l .fog { background:rgba(120,138,166,.38); }
+  .t1l .clear-patch { background:rgba(255,255,255,.75); }
+  .t1l .poi { background:#d98a2b; box-shadow:0 0 8px rgba(217,138,43,.6); }
+  .t1l .chip { background:#ffffff; color:#4a5872; border:1px solid #e2e8f2; }
+  .t1l .chip b { color:#d98a2b; }
+  .t1l .cta { background:#1d2433; color:#f4f6fa; }
+  .t1l .toast { background:#ffffff; color:#44506a; border:1px solid #e2e8f2; }
+  .t1l .toast i { color:#2f8f7a; font-style:normal; }
+
+  /* ============ ТЕМА 2: Свежий асфальт ============
+     dark: bg #15181a surface #1f2426 fog rgba(88,98,102,.5) text #eef1f2 accent(мята) #2ee6a8 warn #ffb454
+     light: bg #f7f8f8 surface #ffffff fog rgba(150,160,164,.32) text #1a1e20 accent #00a876 warn #e8920f */
+  .t2d { background:#15181a; color:#eef1f2; }
+  .t2d .mapmock { background:linear-gradient(135deg,#1f2426,#262d2f); }
+  .t2d .fog { background:rgba(88,98,102,.5); }
+  .t2d .clear-patch { background:rgba(46,230,168,.14); }
+  .t2d .poi { background:#2ee6a8; box-shadow:0 0 8px #2ee6a8; }
+  .t2d .chip { background:#1f2426; color:#9aa6aa; }
+  .t2d .chip b { color:#2ee6a8; }
+  .t2d .cta { background:#2ee6a8; color:#06281c; }
+  .t2d .toast { background:#1f2426; color:#aebabd; }
+  .t2d .toast i { color:#ffb454; font-style:normal; }
+  .t2l { background:#f7f8f8; color:#1a1e20; }
+  .t2l .mapmock { background:linear-gradient(135deg,#e4e8e9,#d5dcdd); }
+  .t2l .fog { background:rgba(150,160,164,.32); }
+  .t2l .clear-patch { background:rgba(255,255,255,.8); }
+  .t2l .poi { background:#00a876; box-shadow:0 0 8px rgba(0,168,118,.5); }
+  .t2l .chip { background:#fff; color:#4b5659; border:1px solid #e4e8e9; }
+  .t2l .chip b { color:#00a876; }
+  .t2l .cta { background:#1a1e20; color:#f7f8f8; }
+  .t2l .toast { background:#fff; color:#45514f; border:1px solid #e4e8e9; }
+  .t2l .toast i { color:#e8920f; font-style:normal; }
+
+  /* ============ ТЕМА 3: Ботаника ============
+     dark: bg #101a14 surface #182419 fog rgba(74,98,80,.5) text #e9f1ea accent(коралл) #ff7a59 leaf #8fc98f
+     light: bg #f4f7f2 surface #ffffff fog rgba(140,160,132,.3) text #1c2a1e accent #e85d3d leaf #3d7a3d */
+  .t3d { background:#101a14; color:#e9f1ea; }
+  .t3d .mapmock { background:linear-gradient(135deg,#182419,#1e2f21); }
+  .t3d .fog { background:rgba(74,98,80,.5); }
+  .t3d .clear-patch { background:rgba(143,201,143,.18); }
+  .t3d .poi { background:#ff7a59; box-shadow:0 0 8px #ff7a59; }
+  .t3d .chip { background:#182419; color:#a3bfa6; }
+  .t3d .chip b { color:#ff7a59; }
+  .t3d .cta { background:#ff7a59; color:#2b0e06; }
+  .t3d .toast { background:#182419; color:#b2c9b4; }
+  .t3d .toast i { color:#8fc98f; font-style:normal; }
+  .t3l { background:#f4f7f2; color:#1c2a1e; }
+  .t3l .mapmock { background:linear-gradient(135deg,#dfe9da,#d0e0c9); }
+  .t3l .fog { background:rgba(140,160,132,.3); }
+  .t3l .clear-patch { background:rgba(255,255,255,.8); }
+  .t3l .poi { background:#e85d3d; box-shadow:0 0 8px rgba(232,93,61,.5); }
+  .t3l .chip { background:#fff; color:#4a5c47; border:1px solid #e2ead9; }
+  .t3l .chip b { color:#e85d3d; }
+  .t3l .cta { background:#1c2a1e; color:#f4f7f2; }
+  .t3l .toast { background:#fff; color:#47584a; border:1px solid #e2ead9; }
+  .t3l .toast i { color:#3d7a3d; font-style:normal; }
+
+  /* ============ ТЕМА 4: Рассвет ============
+     dark: bg #1b1420 surface #251b2c fog rgba(96,76,110,.5) text #f2ebf4 accent(ягода) #e84e8a dawn #f2b172
+     light: bg #fbf6f4 surface #ffffff fog rgba(180,150,170,.28) text #2b1e2a accent #c92e6e dawn #d97f2b */
+  .t4d { background:#1b1420; color:#f2ebf4; }
+  .t4d .mapmock { background:linear-gradient(135deg,#251b2c,#2f2238); }
+  .t4d .fog { background:rgba(96,76,110,.5); }
+  .t4d .clear-patch { background:rgba(242,177,114,.18); }
+  .t4d .poi { background:#e84e8a; box-shadow:0 0 8px #e84e8a; }
+  .t4d .chip { background:#251b2c; color:#bda9c4; }
+  .t4d .chip b { color:#f2b172; }
+  .t4d .cta { background:linear-gradient(90deg,#e84e8a,#f2b172); color:#2b0d1c; }
+  .t4d .toast { background:#251b2c; color:#c6b3cc; }
+  .t4d .toast i { color:#e84e8a; font-style:normal; }
+  .t4l { background:#fbf6f4; color:#2b1e2a; }
+  .t4l .mapmock { background:linear-gradient(135deg,#f0e2e6,#e9d5da); }
+  .t4l .fog { background:rgba(180,150,170,.28); }
+  .t4l .clear-patch { background:rgba(255,255,255,.8); }
+  .t4l .poi { background:#c92e6e; box-shadow:0 0 8px rgba(201,46,110,.5); }
+  .t4l .chip { background:#fff; color:#5d4a5c; border:1px solid #efe2e6; }
+  .t4l .chip b { color:#c92e6e; }
+  .t4l .cta { background:linear-gradient(90deg,#c92e6e,#d97f2b); color:#fff; }
+  .t4l .toast { background:#fff; color:#5a4a5a; border:1px solid #efe2e6; }
+  .t4l .toast i { color:#c92e6e; font-style:normal; }
+
+  /* ============ ТЕМА 5: Моно + сигнал ============
+     dark: bg #101012 surface #1a1a1e fog rgba(90,90,96,.5) text #f0f0f2 accent(электрик) #4d7cfe signal #ff5c33
+     light: bg #fafafa surface #ffffff fog rgba(160,160,166,.3) text #17171a accent #2f56d6 signal #e0461f */
+  .t5d { background:#101012; color:#f0f0f2; }
+  .t5d .mapmock { background:linear-gradient(135deg,#1a1a1e,#222228); }
+  .t5d .fog { background:rgba(90,90,96,.5); }
+  .t5d .clear-patch { background:rgba(77,124,254,.16); }
+  .t5d .poi { background:#ff5c33; box-shadow:0 0 8px #ff5c33; }
+  .t5d .chip { background:#1a1a1e; color:#a2a2aa; }
+  .t5d .chip b { color:#4d7cfe; }
+  .t5d .cta { background:#4d7cfe; color:#f0f0f2; }
+  .t5d .toast { background:#1a1a1e; color:#acacb4; }
+  .t5d .toast i { color:#ff5c33; font-style:normal; }
+  .t5l { background:#fafafa; color:#17171a; }
+  .t5l .mapmock { background:linear-gradient(135deg,#e8e8ea,#dcdce0); }
+  .t5l .fog { background:rgba(160,160,166,.3); }
+  .t5l .clear-patch { background:rgba(255,255,255,.85); }
+  .t5l .poi { background:#e0461f; box-shadow:0 0 8px rgba(224,70,31,.5); }
+  .t5l .chip { background:#fff; color:#54545c; border:1px solid #eaeaec; }
+  .t5l .chip b { color:#2f56d6; }
+  .t5l .cta { background:#17171a; color:#fafafa; }
+  .t5l .toast { background:#fff; color:#4c4c54; border:1px solid #eaeaec; }
+  .t5l .toast i { color:#e0461f; font-style:normal; }
+</style>
+</head>
+<body>
+<h1>WalkQuest — пять цветовых характеров</h1>
+<p class="sub">Каждый блок: тёмная и светлая тема. Фрагмент экрана один и тот же — смотрите на ощущение, а не на вёрстку.</p>
+
+<!-- ТЕМА 1 -->
+<div class="theme">
+  <div class="theme-head"><div class="theme-name">1. Северный вечер</div><div class="theme-reg">Спокойный вечерний променад. Туман как прохладная дымка, акцент — тёплый «фонарь». Уютно, не сонно.</div></div>
+  <div class="pair">
+    <div class="mode t1d"><div class="mode-label">Тёмная</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+    <div class="mode t1l"><div class="mode-label">Светлая</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+  </div>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#12161f"></span>bg-dark #12161f</span>
+    <span class="tok"><span class="sw" style="background:#f2a94b"></span>accent #f2a94b</span>
+    <span class="tok"><span class="sw" style="background:#58b09c"></span>ok #58b09c</span>
+    <span class="tok"><span class="sw" style="background:#f4f6fa"></span>bg-light #f4f6fa</span>
+  </div>
+</div>
+
+<!-- ТЕМА 2 -->
+<div class="theme">
+  <div class="theme-head"><div class="theme-name">2. Свежий асфальт</div><div class="theme-reg">Городской минимализм картографических приложений. Графит + мятный акцент. Бодро, чисто, по-деловому.</div></div>
+  <div class="pair">
+    <div class="mode t2d"><div class="mode-label">Тёмная</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+    <div class="mode t2l"><div class="mode-label">Светлая</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+  </div>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#15181a"></span>bg-dark #15181a</span>
+    <span class="tok"><span class="sw" style="background:#2ee6a8"></span>accent #2ee6a8</span>
+    <span class="tok"><span class="sw" style="background:#ffb454"></span>warn #ffb454</span>
+    <span class="tok"><span class="sw" style="background:#f7f8f8"></span>bg-light #f7f8f8</span>
+  </div>
+</div>
+
+<!-- ТЕМА 3 -->
+<div class="theme">
+  <div class="theme-head"><div class="theme-name">3. Ботаника</div><div class="theme-reg">Парк и экотропа. Глубокая зелень + коралловый акцент. Про природу в городе, дворы и лесопарки.</div></div>
+  <div class="pair">
+    <div class="mode t3d"><div class="mode-label">Тёмная</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+    <div class="mode t3l"><div class="mode-label">Светлая</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+  </div>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#101a14"></span>bg-dark #101a14</span>
+    <span class="tok"><span class="sw" style="background:#ff7a59"></span>accent #ff7a59</span>
+    <span class="tok"><span class="sw" style="background:#8fc98f"></span>leaf #8fc98f</span>
+    <span class="tok"><span class="sw" style="background:#f4f7f2"></span>bg-light #f4f7f2</span>
+  </div>
+</div>
+
+<!-- ТЕМА 4 -->
+<div class="theme">
+  <div class="theme-head"><div class="theme-name">4. Рассвет</div><div class="theme-reg">Тёплый оптимизм без инфантильности. Сливово-ягодный + персиковый. Самый «игровой» из пяти, но взрослый.</div></div>
+  <div class="pair">
+    <div class="mode t4d"><div class="mode-label">Тёмная</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+    <div class="mode t4l"><div class="mode-label">Светлая</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+  </div>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#1b1420"></span>bg-dark #1b1420</span>
+    <span class="tok"><span class="sw" style="background:linear-gradient(90deg,#e84e8a,#f2b172)"></span>accent gradient</span>
+    <span class="tok"><span class="sw" style="background:#fbf6f4"></span>bg-light #fbf6f4</span>
+  </div>
+</div>
+
+<!-- ТЕМА 5 -->
+<div class="theme">
+  <div class="theme-head"><div class="theme-name">5. Моно + сигнал</div><div class="theme-reg">Строгий монохром, один электрический акцент. Утилитарно-современный, данные на первом месте.</div></div>
+  <div class="pair">
+    <div class="mode t5d"><div class="mode-label">Тёмная</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+    <div class="mode t5l"><div class="mode-label">Светлая</div><div class="screen">
+      <div class="mapmock"><div class="fog"></div><div class="clear-patch" style="width:70px;height:70px;left:55%;top:38%"></div><div class="poi" style="left:30%;top:25%"></div><div class="poi" style="left:72%;top:60%"></div><div class="maplabel">Центральный район · СПб</div></div>
+      <div class="row"><span class="chip">Открыто <b>17%</b></span><span class="chip">Серия: 4 дня</span></div>
+      <div class="cta">Начать прогулку</div>
+      <div class="toast"><i>◆</i> Ачивка «Первый квартал» — возвращайтесь завтра, впереди ещё столько открытий</div>
+    </div></div>
+  </div>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#101012"></span>bg-dark #101012</span>
+    <span class="tok"><span class="sw" style="background:#4d7cfe"></span>accent #4d7cfe</span>
+    <span class="tok"><span class="sw" style="background:#ff5c33"></span>signal #ff5c33</span>
+    <span class="tok"><span class="sw" style="background:#fafafa"></span>bg-light #fafafa</span>
+  </div>
+</div>
+
+</body>
+</html>

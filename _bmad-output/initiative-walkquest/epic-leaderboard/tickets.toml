@@ -1,0 +1,71 @@
+# tickets.toml — истории эпика epic-leaderboard в порядке сборки. Порядок таблиц = порядок работ.
+#
+# СТАТУС НА 2026-10-09: кодовая часть (1,2,4,5) завершена — 362 JVM-теста зелёных,
+# assembleRelease PASS; миграции и конфиг готовы. История 3 (создание проекта +
+# db push) ЗАБЛОКИРОВАНА HITL: у авторизованного аккаунта нет организации Supabase
+# (supabase orgs list пуст). Чек-лист шагов: deferred-work.md.
+#
+# Нарезка — 2026-10-09 (инсепшн эпика 5). Бэкенд: Supabase Free (AD-7), RLS (Done when 6),
+# на сервер только ник + агрегаты (AD-3). Клиент — plain REST к PostgREST (новых
+# зависимостей нет; OkHttp уже в проекте для пакетов 1.5).
+
+[[entry]]
+id = 1
+type = "story"
+title = "Домен агрегатов и политика ника (FR-19, AD-3)"
+description = "domain/leaderboard: LeaderboardAggregates — снимок для отправки (ник + по каждому региону: суммарное расстояние прогулок региона [по regionIds записей], процент открытия); собирается из WalkHistory/ComputeRegionProgress — только агрегаты, никаких треков (AD-3, Done when 5: на трафике только эти поля). NicknamePolicy: валидация ника (3..24 символа, буквы/цифры/подчёркивание/дефис, без пробелов-краёв); участие опционально (opt-out скрывает из рейтингов, FR-19)."
+verify = "JVM: сборка агрегатов по фикстурам (расстояние региона = сумма записей с regionId; fraction из прогресса); валидация ника (границы, недопустимые символы); opt-out не ломает локальные данные."
+covers = ["FR-19"]
+after = []
+hitl = false
+risk = "low"
+references = ["architecture — AD-3, AD-7", "prd — FR-19 (Consequences)"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Клиент Supabase (data): профиль, агрегаты, рейтинг, друзья"
+description = "data/leaderboard: LeaderboardApi(baseUrl, anonKey) поверх PostgREST REST (OkHttp): upsertProfile(nickname), publishAggregates(снимок), cityTop(regionId, metric) — топ по расстоянию/проценту, addFriendByNickname, createInvite/acceptInvite (код приглашения). Отдельно LeaderboardOutbox (файл outbox.json): неотправленные снимки — офлайн-очередь, отправка при появлении сети и по ручному обновлению (FR-19). Ответы/ошибки — sealed-результаты."
+verify = "JVM: против MiniHttpServer (паттерн RegionPackageRepositoryTest) — тела запросов содержат ТОЛЬКО ник/агрегаты (AD-3: ни координат, ни треков); outbox копит при недоступности и отдаёт на повторную отправку."
+covers = ["FR-19"]
+after = [1]
+hitl = false
+risk = "high"
+references = ["architecture — AD-3, AD-7"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Supabase-проект: миграции, RLS, keep-alive"
+description = "supabase/ миграции: profiles(nickname unique), aggregates(pk(user_id,region_id), distance_meters, fraction, updated_at), invites(code, inviter), friendships(пара пользователей). RLS: писать агрегаты/профиль — только свою строку (auth.uid()); читать топ — всем; friendships — только свои. RPC accept_invite(code) (security definer) — принятие приглашения создаёт пару дружбы (D5 отмечается). Проект создаётся через supabase CLI (владелец авторизован); keep-alive open question — решается cron-таской владельца (deferred)."
+verify = "миграции применены (supabase db push), RLS включена (Done when 6): попытка чужой строки отклоняется; функция accept_invite создаёт двустороннюю дружбу."
+covers = ["FR-19"]
+after = [2]
+hitl = true
+risk = "medium"
+notes = ["Создание проекта и db push — HITL-шаг (аккаунт владельца); подготовлено всё для одной команды."]
+references = ["architecture — AD-7"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Экран рейтинга: ник при первом открытии, вкладки «Город»/«Друзья»"
+description = "Пятая вкладка MainActivity «Рейтинг»: при первом открытии — запрос ника («Придумайте ник — так вас увидят другие», FR-19; не при онбординге); отказ = «невидимый режим» (участие отключаемо). Вкладки «Город» (текущий домашний регион) и «Друзья»: список мест по расстоянию и проценту открытия (две колонки-метрики). Ручное обновление = собрать агрегаты + outbox-flush + перечитать топ. Добавление друга по нику и по ссылке-приглашению (поделиться кодом); принятие приглашения → D5."
+verify = "JVM: viewmodel-состояния (ник задан/нет, таблицы топа). Устройство: ник не спрашивается до первого открытия; невидимый режим не отправляет данные; ручное обновление шлёт агрегаты и перечитывает топ."
+covers = ["FR-19"]
+after = [1, 2]
+hitl = false
+risk = "medium"
+references = ["ux — прототип rating, EXPERIENCE"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Интеграция отправки агрегатов и sweep"
+description = "Сервис при завершении прогулки: если ник задан и участие включено — снимок агрегатов в outbox + попытка отправки (FR-19: отправка при завершении прогулки). D4 «В строю» выдаётся при первой успешной публикации профиля; D5 — при acceptInvite (движок 4.2 дозапускается). Sweep эпика."
+verify = "JVM: outbox получает снимок после прогулки (фикстура); D4/D5 добавлены в каталог движка и выдаются. Полный прогон тестов + assembleRelease."
+covers = ["FR-19"]
+after = [3, 4]
+hitl = false
+risk = "medium"
+references = ["prd — FR-19 (Consequences), FR-15 (D4/D5)"]

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — цветовые варианты (шрифты Russo One + Manrope)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Manrope","Segoe UI",-apple-system,Roboto,Arial,sans-serif; background:#0b0b0e; color:#e8e6f0; padding:32px 24px; }
+  h1 { font-family:"Russo One",sans-serif; font-size:22px; font-weight:400; margin-bottom:4px; }
+  .sub { color:#9a95ad; font-size:14px; margin-bottom:28px; max-width:900px; line-height:1.5; }
+  .wrap { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:320px; }
+  .col-name { font-family:"Russo One",sans-serif; font-size:16px; font-weight:400; margin-bottom:3px; }
+  .col-desc { font-size:12.5px; color:#9a95ad; margin-bottom:12px; line-height:1.5; }
+
+  .phone { border-radius:32px; border:2px solid var(--line); overflow:hidden; background:var(--bg); height:600px; display:flex; flex-direction:column; position:relative; }
+
+  .map { position:relative; flex:1; background:var(--mapbg); overflow:hidden; }
+  .contours { position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(35deg, transparent 0 46px, var(--grid1) 46px 48px, transparent 48px 110px),
+      repeating-linear-gradient(-55deg, transparent 0 70px, var(--grid2) 70px 72px, transparent 72px 160px);
+  }
+  .foglayer { position:absolute; inset:0; background:var(--fog); }
+  .revealed { position:absolute; border-radius:50%; background:var(--reveal); box-shadow:var(--revealsh); }
+  .poi-dot { position:absolute; width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accentglow); }
+  .poi-dot.rare { background:var(--rare); box-shadow:0 0 10px var(--rare); }
+  .me { position:absolute; width:14px; height:14px; border-radius:50%; background:var(--text); border:3px solid var(--accent2); box-shadow:0 0 12px var(--accentglow); }
+
+  .topbar { position:absolute; top:0; left:0; right:0; padding:14px; display:flex; justify-content:space-between; align-items:center; z-index:5; }
+  .icon-btn { width:34px; height:34px; border-radius:50%; background:var(--chipbg); color:var(--mutedhi); display:flex; align-items:center; justify-content:center; font-size:16px; border:1px solid var(--line); }
+  .mode-toggle { display:flex; background:var(--chipbg); border-radius:999px; padding:3px; border:1px solid var(--line); }
+  .mt { width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px; border-radius:50%; color:var(--muted); }
+  .mt.on { background:var(--accent); color:var(--onaccent); }
+
+  .sheet { background:var(--sheet); border-top:1px solid var(--line); border-radius:20px 20px 0 0; padding:10px 16px 12px; z-index:6; position:relative; }
+  .sheet-grab { width:36px; height:4px; border-radius:999px; background:var(--grab); margin:0 auto 10px; }
+  .statline { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 6px 0; }
+  .statline b { color:var(--accentsoft); font-family:"Russo One",sans-serif; font-weight:400; font-size:13px; }
+  .plan-card { margin-top:10px; display:flex; align-items:center; gap:10px; background:var(--planbg); border:1px solid var(--planline); border-radius:12px; padding:9px 12px; font-size:12.5px; color:var(--plantext); }
+  .plan-card .plus { margin-left:auto; color:var(--accent); font-weight:700; font-size:15px; }
+  .cta-wide { margin-top:10px; background:var(--cta); color:var(--onaccent); font-family:"Russo One",sans-serif; font-weight:400; font-size:15px; letter-spacing:.03em; text-align:center; padding:14px; border-radius:14px; }
+  .bottomnav { display:flex; justify-content:space-around; padding:10px 8px 16px; background:var(--navbg); font-size:10.5px; color:var(--navmuted); position:relative; z-index:7; }
+  .bottomnav .on { color:var(--accentsoft); }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:16px; display:block; margin-bottom:3px; }
+
+  .swatches { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .sw { flex:1; min-width:64px; border-radius:10px; border:1px solid var(--line); overflow:hidden; }
+  .sw .chip { height:34px; }
+  .sw .nm { font-size:10px; padding:5px 7px 6px; color:var(--mutedhi); background:var(--bg); line-height:1.35; }
+
+  /* ===== Вариант 1: Северное сияние ===== */
+  .aurora {
+    --bg:#0b1420; --mapbg:linear-gradient(160deg,#10202a,#0e1c26 55%,#0c1822);
+    --grid1:rgba(52,211,153,.09); --grid2:rgba(52,211,153,.07);
+    --fog:rgba(9,17,24,.72); --reveal:radial-gradient(circle, rgba(52,211,153,.22) 0%, rgba(45,212,191,.10) 55%, transparent 72%);
+    --revealsh:0 0 34px 6px rgba(52,211,153,.14) inset;
+    --accent:#34d399; --accent2:#2dd4bf; --accentglow:rgba(52,211,153,.85); --accentsoft:#6ee7b7;
+    --rare:#8b5cf6; --onaccent:#04120c;
+    --text:#e6f2ec; --muted:#8fa8a0; --mutedhi:#bcd4cc;
+    --chipbg:rgba(13,26,34,.9); --line:#1e3a34;
+    --sheet:rgba(12,22,28,.95); --grab:#274a42;
+    --planbg:rgba(52,211,153,.08); --planline:rgba(52,211,153,.28); --plantext:#c4ecd9;
+    --cta:linear-gradient(180deg,#34d399,#10b981); --navbg:#081019; --navmuted:#6d8880;
+  }
+  /* ===== Вариант 2: Белые ночи ===== */
+  .nights {
+    --bg:#0f172a; --mapbg:linear-gradient(160deg,#1b2547,#1a2342 55%,#151d38);
+    --grid1:rgba(125,211,252,.10); --grid2:rgba(129,140,248,.08);
+    --fog:rgba(13,19,38,.70); --reveal:radial-gradient(circle, rgba(125,211,252,.20) 0%, rgba(129,140,248,.10) 55%, transparent 72%);
+    --revealsh:0 0 34px 6px rgba(125,211,252,.14) inset;
+    --accent:#7dd3fc; --accent2:#818cf8; --accentglow:rgba(125,211,252,.85); --accentsoft:#a5e3fd;
+    --rare:#c084fc; --onaccent:#0a1420;
+    --text:#eef2fb; --muted:#94a3b8; --mutedhi:#c3cde0;
+    --chipbg:rgba(21,29,56,.9); --line:#2b3a63;
+    --sheet:rgba(18,25,50,.95); --grab:#33426e;
+    --planbg:rgba(125,211,252,.08); --planline:rgba(125,211,252,.28); --plantext:#cfe6f7;
+    --cta:linear-gradient(180deg,#7dd3fc,#38bdf8); --navbg:#0c1226; --navmuted:#7d89ab;
+  }
+  /* ===== Вариант 3: Туман 2.0 (Lavender Mist + новые шрифты) ===== */
+  .mist {
+    --bg:#100d18; --mapbg:linear-gradient(160deg,#241c36,#2c2240 55%,#231a33);
+    --grid1:rgba(178,158,209,.10); --grid2:rgba(178,158,209,.08);
+    --fog:rgba(178,158,209,.30); --reveal:#241c36; --revealsh:none;
+    --accent:#c6e26b; --accent2:#7a5fc0; --accentglow:rgba(198,226,107,.8); --accentsoft:#d7ec96;
+    --rare:#c084fc; --onaccent:#22290a;
+    --text:#efeaf7; --muted:#8d83a6; --mutedhi:#c9bade;
+    --chipbg:rgba(35,27,51,.88); --line:#342a4d;
+    --sheet:rgba(30,23,45,.94); --grab:#4a3f66;
+    --planbg:rgba(198,226,107,.08); --planline:rgba(198,226,107,.25); --plantext:#d9e8b0;
+    --cta:#c6e26b; --navbg:#141020; --navmuted:#7d7194;
+  }
+</style>
+</head>
+<body>
+<h1>Цветовые варианты — шрифты везде одинаковые (Russo One + Manrope)</h1>
+<p class="sub">Три холодных направления вместо янтарного. Структура экрана и компоненты неизменны — сравниваем только цвет. Вариант 3 — это одобренная «Lavender Mist», но уже с новыми шрифтами, как базовая точка отсчёта.</p>
+
+<div class="wrap">
+
+<div class="col aurora">
+  <div class="col-name">1. Северное сияние</div>
+  <div class="col-desc">Глубокий тёмно-бирюзовый, изумрудное свечение открытых участков. Ночной, «северный» характер.</div>
+  <div class="phone">
+    <div class="map">
+      <div class="contours"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:38%;top:24%"></div>
+      <div class="revealed" style="width:86px;height:86px;left:52%;top:38%"></div>
+      <div class="poi-dot" style="left:28.5%;top:24%"></div>
+      <div class="poi-dot rare" style="left:74.5%;top:56%"></div>
+      <div class="me" style="left:52%;top:41%"></div>
+      <div class="topbar">
+        <span class="mode-toggle"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+        <span class="icon-btn">⚙</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="statline"><span><b>17%</b> открыто</span><span><b>4 дня</b> серия</span><span><b>12,4 км</b> за неделю</span></div>
+      <div class="plan-card">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0b1420"></div><div class="nm">Фон #0B1420</div></div>
+    <div class="sw"><div class="chip" style="background:#34d399"></div><div class="nm">Изумруд #34D399</div></div>
+    <div class="sw"><div class="chip" style="background:#2dd4bf"></div><div class="nm">Бирюза #2DD4BF</div></div>
+    <div class="sw"><div class="chip" style="background:#8b5cf6"></div><div class="nm">Редкий #8B5CF6</div></div>
+  </div>
+</div>
+
+<div class="col nights">
+  <div class="col-name">2. Белые ночи</div>
+  <div class="col-desc">Ночной индиго, светло-голубое свечение — как петербургские сумерки. Спокойнее и светлее первого.</div>
+  <div class="phone">
+    <div class="map">
+      <div class="contours"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:38%;top:24%"></div>
+      <div class="revealed" style="width:86px;height:86px;left:52%;top:38%"></div>
+      <div class="poi-dot" style="left:28.5%;top:24%"></div>
+      <div class="poi-dot rare" style="left:74.5%;top:56%"></div>
+      <div class="me" style="left:52%;top:41%"></div>
+      <div class="topbar">
+        <span class="mode-toggle"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+        <span class="icon-btn">⚙</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="statline"><span><b>17%</b> открыто</span><span><b>4 дня</b> серия</span><span><b>12,4 км</b> за неделю</span></div>
+      <div class="plan-card">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0f172a"></div><div class="nm">Фон #0F172A</div></div>
+    <div class="sw"><div class="chip" style="background:#7dd3fc"></div><div class="nm">Небо #7DD3FC</div></div>
+    <div class="sw"><div class="chip" style="background:#818cf8"></div><div class="nm">Индиго #818CF8</div></div>
+    <div class="sw"><div class="chip" style="background:#c084fc"></div><div class="nm">Редкий #C084FC</div></div>
+  </div>
+</div>
+
+<div class="col mist">
+  <div class="col-name">3. Туман 2.0 (база)</div>
+  <div class="col-desc">Одобренная «Lavender Mist» с фисташковым акцентом, но уже с Russo One + Manrope вместо Nunito.</div>
+  <div class="phone">
+    <div class="map">
+      <div class="contours"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:38%;top:24%"></div>
+      <div class="revealed" style="width:86px;height:86px;left:52%;top:38%"></div>
+      <div class="poi-dot" style="left:28.5%;top:24%"></div>
+      <div class="poi-dot rare" style="left:74.5%;top:56%"></div>
+      <div class="me" style="left:52%;top:41%"></div>
+      <div class="topbar">
+        <span class="mode-toggle"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+        <span class="icon-btn">⚙</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="statline"><span><b>17%</b> открыто</span><span><b>4 дня</b> серия</span><span><b>12,4 км</b> за неделю</span></div>
+      <div class="plan-card">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#100d18"></div><div class="nm">Фон #100D18</div></div>
+    <div class="sw"><div class="chip" style="background:#c6e26b"></div><div class="nm">Фисташка #C6E26B</div></div>
+    <div class="sw"><div class="chip" style="background:#7a5fc0"></div><div class="nm">Лаванда #7A5FC0</div></div>
+    <div class="sw"><div class="chip" style="background:#c084fc"></div><div class="nm">Редкий #C084FC</div></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

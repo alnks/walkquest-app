@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — POI, Рейтинг, Регионы, Профиль, Настройки (v3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  h2 { font-size:16px; margin:34px 0 12px; color:#c9bade; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:24px; max-width:820px; line-height:1.5; }
+  .wrap { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:272px; }
+  .col-name { font-size:13px; font-weight:600; margin-bottom:8px; }
+  .phone { border-radius:26px; overflow:hidden; height:520px; display:flex; flex-direction:column; position:relative; }
+
+  .d { background:#191423; color:#EFEAf7; border:2px solid #3a2f52; }
+  .d .card { background:#231B33; border:1px solid #342A4D; }
+  .d .dim { color:#8D83A6; }
+  .d .accent { color:#C6E26B; }
+  .d .accent-bg { background:#C6E26B; color:#22290A; }
+  .d .mapzone { background:linear-gradient(160deg,#241C36,#2C2240); }
+  .d .fog { background:rgba(178,158,209,.30); }
+  .d .revealed { background:#241C36; }
+  .d .me-row { border:1.5px solid #C6E26B; background:rgba(198,226,107,.08); }
+  .d .photo { background:linear-gradient(135deg,#2C2248,#3a2f52); }
+  .d .grp2 { background:#231B33; border:1px solid #342A4D; }
+  .l { background:#F6F3FA; color:#241C33; border:2px solid #d3cbe6; }
+  .l .card { background:#FFFFFF; border:1px solid #E6DFF2; }
+  .l .dim { color:#6E6384; }
+  .l .accent { color:#7A9A1F; }
+  .l .accent-bg { background:#7A9A1F; color:#fff; }
+  .l .mapzone { background:linear-gradient(160deg,#E3DCF0,#D5CBE8); }
+  .l .fog { background:rgba(178,158,209,.40); }
+  .l .revealed { background:#EDE7F7; }
+  .l .me-row { border:1.5px solid #7A9A1F; background:rgba(122,154,31,.07); }
+  .l .photo { background:linear-gradient(135deg,#E3DCF0,#D5CBE8); }
+  .l .soft { color:#4A3F66; }
+
+  .tab-head { padding:16px 16px 10px; }
+  .tab-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:19px; }
+  .l .tab-title { color:#4A3F66; }
+  .body-c { flex:1; padding:0 14px 12px; overflow:hidden; }
+  .seg { display:flex; gap:6px; padding:2px 16px 10px; }
+  .seg span { font-size:11px; padding:5px 11px; border-radius:999px; border:1px solid; }
+  .d .seg span { background:#231B33; color:#8D83A6; border-color:#342A4D; }
+  .l .seg span { background:#fff; color:#6E6384; border-color:#E6DFF2; }
+  .d .seg span.on { background:rgba(198,226,107,.12); border-color:rgba(198,226,107,.5); color:#C6E26B; }
+  .l .seg span.on { background:rgba(122,154,31,.10); border-color:rgba(122,154,31,.5); color:#7A9A1F; }
+
+  .mapzone { position:relative; flex:1; overflow:hidden; }
+  .fog { position:absolute; inset:0; }
+  .revealed { position:absolute; border-radius:50%; }
+  .poi-glow { position:absolute; width:10px; height:10px; border-radius:50%; }
+  .d .poi-glow { background:#C6E26B; box-shadow:0 0 10px rgba(198,226,107,.8); }
+  .l .poi-glow { background:#7A9A1F; box-shadow:0 0 9px rgba(122,154,31,.6); }
+  .poi-card { position:absolute; left:12px; right:12px; bottom:12px; border-radius:16px; overflow:hidden; z-index:5; }
+  .photos { display:flex; gap:4px; height:74px; }
+  .photo { flex:1; display:flex; align-items:center; justify-content:center; font-size:16px; opacity:.85; }
+  .poi-txt { padding:12px 14px 14px; }
+  .poi-txt .t { font-family:"Nunito",sans-serif; font-weight:800; font-size:15px; }
+  .poi-txt .s { font-size:11.5px; line-height:1.55; margin-top:5px; }
+
+  .lb-row { display:flex; align-items:center; gap:10px; border-radius:12px; padding:9px 12px; margin-bottom:7px; }
+  .lb-rank { font-family:"Nunito",sans-serif; font-weight:1000; font-size:15px; width:26px; }
+  .lb-name { flex:1; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px; }
+  .lb-val { font-size:12px; font-weight:700; }
+  .me-chip { font-size:9px; font-weight:700; border-radius:999px; padding:2px 7px; line-height:1.4; }
+  .d .me-chip { background:#C6E26B; color:#22290A; }
+  .l .me-chip { background:#7A9A1F; color:#fff; }
+  .nick-cta { border-radius:13px; padding:14px; text-align:center; margin-bottom:10px; }
+  .nick-cta .t { font-size:13px; font-weight:700; font-family:"Nunito",sans-serif; }
+  .nick-cta .s { font-size:11px; margin-top:4px; line-height:1.45; }
+
+  .rg-row { display:flex; align-items:center; gap:12px; border-radius:14px; padding:12px; margin-bottom:8px; }
+  .rg-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:19px; }
+  .d .rg-pct { color:#B3A6C9; }
+  .d .rg-pct.home { color:#C6E26B; }
+  .l .rg-pct { color:#8D83A6; }
+  .l .rg-pct.home { color:#7A9A1F; }
+  .rg-name { font-size:12.5px; font-weight:700; }
+  .l .rg-name { color:#4A3F66; }
+  .rg-sub { font-size:10.5px; }
+
+  .grp { border-radius:16px; padding:4px 14px; margin-bottom:12px; }
+  .pr-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; font-size:12.5px; }
+  .pr-row + .pr-row { border-top:1px solid; }
+  .d .pr-row + .pr-row { border-color:#2C2248; }
+  .l .pr-row + .pr-row { border-color:#EFEAf6; }
+  .pr-row .k { font-weight:500; }
+  .pill { font-size:10.5px; border-radius:999px; padding:4px 11px; font-weight:600; }
+  .d .pill { background:#2C2248; color:#B3A6C9; }
+  .l .pill { background:#F6F3FA; color:#5C506E; border:1px solid #E6DFF2; }
+  .pill.on { font-weight:700; }
+  .d .pill.on { background:rgba(198,226,107,.14); color:#C6E26B; }
+  .l .pill.on { background:rgba(122,154,31,.10); color:#7A9A1F; border-color:rgba(122,154,31,.4); }
+  .sec-l { font-size:10px; text-transform:uppercase; letter-spacing:.1em; margin:12px 0 6px; }
+  .avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:10px; }
+  .d .avatar { background:#2C2248; }
+  .l .avatar { background:#fff; border:1px solid #E6DFF2; }
+  .bottomnav { display:flex; justify-content:space-around; padding:9px 8px 13px; font-size:9.5px; }
+  .d .bottomnav { background:#141020; color:#8D83A6; }
+  .l .bottomnav { background:#FBF9FD; color:#6E6384; border-top:1px solid #E6DFF2; }
+  .d .bottomnav .on { color:#C6E26B; }
+  .l .bottomnav .on { color:#7A9A1F; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:14px; display:block; margin-bottom:2px; }
+</style>
+</head>
+<body>
+<h1>POI · Рейтинг · Регионы · Профиль · Настройки — v3</h1>
+<p class="sub">Все состояния в обеих темах рядом. Правки: «на устройстве», чип «вы» отцентрован, мягкие проценты регионов, цель и обратная связь в Профиле, новые Настройки с темой и уведомлениями.</p>
+
+<h2>Карточка POI</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="mapzone"><div class="fog"></div><div class="revealed" style="width:110px;height:110px;left:36%;top:16%"></div><div class="poi-glow" style="left:45%;top:26%"></div>
+      <div class="poi-card card">
+        <div class="photos"><div class="photo">🖼</div><div class="photo">🖼</div><div class="photo">🖼</div></div>
+        <div class="poi-txt"><div class="t">Домик Петра I</div><div class="s dim">Небольшой деревянный дом на Петровской набережной, где жил Пётр I летом 1703 года во время строительства города. Позже дом накрыли каменным футляром — так он сохранился до наших дней. Сейчас здесь музей с личными вещами царя.</div></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="mapzone"><div class="fog"></div><div class="revealed" style="width:110px;height:110px;left:36%;top:16%"></div><div class="poi-glow" style="left:45%;top:26%"></div>
+      <div class="poi-card card">
+        <div class="photos"><div class="photo">🖼</div><div class="photo">🖼</div><div class="photo">🖼</div></div>
+        <div class="poi-txt"><div class="t soft">Домик Петра I</div><div class="s dim">Небольшой деревянный дом на Петровской набережной, где жил Пётр I летом 1703 года во время строительства города. Позже дом накрыли каменным футляром — так он сохранился до наших дней. Сейчас здесь музей с личными вещами царя.</div></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Рейтинг — оба состояния, обе темы</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная · первый вход</div><div class="phone d">
+    <div class="tab-head"><div class="tab-title">Рейтинг</div></div>
+    <div class="seg"><span class="on">Город</span><span>Друзья</span></div>
+    <div class="body-c">
+      <div class="nick-cta card"><div class="t">Придумайте ник</div><div class="s dim">Так вас увидят другие. История передвижений остаётся на устройстве — в рейтинг уходят только ник и цифры.</div><div class="accent-bg" style="margin-top:10px;border-radius:11px;padding:10px;font-size:12.5px;font-weight:700">Выбрать ник</div></div>
+      <div class="lb-row card"><span class="lb-rank accent">1</span><span class="lb-name">FogLady</span><span class="lb-val accent">41%</span></div>
+      <div class="lb-row card"><span class="lb-rank">2</span><span class="lb-name">walkspb</span><span class="lb-val">38%</span></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item on"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая · первый вход</div><div class="phone l">
+    <div class="tab-head"><div class="tab-title">Рейтинг</div></div>
+    <div class="seg"><span class="on">Город</span><span>Друзья</span></div>
+    <div class="body-c">
+      <div class="nick-cta card"><div class="t soft">Придумайте ник</div><div class="s dim">Так вас увидят другие. История передвижений остаётся на устройстве — в рейтинг уходят только ник и цифры.</div><div class="accent-bg" style="margin-top:10px;border-radius:11px;padding:10px;font-size:12.5px;font-weight:700">Выбрать ник</div></div>
+      <div class="lb-row card"><span class="lb-rank accent">1</span><span class="lb-name">FogLady</span><span class="lb-val accent">41%</span></div>
+      <div class="lb-row card"><span class="lb-rank">2</span><span class="lb-name">walkspb</span><span class="lb-val">38%</span></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item on"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Тёмная · с ником</div><div class="phone d">
+    <div class="tab-head"><div class="tab-title">Рейтинг</div></div>
+    <div class="seg"><span class="on">Город</span><span>Друзья</span></div>
+    <div class="body-c">
+      <div class="lb-row card"><span class="lb-rank accent">1</span><span class="lb-name">FogLady</span><span class="lb-val accent">41%</span></div>
+      <div class="lb-row card"><span class="lb-rank">2</span><span class="lb-name">walkspb</span><span class="lb-val">38%</span></div>
+      <div class="lb-row me-row"><span class="lb-rank accent">7</span><span class="lb-name">olya_walks<span class="me-chip">вы</span></span><span class="lb-val accent">17%</span></div>
+      <div class="lb-row card"><span class="lb-rank">8</span><span class="lb-name">пешеход92</span><span class="lb-val">16%</span></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item on"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая · с ником</div><div class="phone l">
+    <div class="tab-head"><div class="tab-title">Рейтинг</div></div>
+    <div class="seg"><span class="on">Город</span><span>Друзья</span></div>
+    <div class="body-c">
+      <div class="lb-row card"><span class="lb-rank accent">1</span><span class="lb-name">FogLady</span><span class="lb-val accent">41%</span></div>
+      <div class="lb-row card"><span class="lb-rank">2</span><span class="lb-name">walkspb</span><span class="lb-val">38%</span></div>
+      <div class="lb-row me-row"><span class="lb-rank accent">7</span><span class="lb-name soft">olya_walks<span class="me-chip">вы</span></span><span class="lb-val accent">17%</span></div>
+      <div class="lb-row card"><span class="lb-rank">8</span><span class="lb-name soft">пешеход92</span><span class="lb-val">16%</span></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item on"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Регионы</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="tab-head"><div class="tab-title">Регионы</div></div>
+    <div class="body-c">
+      <div class="rg-row card"><span class="rg-pct home">17%</span><div><div class="rg-name">Санкт-Петербург и Ленобласть</div><div class="rg-sub dim">домашний регион · 21 прогулка</div></div></div>
+      <div class="rg-row card"><span class="rg-pct">4%</span><div><div class="rg-name">Псков и область</div><div class="rg-sub dim">2 прогулки</div></div></div>
+      <div class="rg-row card"><span class="rg-pct">1%</span><div><div class="rg-name">Москва</div><div class="rg-sub dim">1 прогулка</div></div></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="tab-head"><div class="tab-title">Регионы</div></div>
+    <div class="body-c">
+      <div class="rg-row card"><span class="rg-pct home">17%</span><div><div class="rg-name">Санкт-Петербург и Ленобласть</div><div class="rg-sub dim">домашний регион · 21 прогулка</div></div></div>
+      <div class="rg-row card"><span class="rg-pct">4%</span><div><div class="rg-name">Псков и область</div><div class="rg-sub dim">2 прогулки</div></div></div>
+      <div class="rg-row card"><span class="rg-pct">1%</span><div><div class="rg-name">Москва</div><div class="rg-sub dim">1 прогулка</div></div></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Профиль</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="tab-head"><div class="tab-title">Профиль</div></div>
+    <div class="body-c">
+      <div style="display:flex;align-items:center;gap:12px;padding:4px 4px 10px"><div class="avatar">🚶</div><div><div style="font-family:Nunito;font-weight:800;font-size:15px">olya_walks</div><div class="dim" style="font-size:10.5px">в рейтинге · участие вкл</div></div></div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Ник в рейтинге</span><span class="pill on">olya_walks</span></div>
+        <div class="pr-row"><span class="k">Участие в рейтинге</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Моя цель</span><span class="pill">3 прогулки/нед →</span></div>
+        <div class="pr-row"><span class="k">Мои регионы</span><span class="pill">2 →</span></div>
+        <div class="pr-row"><span class="k">Перенос прогресса</span><span class="pill">экспорт →</span></div>
+      </div>
+      <div class="sec-l dim">О приложении</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Обратная связь</span><span class="pill">→</span></div>
+        <div class="pr-row"><span class="k">Политика конфиденциальности</span><span class="pill">→</span></div>
+        <div class="pr-row"><span class="k">Версия</span><span class="pill">1.0</span></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item on"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="tab-head"><div class="tab-title">Профиль</div></div>
+    <div class="body-c">
+      <div style="display:flex;align-items:center;gap:12px;padding:4px 4px 10px"><div class="avatar">🚶</div><div><div style="font-family:Nunito;font-weight:800;font-size:15px" class="soft">olya_walks</div><div class="dim" style="font-size:10.5px">в рейтинге · участие вкл</div></div></div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Ник в рейтинге</span><span class="pill on">olya_walks</span></div>
+        <div class="pr-row"><span class="k">Участие в рейтинге</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Моя цель</span><span class="pill">3 прогулки/нед →</span></div>
+        <div class="pr-row"><span class="k">Мои регионы</span><span class="pill">2 →</span></div>
+        <div class="pr-row"><span class="k">Перенос прогресса</span><span class="pill">экспорт →</span></div>
+      </div>
+      <div class="sec-l dim">О приложении</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Обратная связь</span><span class="pill">→</span></div>
+        <div class="pr-row"><span class="k">Политика конфиденциальности</span><span class="pill">→</span></div>
+        <div class="pr-row"><span class="k">Версия</span><span class="pill">1.0</span></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item on"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Настройки (шестерёнка с главного)</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="tab-head"><div class="tab-title">Настройки</div></div>
+    <div class="body-c">
+      <div class="sec-l dim">Цель</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Отсчёт цели</span><span class="pill on">прогулки/нед</span></div>
+        <div class="pr-row"><span class="k">Значение цели</span><span class="pill on">3</span></div>
+      </div>
+      <div class="sec-l dim">Прогулки</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Режим по умолчанию</span><span class="pill">пешком</span></div>
+        <div class="pr-row"><span class="k">Кнопка «Задание» на прогулке</span><span class="pill on">показывать</span></div>
+        <div class="pr-row"><span class="k">Автопауза и напоминание</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Автозавершение при разряде</span><span class="pill">при 10%</span></div>
+      </div>
+      <div class="sec-l dim">Уведомления</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Напоминания по цели</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Запланированные прогулки</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Во время прогулки</span><span class="pill">тихие</span></div>
+      </div>
+      <div class="sec-l dim">Внешний вид</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Тема</span><span class="pill">системная</span></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="tab-head"><div class="tab-title">Настройки</div></div>
+    <div class="body-c">
+      <div class="sec-l dim">Цель</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Отсчёт цели</span><span class="pill on">прогулки/нед</span></div>
+        <div class="pr-row"><span class="k">Значение цели</span><span class="pill on">3</span></div>
+      </div>
+      <div class="sec-l dim">Прогулки</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Режим по умолчанию</span><span class="pill">пешком</span></div>
+        <div class="pr-row"><span class="k">Кнопка «Задание» на прогулке</span><span class="pill on">показывать</span></div>
+        <div class="pr-row"><span class="k">Автопауза и напоминание</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Автозавершение при разряде</span><span class="pill">при 10%</span></div>
+      </div>
+      <div class="sec-l dim">Уведомления</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Напоминания по цели</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Запланированные прогулки</span><span class="pill on">вкл</span></div>
+        <div class="pr-row"><span class="k">Во время прогулки</span><span class="pill">тихие</span></div>
+      </div>
+      <div class="sec-l dim">Внешний вид</div>
+      <div class="grp card">
+        <div class="pr-row"><span class="k">Тема</span><span class="pill">системная</span></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+</body>
+</html>

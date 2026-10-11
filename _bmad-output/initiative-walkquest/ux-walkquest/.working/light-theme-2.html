@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — светлая тема: онбординг, Прогресс, задания</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#e9e4f2; color:#241C33; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  h2 { font-size:16px; margin:34px 0 12px; color:#4A3F66; }
+  .sub { color:#5C506E; font-size:14px; margin-bottom:24px; max-width:760px; line-height:1.5; }
+  .wrap { display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:270px; }
+  .col-name { font-size:13px; font-weight:600; margin-bottom:8px; color:#4A3F66; }
+  .phone { border-radius:26px; border:2px solid #d3cbe6; overflow:hidden; background:#F6F3FA; height:520px; display:flex; flex-direction:column; position:relative; }
+
+  .card { background:#FFFFFF; border:1px solid #E6DFF2; border-radius:12px; }
+  .dim { color:#6E6384; }
+  .accent { color:#7A9A1F; }
+  .accent-bg { background:#7A9A1F; color:#fff; }
+
+  .ob-body { flex:1; padding:22px 18px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .ob-emoji { font-size:34px; margin-bottom:12px; }
+  .ob-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:19px; color:#4A3F66; margin-bottom:8px; }
+  .ob-text { font-size:12px; color:#5C506E; line-height:1.55; margin-bottom:12px; }
+  .ob-visual { width:100%; border-radius:14px; background:#EDE7F7; height:100px; margin-bottom:12px; position:relative; overflow:hidden; }
+  .ob-fog { position:absolute; inset:0; background:rgba(178,158,209,.42); }
+  .ob-clear { position:absolute; border-radius:50%; background:#EDE7F7; }
+  .ob-cta { width:100%; margin-top:auto; background:#7A9A1F; color:#fff; font-weight:700; font-size:13.5px; text-align:center; padding:12px; border-radius:13px; }
+  .ob-link { margin-top:9px; font-size:11.5px; color:#6E6384; }
+  .ob-dots { display:flex; gap:6px; margin:10px 0; }
+  .ob-dots i { width:6px; height:6px; border-radius:50%; background:#D9D0EA; }
+  .ob-dots i.on { background:#7A9A1F; width:16px; border-radius:999px; }
+  .opt { width:100%; text-align:left; background:#fff; border:1.5px solid #E6DFF2; border-radius:12px; padding:10px 12px; margin-bottom:7px; }
+  .opt .t { font-size:12.5px; font-weight:700; color:#241C33; font-family:"Nunito",sans-serif; }
+  .opt .s { font-size:10.5px; color:#6E6384; margin-top:2px; }
+  .opt.sel { border-color:#7A9A1F; background:rgba(122,154,31,.06); }
+  .stepper { display:flex; align-items:center; gap:11px; margin-top:7px; }
+  .stepper .pm { width:26px; height:26px; border-radius:8px; background:#F6F3FA; border:1px solid #D9D0EA; color:#7A9A1F; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .stepper .val { font-family:"Nunito",sans-serif; font-weight:1000; font-size:18px; color:#241C33; }
+  .map-pick { width:100%; border-radius:14px; height:110px; background:linear-gradient(160deg,#E3DCF0,#D5CBE8); position:relative; overflow:hidden; margin-bottom:10px; }
+  .pin { position:absolute; left:46%; top:34%; font-size:20px; }
+
+  .tab-head { padding:14px 14px 8px; }
+  .tab-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:18px; color:#4A3F66; }
+  .seg { display:flex; gap:6px; padding:4px 14px 9px; }
+  .seg span { font-size:10.5px; padding:5px 11px; border-radius:999px; background:#fff; color:#6E6384; border:1px solid #E6DFF2; }
+  .seg span.on { background:rgba(122,154,31,.10); border-color:rgba(122,154,31,.5); color:#7A9A1F; }
+  .pr-body { flex:1; padding:2px 14px 12px; overflow:hidden; }
+  .pr-hero { display:flex; align-items:center; gap:11px; margin:4px 0 10px; }
+  .pr-hero .n { font-family:"Nunito",sans-serif; font-weight:1000; font-size:34px; color:#7A9A1F; line-height:1; }
+  .pr-hero .t { font-size:11px; color:#6E6384; line-height:1.4; }
+  .pr-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; margin-bottom:8px; }
+  .pr-stat { background:#fff; border:1px solid #E6DFF2; border-radius:11px; padding:9px; }
+  .pr-stat .v { font-family:"Nunito",sans-serif; font-weight:1000; font-size:15px; color:#4A3F66; }
+  .pr-stat .l { font-size:9px; color:#6E6384; margin-top:2px; line-height:1.3; }
+  .numlist .row { display:flex; justify-content:space-between; font-size:11px; color:#5C506E; padding:6px 2px; border-bottom:1px solid #EFEAf6; }
+  .numlist .row b { color:#4A3F66; font-weight:600; }
+  .sec-l { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#6E6384; margin:10px 0 6px; }
+  .aitem { display:flex; gap:9px; align-items:center; background:#fff; border:1px solid #E6DFF2; border-radius:11px; padding:8px 11px; margin-bottom:6px; }
+  .aitem .ic { width:32px; height:32px; border-radius:9px; background:#F6F3FA; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .aitem.lock { border-style:dashed; }
+  .aitem.lock .ic { filter:grayscale(1); opacity:.45; }
+  .aitem .tt { font-size:11.5px; font-weight:700; color:#4A3F66; font-family:"Nunito",sans-serif; }
+  .aitem .ts { font-size:10px; color:#6E6384; }
+  .pbar { height:4px; border-radius:999px; background:#EFEAf6; margin-top:4px; overflow:hidden; }
+  .pbar i { display:block; height:100%; background:#7A9A1F; border-radius:999px; }
+  .task-note { font-size:11px; color:#5C506E; line-height:1.5; background:#fff; border:1px solid #E6DFF2; border-radius:11px; padding:10px 12px; margin-bottom:9px; }
+  .task-active { background:rgba(122,154,31,.07); border:1px solid rgba(122,154,31,.35); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .ta-label { display:inline-block; font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:#7A9A1F; background:rgba(122,154,31,.12); border-radius:999px; padding:3px 8px; margin-bottom:6px; }
+  .task-active .tt { font-size:12px; font-weight:700; color:#241C33; font-family:"Nunito",sans-serif; }
+  .task-active .ts { font-size:10px; color:#6E6384; margin:3px 0 8px; line-height:1.4; }
+  .btn-mini { display:inline-block; font-size:10.5px; padding:6px 13px; border-radius:999px; font-weight:700; margin-right:6px; }
+  .btn-ok { background:#7A9A1F; color:#fff; }
+  .btn-ghost { background:transparent; color:#6E6384; border:1px solid #D9D0EA; }
+  .task-actions { display:flex; gap:9px; margin-bottom:10px; }
+  .task-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:#fff; border:1.5px solid #D9D0EA; border-radius:13px; padding:11px 8px; font-size:11px; font-weight:700; color:#241C33; text-align:center; box-shadow:0 2px 0 rgba(60,40,110,.06); }
+  .task-btn .i { font-size:18px; }
+  .grid6 { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:6px; }
+  .g6 { background:#fff; border:1.5px solid #E6DFF2; border-radius:12px; padding:10px 9px; }
+  .g6 .i { font-size:17px; margin-bottom:4px; }
+  .g6 .t { font-size:10.5px; color:#4A3F66; font-weight:700; line-height:1.3; font-family:"Nunito",sans-serif; }
+  .g6 .d { font-size:9px; color:#6E6384; line-height:1.4; margin-top:3px; }
+  .g6.sel { border-color:#7A9A1F; background:rgba(122,154,31,.06); }
+  .qcard { background:linear-gradient(160deg,#fff,#F6F3FA); border:1.5px solid rgba(122,154,31,.4); border-radius:16px; padding:18px 16px; text-align:center; margin-top:auto; margin-bottom:auto; }
+  .qcard .qi { font-size:34px; margin-bottom:8px; }
+  .qcard .qt { font-family:"Nunito",sans-serif; font-weight:800; font-size:15px; color:#241C33; margin-bottom:5px; }
+  .qcard .qs { font-size:11px; color:#6E6384; line-height:1.5; margin-bottom:14px; }
+  .qbtns { display:flex; gap:8px; }
+  .qbtns .a { flex:1; background:#7A9A1F; color:#fff; font-weight:700; font-size:12px; padding:10px; border-radius:10px; text-align:center; }
+  .qbtns .d { flex:1; background:transparent; border:1px solid #D9D0EA; color:#6E6384; font-size:12px; padding:10px; border-radius:10px; text-align:center; }
+  .dice-btn { background:#fff; border:1.5px solid #D9D0EA; border-radius:14px; padding:14px 22px; font-size:12.5px; font-weight:700; color:#241C33; box-shadow:0 2px 0 rgba(60,40,110,.08); cursor:pointer; }
+  .dice-btn .i { font-size:20px; display:block; text-align:center; margin-bottom:5px; }
+  #dealL { display:none; }
+  .deal-zone-l { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 14px 70px; }
+  .qcard-l { display:none; }
+  #dealL:checked ~ .deal-zone-l .dice-btn { display:none; }
+  #dealL:checked ~ .deal-zone-l .qcard-l { display:block; animation:dealL .38s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes dealL { from { opacity:0; transform:translateY(46px) rotate(3deg) scale(.92); } to { opacity:1; transform:none; } }
+  .bottomnav { display:flex; justify-content:space-around; padding:9px 8px 13px; background:#FBF9FD; font-size:9.5px; color:#6E6384; border-top:1px solid #E6DFF2; }
+  .bottomnav .on { color:#7A9A1F; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:14px; display:block; margin-bottom:2px; }
+</style>
+</head>
+<body>
+<h1>Светлая тема — все остальные экраны</h1>
+<p class="sub">Онбординг, Прогресс (3 секции), задания (вкладка, случайное, выбор из 6) — всё в светлой лаванде.</p>
+
+<h2>Онбординг</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">1. Приветствие</div><div class="phone">
+    <div class="ob-body">
+      <div class="ob-emoji">🌫</div>
+      <div class="ob-title">Город под туманом</div>
+      <div class="ob-visual"><div class="ob-fog"></div><div class="ob-clear" style="width:60px;height:60px;left:55%;top:28%"></div></div>
+      <div class="ob-text">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</div>
+      <div class="ob-dots"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="ob-cta">Дальше</div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">2. Домашний регион</div><div class="phone">
+    <div class="ob-body">
+      <div class="ob-title">Где вы живёте?</div>
+      <div class="ob-text">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</div>
+      <div class="map-pick"><div class="ob-fog" style="opacity:.5"></div><div class="pin">📍</div></div>
+      <div class="opt sel"><div class="t">Санкт-Петербург и Ленобласть</div><div class="s">определено по геолокации</div></div>
+      <div class="ob-dots"><i></i><i class="on"></i><i></i><i></i></div>
+      <div class="ob-cta">Это мой регион</div>
+      <div class="ob-link">Выбрать другой</div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">3. Цель</div><div class="phone">
+    <div class="ob-body">
+      <div class="ob-title">Ваша цель</div>
+      <div class="ob-text">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</div>
+      <div class="opt sel"><div class="t">🚶 Прогулок в неделю</div><div class="stepper"><span class="pm">−</span><span class="val">3</span><span class="pm">＋</span></div></div>
+      <div class="opt"><div class="t">⏱ Минут в день</div></div>
+      <div class="opt"><div class="t">📏 Километров в день</div></div>
+      <div class="ob-dots"><i></i><i></i><i class="on"></i><i></i></div>
+      <div class="ob-cta">Выбрать</div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">4. Доступ к геолокации</div><div class="phone">
+    <div class="ob-body">
+      <div class="ob-emoji">📍</div>
+      <div class="ob-title">Доступ к геолокации</div>
+      <div class="ob-text">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».<br><br><b>Информация о ваших передвижениях не покидает телефон.</b> На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</div>
+      <div class="ob-dots"><i></i><i></i><i></i><i class="on"></i></div>
+      <div class="ob-cta">Разрешить и открыть карту</div>
+    </div>
+  </div></div>
+</div>
+
+<h2>Прогресс</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Статистика</div><div class="phone">
+    <div class="tab-head"><div class="tab-title">Прогресс</div></div>
+    <div class="seg"><span class="on">Статистика</span><span>Достижения</span><span>Задания</span></div>
+    <div class="pr-body">
+      <div class="pr-hero"><div class="n">17,4%</div><div class="t">домашнего региона<br>открыто</div></div>
+      <div class="pr-grid">
+        <div class="pr-stat"><div class="v">23</div><div class="l">прогулок всего</div></div>
+        <div class="pr-stat"><div class="v">86 км</div><div class="l">пройдено всего</div></div>
+        <div class="pr-stat"><div class="v">4 дня</div><div class="l">текущая серия</div></div>
+        <div class="pr-stat"><div class="v">5</div><div class="l">достижений</div></div>
+        <div class="pr-stat"><div class="v">3</div><div class="l">заданий выполнено</div></div>
+        <div class="pr-stat"><div class="v">2</div><div class="l">региона посещено</div></div>
+      </div>
+      <div class="numlist">
+        <div class="row"><span>Максимальная серия</span><b>9 дней</b></div>
+        <div class="row"><span>В среднем за прогулку</span><b>3,7 км</b></div>
+        <div class="row"><span>Среднее время прогулки</span><b>52 мин</b></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Достижения</div><div class="phone">
+    <div class="tab-head"><div class="tab-title">Прогресс</div></div>
+    <div class="seg"><span>Статистика</span><span class="on">Достижения</span><span>Задания</span></div>
+    <div class="pr-body">
+      <div class="sec-l">Полученные · 5 ▾</div>
+      <div class="aitem"><div class="ic">🏔</div><div><div class="tt">Исследователь кварталов</div><div class="ts">10 дворов открыты изнутри</div></div></div>
+      <div class="aitem"><div class="ic">🌅</div><div><div class="tt">Ранняя птица</div><div class="ts">прогулка до 8 утра</div></div></div>
+      <div class="sec-l">Неполученные · 19 ▾</div>
+      <div class="aitem lock"><div class="ic">🌳</div><div style="flex:1"><div class="tt">Лесник</div><div class="ts">откройте 5 парков или лесопарков</div><div class="pbar"><i style="width:80%"></i></div></div></div>
+      <div class="aitem lock"><div class="ic">👑</div><div><div class="tt">Хозяин города</div><div class="ts">откройте 50% домашнего региона</div></div></div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Задания</div><div class="phone">
+    <div class="tab-head"><div class="tab-title">Прогресс</div></div>
+    <div class="seg"><span>Статистика</span><span>Достижения</span><span class="on">Задания</span></div>
+    <div class="pr-body">
+      <div class="task-note">Задания помогут разнообразить вашу прогулку. Их выполнение необязательно :)</div>
+      <div class="task-active">
+        <span class="ta-label">Активное задание</span>
+        <div class="tt">🟣 Пять фиолетовых вещей</div>
+        <div class="ts">За время прогулки найдите 5 вещей фиолетового цвета.</div>
+        <span class="btn-mini btn-ok">Выполнено</span><span class="btn-mini btn-ghost">Отказаться</span>
+      </div>
+      <div class="task-actions">
+        <div class="task-btn"><span class="i">🎲</span>Случайное задание</div>
+        <div class="task-btn"><span class="i">🃏</span>Выбрать из 6</div>
+      </div>
+      <div class="sec-l">Выполненные · 3</div>
+      <div class="numlist">
+        <div class="row"><span>🏛 Лицо города</span><b>18 сент</b></div>
+        <div class="row"><span>🏃 Интервалы</span><b>12 сент</b></div>
+      </div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Задания — выбор</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Случайное задание</div><div class="phone">
+    <input type="checkbox" id="dealL">
+    <div class="tab-head"><div class="tab-title">Случайное задание</div></div>
+    <div class="deal-zone-l">
+      <label class="dice-btn" for="dealL"><span class="i">🃏</span>Вытянуть карту</label>
+      <div class="qcard qcard-l" style="margin:0">
+        <div class="qi">🟣</div>
+        <div class="qt">Пять фиолетовых вещей</div>
+        <div class="qs">За время прогулки найдите 5 вещей фиолетового цвета. Знаки, двери, витрины — город полон сюрпризов.</div>
+        <div class="qbtns"><div class="d">🎲 Ещё раз</div><div class="a">Принять</div></div>
+      </div>
+      <div class="ob-link" style="margin-top:12px">Не сейчас</div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Выбор из 6</div><div class="phone">
+    <div class="tab-head"><div class="tab-title">Выберите задание</div></div>
+    <div class="pr-body">
+      <div class="grid6">
+        <div class="g6 sel"><div class="i">🟣</div><div class="t">5 фиолетовых вещей</div><div class="d">Найдите 5 вещей фиолетового цвета.</div></div>
+        <div class="g6"><div class="i">🏛</div><div class="t">Лицо города</div><div class="d">3 детали архитектуры, которых не замечали.</div></div>
+        <div class="g6"><div class="i">💬</div><div class="t">Тёплое слово</div><div class="d">Комплимент прохожему. Искренне.</div></div>
+        <div class="g6"><div class="i">🏃</div><div class="t">Интервалы</div><div class="d">3 раза смените шаг на быстрый.</div></div>
+        <div class="g6"><div class="i">🌳</div><div class="t">Старожил</div><div class="d">Самое старое дерево на маршруте.</div></div>
+        <div class="g6"><div class="i">🪟</div><div class="t">Витринист</div><div class="d">3 витрины, самый странный предмет.</div></div>
+      </div>
+      <div class="ob-cta" style="margin-top:12px">Принять задание</div>
+      <div class="ob-link" style="text-align:center">Не сейчас</div>
+    </div>
+    <div class="bottomnav"><div class="bn-item"><span class="bn-ico">◈</span>Карта</div><div class="bn-item on"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+</body>
+</html>

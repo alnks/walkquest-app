@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — светлая тема v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* СВЕТЛАЯ ЛАВАНДА v2: bg #F6F3FA surface #FFFFFF map #E3DCF0/#D5CBE8 fog #B29ED1 40%
+     ink #241C33 headline #4A3F66 secondary #5C506E dim #6E6384 accent #7A9A1F border #E6DFF2 nav #FBF9FD */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#e9e4f2; color:#241C33; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  .sub { color:#5C506E; font-size:14px; margin-bottom:28px; max-width:760px; line-height:1.5; }
+  .wrap { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:300px; }
+  .col-name { font-size:13.5px; font-weight:600; margin-bottom:3px; }
+  .col-desc { font-size:11.5px; color:#6E6384; margin-bottom:10px; line-height:1.45; }
+  .phone { border-radius:28px; border:2px solid #d3cbe6; overflow:hidden; background:#F6F3FA; height:560px; display:flex; flex-direction:column; position:relative; }
+
+  .map { position:relative; flex:1; background:linear-gradient(160deg,#E3DCF0,#D5CBE8); overflow:hidden; }
+  .grid-lines { position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(35deg, transparent 0 46px, rgba(90,70,130,.10) 46px 48px, transparent 48px 110px),
+      repeating-linear-gradient(-55deg, transparent 0 70px, rgba(90,70,130,.08) 70px 72px, transparent 72px 160px);
+  }
+  .foglayer { position:absolute; inset:0; background:rgba(178,158,209,.40); }
+  .revealed { position:absolute; border-radius:50%; background:#EDE7F7; }
+  .poi-dot { position:absolute; width:8px; height:8px; border-radius:50%; background:#7A9A1F; box-shadow:0 0 8px rgba(122,154,31,.6); }
+  .me { position:absolute; width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #7A5FC0; box-shadow:0 0 10px rgba(60,40,110,.35); }
+  .topbar { position:absolute; top:0; left:0; right:0; padding:14px; display:flex; justify-content:space-between; align-items:center; z-index:5; }
+
+  /* тогл: активный значок на белом кружке с кольцом акцента */
+  .mode-toggle { display:flex; background:rgba(255,255,255,.92); border-radius:999px; padding:3px; border:1px solid #E6DFF2; }
+  .mt { width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px; border-radius:50%; color:#6E6384; }
+  .mt.on { background:#FFFFFF; border:2px solid #7A9A1F; box-shadow:0 1px 4px rgba(60,40,110,.15); }
+
+  /* векторная шестерёнка — минималистичная, меньше */
+  .icon-btn { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; border:1px solid #E6DFF2; }
+  .icon-btn svg { width:15px; height:15px; stroke:#5C506E; stroke-width:1.6; }
+
+  /* зона панели: углы панели показывают карту, а не фон телефона */
+  .sheet-zone { background:linear-gradient(160deg,#E3DCF0,#D5CBE8); }
+  .sheet { background:rgba(255,255,255,.95); border-radius:20px 20px 0 0; padding:10px 16px 12px; z-index:6; position:relative; box-shadow:0 -6px 24px rgba(60,40,110,.10); }
+  .sheet-grab { width:36px; height:4px; border-radius:999px; background:#D9D0EA; margin:0 auto 10px; }
+  /* статистика мини-колонками с разделителями */
+  .statline { display:flex; padding:2px 4px 0; }
+  .statcol { flex:1; text-align:center; }
+  .statcol + .statcol { border-left:1px solid #E6DFF2; }
+  .statcol .v { font-family:"Nunito",sans-serif; font-weight:800; font-size:14px; color:#7A9A1F; }
+  .statcol .l { font-size:10px; color:#6E6384; margin-top:1px; }
+  .plan-card { margin-top:10px; display:flex; align-items:center; gap:10px; background:rgba(122,154,31,.08); border:1px solid rgba(122,154,31,.3); border-radius:12px; padding:9px 12px; font-size:12.5px; color:#556B14; }
+  .plan-card .plus { margin-left:auto; color:#7A9A1F; font-weight:700; font-size:15px; }
+  .cta-wide { margin-top:10px; background:#7A9A1F; color:#fff; font-weight:700; font-size:15px; text-align:center; padding:14px; border-radius:14px; }
+  .bottomnav { display:flex; justify-content:space-around; padding:10px 8px 14px; background:#FBF9FD; font-size:10px; color:#6E6384; border-top:1px solid #E6DFF2; }
+  .bottomnav .on { color:#7A9A1F; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:15px; display:block; margin-bottom:2px; }
+
+  .live { position:absolute; top:14px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:7px; font-size:11.5px; color:#556B14; background:rgba(255,255,255,.92); padding:6px 12px; border-radius:999px; white-space:nowrap; border:1px solid #E6DFF2; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:#7A9A1F; box-shadow:0 0 7px rgba(122,154,31,.6); }
+  .quest-fab { position:absolute; right:14px; bottom:14px; background:rgba(255,255,255,.92); border:1.5px dashed #B6A8D4; color:#5C506E; font-size:11.5px; padding:8px 12px; border-radius:999px; }
+  .walk-bar { background:rgba(255,255,255,.96); padding:10px 16px 14px; z-index:6; }
+  .walk-stats { display:flex; padding:0 4px 10px; }
+  .btn-pause { flex:1; padding:13px; border-radius:14px; background:#FFFFFF; color:#241C33; font-weight:600; font-size:14px; text-align:center; border:1px solid #E6DFF2; }
+  .btn-stop { flex:1; padding:13px; border-radius:14px; background:#7A9A1F; color:#fff; font-weight:700; font-size:14px; text-align:center; }
+  .walk-actions { display:flex; gap:10px; }
+
+  /* финал: заголовки сливовые, не чёрные */
+  .fin-body { flex:1; padding:26px 22px 18px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .fin-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:24px; color:#4A3F66; margin-bottom:4px; }
+  .fin-sub { font-size:13px; color:#6E6384; margin-bottom:18px; }
+  .fin-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:58px; color:#7A9A1F; line-height:1; }
+  .fin-pct-l { font-size:12px; color:#6E6384; margin:4px 0 16px; }
+  .fin-grid { display:flex; gap:10px; width:100%; }
+  .fstat { flex:1; background:#FFFFFF; border:1px solid #E6DFF2; border-radius:14px; padding:12px; }
+  .fstat .v { font-size:17px; font-weight:600; color:#4A3F66; }
+  .fstat .l { font-size:10.5px; color:#6E6384; margin-top:2px; }
+  .ach-unlock { width:100%; margin-top:14px; background:rgba(122,154,31,.07); border:1px solid rgba(122,154,31,.3); border-radius:16px; padding:12px; display:flex; align-items:center; gap:12px; text-align:left; }
+  .ach-ic { width:44px; height:44px; border-radius:12px; background:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; border:1px solid rgba(122,154,31,.35); }
+  .ach-t { font-size:13px; font-weight:700; color:#4A3F66; font-family:"Nunito",sans-serif; }
+  .ach-s { font-size:11.5px; color:#6E6384; }
+  .fin-actions { margin-top:auto; width:100%; padding-top:16px; }
+  .btn-share { width:100%; padding:14px; border-radius:14px; background:#7A9A1F; color:#fff; font-weight:700; font-size:14px; text-align:center; }
+  .btn-home { width:100%; padding:12px; margin-top:8px; color:#6E6384; font-size:13px; text-align:center; }
+  .fin-tomorrow { font-size:12px; color:#6E6384; margin-top:12px; font-style:italic; }
+</style>
+</head>
+<body>
+<h1>Светлая тема v2 — правки учтены</h1>
+<p class="sub">Тогл: значок на белом кружке с кольцом акцента (ноги не сливаются). Шестерёнка — векторная. Статистика — мини-колонки с разделителями. Финал: заголовки сливовые #4A3F66 вместо почти-чёрного.</p>
+
+<div class="wrap">
+
+<div class="col">
+  <div class="col-name">Главный экран</div>
+  <div class="col-desc">Белый кружок под активным значком; векторная шестерёнка; статистика колонками.</div>
+  <div class="phone">
+    <div class="map">
+      <div class="grid-lines"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:38%;top:24%"></div>
+      <div class="revealed" style="width:86px;height:86px;left:52%;top:38%"></div>
+      <div class="poi-dot" style="left:28.5%;top:24%"></div>
+      <div class="poi-dot" style="left:74.5%;top:56%"></div>
+      <div class="me" style="left:52%;top:41%"></div>
+      <div class="topbar">
+        <span class="mode-toggle"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      </div>
+    </div>
+    <div class="sheet-zone">
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="statline">
+        <div class="statcol"><div class="v">17%</div><div class="l">открыто</div></div>
+        <div class="statcol"><div class="v">4 дня</div><div class="l">серия</div></div>
+        <div class="statcol"><div class="v">12,4 км</div><div class="l">за неделю</div></div>
+      </div>
+      <div class="plan-card">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Активная прогулка</div>
+  <div class="col-desc">Строка цифр тоже колонками — как на главном.</div>
+  <div class="phone">
+    <div class="map">
+      <div class="grid-lines"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:34%;top:24%"></div>
+      <svg style="position:absolute;left:15%;top:12%;width:70%;height:60%" viewBox="0 0 240 260" fill="none">
+        <path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#7A9A1F" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      </svg>
+      <div class="me" style="left:76%;top:20%"></div>
+      <div class="live"><span class="live-dot"></span>Идёт запись</div>
+      <div class="quest-fab">＋ Задание</div>
+    </div>
+    <div class="walk-bar">
+      <div class="walk-stats">
+        <div class="statcol"><div class="v">48:12</div><div class="l">время</div></div>
+        <div class="statcol"><div class="v">3,6 км</div><div class="l">расстояние</div></div>
+        <div class="statcol"><div class="v">+0,4%</div><div class="l">открыто</div></div>
+      </div>
+      <div class="walk-actions">
+        <div class="btn-pause">Пауза</div>
+        <div class="btn-stop">Завершить</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="col-name">Финальный экран</div>
+  <div class="col-desc">Заголовок и тексты сливовые; чёрного больше нет.</div>
+  <div class="phone">
+    <div class="fin-body">
+      <div class="fin-title">Отличная прогулка!</div>
+      <div class="fin-sub">вечер · 48 минут</div>
+      <div class="fin-pct">17,4%</div>
+      <div class="fin-pct-l">домашнего региона открыто (+0,4% сегодня)</div>
+      <div class="fin-grid">
+        <div class="fstat"><div class="v">3,6 км</div><div class="l">расстояние</div></div>
+        <div class="fstat"><div class="v">48 мин</div><div class="l">время</div></div>
+        <div class="fstat"><div class="v">5 дней</div><div class="l">серия</div></div>
+      </div>
+      <div class="ach-unlock">
+        <div class="ach-ic">🏔</div>
+        <div>
+          <div class="ach-t">Новое достижение: «Исследователь кварталов»</div>
+          <div class="ach-s">10 дворов открыты изнутри</div>
+        </div>
+      </div>
+      <div class="fin-actions">
+        <div class="btn-share">Поделиться результатом</div>
+        <div class="btn-home">На карту</div>
+        <div class="fin-tomorrow">Возвращайтесь завтра — впереди ещё столько открытий</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

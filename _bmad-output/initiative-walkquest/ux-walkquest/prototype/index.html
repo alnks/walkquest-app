@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — кликабельный прототип</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:20px 12px 40px; }
+
+  /* ---- рамка прототипа (не продукт) ---- */
+  .chrome { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; justify-content:center; }
+  .chrome h1 { font-size:16px; font-weight:600; margin-right:8px; }
+  .chrome button, .chrome select { font-family:inherit; font-size:13px; padding:8px 14px; border-radius:999px; border:1px solid #54457A; background:#231B33; color:#EFEAF7; cursor:pointer; }
+  .chrome button:hover { background:#2C2248; }
+  .note { font-size:12px; color:#8D83A6; margin-bottom:16px; max-width:420px; text-align:center; line-height:1.5; }
+
+  /* ---- телефон ---- */
+  .phone { width:375px; height:740px; border-radius:32px; overflow:hidden; position:relative; display:flex; flex-direction:column; border:2px solid #3a2f52; }
+
+  /* ---- темы через переменные ---- */
+  .app { --bg:#191423; --card:#231B33; --cardbr:#342A4D; --ink:#EFEAF7; --ink2:#B3A6C9; --dim:#8D83A6; --headline:#EFEAF7;
+         --acc:#C6E26B; --accfill:#C6E26B; --nav:#141020; --ghost:#7564A6; --hairline:#2C2248; --sunken:#2C2248;
+         --map1:#241C36; --map2:#2C2240; --fog:rgba(178,158,209,.30); --revealed:#241C36; --cursor:#9379E0;
+         --sheet:rgba(30,23,45,.96); --plan-bg:rgba(198,226,107,.08); --plan-br:rgba(198,226,107,.25); --plan-tx:#D9E8B0;
+         --cta-bg:#C6E26B; --cta-ink:#22290A; --cta-br:transparent; --tint:rgba(198,226,107,.12); --mtbg:#EFEAf7; }
+  .app.light { --bg:#F6F3FA; --card:#FFFFFF; --cardbr:#E6DFF2; --ink:#241C33; --ink2:#5C506E; --dim:#6E6384; --headline:#4A3F66;
+         --acc:#587110; --accfill:#7A9A1F; --nav:#FBF9FD; --ghost:#9A86C4; --hairline:#EFEAf6; --sunken:#EFEAf6;
+         --map1:#E3DCF0; --map2:#D5CBE8; --fog:rgba(178,158,209,.40); --revealed:#EDE7F7; --cursor:#7A5FC0;
+         --sheet:rgba(255,255,255,.95); --plan-bg:rgba(122,154,31,.07); --plan-br:rgba(122,154,31,.3); --plan-tx:#556B14;
+         --cta-bg:#FFFFFF; --cta-ink:#587110; --cta-br:#587110; --tint:rgba(122,154,31,.10); --mtbg:#FFFFFF; }
+  .app { width:100%; height:100%; background:var(--bg); color:var(--ink); display:flex; flex-direction:column; }
+
+  /* ---- экраны ---- */
+  .scr { display:none; flex:1; flex-direction:column; overflow:hidden; }
+  .scr.on { display:flex; }
+  .body { flex:1; overflow-y:auto; padding:0 16px 16px; }
+  .tapt { cursor:pointer; }
+
+  /* ---- типографика ---- */
+  .h-display { font-family:"Nunito",sans-serif; font-weight:1000; }
+  .h-head { font-family:"Nunito",sans-serif; font-weight:800; }
+  .ttl { font-family:"Nunito",sans-serif; font-weight:800; font-size:22px; color:var(--headline); }
+  .txt { font-size:14px; line-height:1.55; color:var(--ink2); }
+  .cap { font-size:12px; color:var(--dim); }
+  .sec-l { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); margin:16px 0 8px; }
+  .acc { color:var(--acc); }
+
+  /* ---- общие компоненты ---- */
+  .card { background:var(--card); border:1px solid var(--cardbr); border-radius:12px; }
+  .cta { font-weight:700; font-size:16px; text-align:center; padding:15px; border-radius:14px; background:var(--cta-bg); color:var(--cta-ink); border:1.5px solid var(--cta-br); cursor:pointer; user-select:none; min-height:52px; display:flex; align-items:center; justify-content:center; }
+  .cta:active { transform:scale(.98); }
+  .ghostbtn { border:1.5px solid var(--ghost); color:var(--ink2); border-radius:14px; background:transparent; padding:13px; font-size:14px; font-weight:600; text-align:center; cursor:pointer; min-height:48px; display:flex; align-items:center; justify-content:center; }
+  .linkbtn { text-align:center; font-size:14px; color:var(--dim); padding:12px; cursor:pointer; }
+  .pill { font-size:12px; border-radius:999px; padding:6px 12px; font-weight:600; background:var(--sunken); color:var(--ink2); border:1px solid transparent; cursor:pointer; }
+  .app.light .pill { border-color:var(--cardbr); }
+  .pill.on { background:var(--tint); color:var(--acc); border-color:var(--acc); font-weight:700; }
+
+  /* ---- нижняя навигация ---- */
+  .bnav { display:flex; justify-content:space-around; padding:10px 8px 16px; background:var(--nav); border-top:1px solid var(--hairline); }
+  .bnav .bi { text-align:center; font-size:12px; color:var(--dim); cursor:pointer; min-width:56px; padding:4px 0; }
+  .bnav .bi .ic { font-size:20px; display:block; margin-bottom:2px; }
+  .bnav .bi.on { color:var(--acc); font-weight:600; }
+
+  /* ---- онбординг ---- */
+  .ob { flex:1; padding:32px 24px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .ob .emoji { font-size:44px; margin-bottom:16px; }
+  .ob .ttl { margin-bottom:10px; }
+  .ob .txt { margin-bottom:16px; }
+  .ob .cta { width:100%; margin-top:auto; }
+  .dots { display:flex; gap:8px; margin:16px 0; }
+  .dots i { width:8px; height:8px; border-radius:50%; background:var(--hairline); }
+  .app.light .dots i { background:#D9D0EA; }
+  .dots i.on { width:24px; border-radius:999px; background:var(--accfill); }
+  .vis { width:100%; border-radius:16px; height:140px; margin-bottom:16px; position:relative; overflow:hidden; background:linear-gradient(160deg,var(--map1),var(--map2)); }
+  .opt { width:100%; text-align:left; border-radius:14px; padding:14px 16px; margin-bottom:10px; background:var(--card); border:1.5px solid var(--cardbr); cursor:pointer; }
+  .opt.sel { border-color:var(--accfill); background:var(--plan-bg); }
+  .opt .t { font-size:15px; font-weight:700; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .opt .s { font-size:12px; margin-top:3px; }
+  .stepper { display:flex; align-items:center; gap:14px; margin-top:10px; }
+  .pm { width:44px; height:44px; border-radius:12px; font-size:20px; display:flex; align-items:center; justify-content:center; background:var(--bg); border:1px solid var(--ghost); color:var(--acc); cursor:pointer; user-select:none; }
+  .stepper .val { font-family:"Nunito",sans-serif; font-weight:1000; font-size:22px; min-width:30px; text-align:center; }
+
+  /* ---- карта ---- */
+  .mapzone { position:relative; flex:1; overflow:hidden; background:linear-gradient(160deg,var(--map1),var(--map2) 55%,var(--map1)); }
+  .gl { position:absolute; inset:0; background: repeating-linear-gradient(35deg, transparent 0 60px, rgba(178,158,209,.10) 60px 62px, transparent 62px 140px), repeating-linear-gradient(-55deg, transparent 0 90px, rgba(178,158,209,.08) 90px 92px, transparent 92px 200px); }
+  .fog { position:absolute; inset:0; background:var(--fog); }
+  .revealed { position:absolute; border-radius:50%; background:var(--revealed); }
+  .poi-dot { position:absolute; width:12px; height:12px; border-radius:50%; background:var(--accfill); box-shadow:0 0 12px var(--accfill); cursor:pointer; }
+  .me { position:absolute; width:18px; height:18px; border-radius:50%; border:4px solid var(--cursor); background:#fff; box-shadow:0 0 14px rgba(147,121,224,.6); }
+  .topbar { position:absolute; top:0; left:0; right:0; padding:14px; display:flex; justify-content:space-between; align-items:center; z-index:5; }
+  .tgl { display:flex; border-radius:999px; padding:4px; background:var(--sheet); border:1px solid var(--cardbr); }
+  .mt { width:44px; height:44px; display:flex; align-items:center; justify-content:center; font-size:20px; border-radius:50%; cursor:pointer; }
+  .mt.on { background:var(--mtbg); border:2px solid var(--accfill); }
+  .icon-btn { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--sheet); border:1px solid var(--cardbr); cursor:pointer; }
+  .icon-btn svg { width:20px; height:20px; fill:none; stroke:var(--ink2); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .sheetwrap { position:relative; margin-top:-24px; z-index:6; }
+  .sheet { background:var(--sheet); border-radius:24px 24px 0 0; padding:14px 16px 16px; backdrop-filter:blur(6px); }
+  .statline { display:flex; padding:4px 4px 2px; }
+  .statcol { flex:1; text-align:center; }
+  .statcol .v { font-family:"Nunito",sans-serif; font-weight:800; font-size:17px; color:var(--acc); }
+  .statcol .v.n { color:var(--ink); }
+  .statcol .c { font-size:12px; color:var(--dim); margin-top:2px; }
+  .plan { margin-top:12px; display:flex; align-items:center; gap:10px; border-radius:14px; padding:13px 14px; font-size:14px; background:var(--plan-bg); border:1px solid var(--plan-br); color:var(--plan-tx); cursor:pointer; }
+  .plan .plus { margin-left:auto; font-weight:700; font-size:18px; }
+  .sheet .cta { margin-top:12px; }
+
+  /* POI карточка */
+  .poi-card { position:absolute; left:14px; right:14px; bottom:14px; border-radius:18px; overflow:hidden; z-index:7; background:var(--card); border:1px solid var(--cardbr); box-shadow:0 8px 30px rgba(0,0,0,.3); }
+  .poi-card .photos { display:flex; gap:5px; height:90px; }
+  .poi-card .photo { flex:1; display:flex; align-items:center; justify-content:center; font-size:22px; background:linear-gradient(135deg,var(--sunken),var(--cardbr)); }
+  .poi-card .pt { padding:14px 16px 16px; }
+  .poi-card .t { font-family:"Nunito",sans-serif; font-weight:800; font-size:17px; color:var(--headline); }
+  .poi-card .s { font-size:13px; line-height:1.55; color:var(--ink2); margin-top:6px; }
+  .poi-close { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,.35); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; z-index:2; }
+
+  /* ---- прогулка ---- */
+  .live { position:absolute; top:14px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; white-space:nowrap; background:var(--sheet); color:var(--acc); border:1px solid var(--cardbr); z-index:5; }
+  .live.paused { color:var(--ink2); }
+  .ldot { width:8px; height:8px; border-radius:50%; background:var(--accfill); box-shadow:0 0 8px var(--accfill); }
+  .live.paused .ldot { background:var(--dim); box-shadow:none; }
+  .qfab { position:absolute; right:14px; bottom:14px; font-size:13px; font-weight:600; padding:10px 16px; border-radius:999px; background:var(--sheet); border:1.5px dashed var(--ghost); color:var(--ink2); cursor:pointer; z-index:5; min-height:44px; }
+  .walk-bar { padding:12px 16px 16px; background:var(--sheet); z-index:6; }
+  .wstats { display:flex; padding:2px 4px 12px; }
+  .wactions { display:flex; gap:12px; }
+  .btn-main { flex:1.7; min-height:56px; border-radius:16px; font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; background:var(--cta-bg); color:var(--cta-ink); border:1.5px solid var(--cta-br); cursor:pointer; user-select:none; }
+  .btn-main:active { transform:scale(.98); }
+  .btn-stop { flex:1; min-height:48px; border-radius:14px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; align-self:center; background:transparent; color:var(--ink2); border:1.5px solid var(--ghost); cursor:pointer; user-select:none; position:relative; overflow:hidden; }
+  .btn-stop .fill { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accfill); opacity:.35; transition:none; }
+  .btn-stop.holding .fill { width:100%; transition:width .6s linear; }
+  .btn-stop span { position:relative; z-index:1; }
+
+  /* ---- финал ---- */
+  .fin { flex:1; padding:32px 20px 20px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .fin-ttl { font-family:"Nunito",sans-serif; font-weight:800; font-size:26px; color:var(--headline); margin-bottom:6px; }
+  .fin-sub { font-size:14px; color:var(--dim); margin-bottom:22px; }
+  .fin-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:64px; line-height:1; color:var(--acc); }
+  .fin-pct-l { font-size:13px; color:var(--dim); margin:8px 0 22px; }
+  .fin-grid { display:flex; gap:10px; width:100%; }
+  .fstat { flex:1; border-radius:14px; padding:14px 8px; background:var(--card); border:1px solid var(--cardbr); }
+  .fstat .v { font-size:17px; font-weight:600; color:var(--headline); }
+  .fstat .c { font-size:12px; color:var(--dim); margin-top:3px; }
+  .ach { width:100%; margin-top:14px; border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; text-align:left; background:var(--plan-bg); border:1px solid var(--plan-br); }
+  .ach-ic { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; background:var(--card); border:1px solid var(--plan-br); }
+  .ach-t { font-size:14px; font-weight:700; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .ach-s { font-size:12px; color:var(--dim); margin-top:2px; }
+  .fin-actions { margin-top:auto; width:100%; padding-top:16px; }
+
+  /* ---- прогресс ---- */
+  .tab-head { padding:18px 16px 10px; }
+  .seg { display:flex; gap:8px; padding:4px 16px 12px; }
+  .seg span { font-size:13px; padding:10px 16px; min-height:44px; display:flex; align-items:center; border-radius:999px; border:1px solid var(--cardbr); background:var(--card); color:var(--dim); cursor:pointer; }
+  .seg span.on { background:var(--tint); border-color:var(--acc); color:var(--acc); font-weight:700; }
+  .pr-hero { display:flex; align-items:center; gap:14px; margin:6px 0 14px; }
+  .pr-hero .n { font-family:"Nunito",sans-serif; font-weight:1000; font-size:44px; line-height:1; color:var(--acc); }
+  .pr-hero .t { font-size:13px; line-height:1.4; color:var(--dim); }
+  .pr-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:10px; }
+  .pr-stat { border-radius:12px; padding:12px 10px; background:var(--card); border:1px solid var(--cardbr); }
+  .pr-stat .v { font-family:"Nunito",sans-serif; font-weight:1000; font-size:18px; color:var(--headline); }
+  .pr-stat .c { font-size:12px; color:var(--dim); margin-top:3px; line-height:1.3; }
+  .nl-row { display:flex; justify-content:space-between; font-size:13px; padding:10px 2px; border-bottom:1px solid var(--hairline); color:var(--ink2); }
+  .nl-row b { font-weight:600; color:var(--headline); }
+  .aitem { display:flex; gap:12px; align-items:center; border-radius:14px; padding:12px 14px; margin-bottom:8px; background:var(--card); border:1px solid var(--cardbr); }
+  .aitem .ic { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:var(--bg); }
+  .aitem.lock { border-style:dashed; }
+  .aitem.lock .ic { filter:grayscale(1); opacity:.45; }
+  .aitem .tt { font-size:14px; font-weight:700; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .aitem .ts { font-size:12px; color:var(--dim); margin-top:2px; }
+  .pbar { height:5px; border-radius:999px; margin-top:6px; background:var(--sunken); overflow:hidden; }
+  .pbar i { display:block; height:100%; border-radius:999px; background:var(--accfill); }
+  .sec-head { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+
+  /* ---- задания ---- */
+  .task-note { font-size:13px; line-height:1.5; border-radius:14px; padding:14px; margin-bottom:12px; background:var(--card); border:1px solid var(--cardbr); color:var(--ink2); }
+  .tactive { border-radius:14px; padding:14px; margin-bottom:12px; background:var(--plan-bg); border:1px solid var(--plan-br); }
+  .tlabel { display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; border-radius:999px; padding:4px 10px; margin-bottom:8px; background:var(--tint); color:var(--acc); }
+  .tactive .tt { font-size:15px; font-weight:700; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .tactive .ts { font-size:13px; color:var(--ink2); margin:5px 0 12px; line-height:1.45; }
+  .btn-mini { display:inline-flex; align-items:center; min-height:44px; font-size:13px; padding:8px 18px; border-radius:999px; font-weight:700; margin-right:8px; cursor:pointer; }
+  .task-actions { display:flex; gap:12px; margin-bottom:12px; }
+  .tbtn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; border-radius:16px; padding:16px 10px; min-height:88px; font-size:14px; font-weight:700; text-align:center; cursor:pointer; background:var(--card); border:1.5px solid var(--ghost); color:var(--headline); }
+  .tbtn .i { font-size:24px; }
+  .qcard { border-radius:20px; padding:24px 20px; text-align:center; margin-top:48px; background:linear-gradient(160deg,var(--sunken),var(--card)); border:1.5px solid var(--plan-br); opacity:0; transform:translateY(30px) scale(.92); transition:opacity .35s ease, transform .35s ease; }
+  .qcard.dealt { opacity:1; transform:none; }
+  .qcard .qi { font-size:40px; margin-bottom:10px; }
+  .qcard .qt { font-family:"Nunito",sans-serif; font-weight:800; font-size:18px; color:var(--headline); margin-bottom:6px; }
+  .qcard .qs { font-size:14px; line-height:1.55; color:var(--ink2); margin-bottom:16px; }
+  .grid6 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+  .g6 { border-radius:14px; padding:14px 12px; background:var(--card); border:1.5px solid var(--cardbr); cursor:pointer; }
+  .g6.sel { border-color:var(--accfill); background:var(--plan-bg); }
+  .g6 .i { font-size:22px; margin-bottom:6px; }
+  .g6 .t { font-size:13px; font-weight:700; line-height:1.3; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .g6 .dsc { font-size:12px; line-height:1.4; margin-top:4px; color:var(--dim); }
+  .pin-bottom { margin-top:auto; padding-top:14px; }
+
+  /* ---- рейтинг / регионы / профиль / настройки ---- */
+  .lb-row { display:flex; align-items:center; gap:12px; border-radius:14px; padding:12px 14px; margin-bottom:8px; background:var(--card); border:1px solid var(--cardbr); }
+  .lb-rank { font-family:"Nunito",sans-serif; font-weight:1000; font-size:17px; width:30px; color:var(--ink2); }
+  .lb-name { flex:1; font-size:14px; font-weight:600; color:var(--headline); display:flex; align-items:center; gap:8px; }
+  .lb-val { font-size:14px; font-weight:700; color:var(--ink2); }
+  .lb-row .accv { color:var(--acc); }
+  .me-row { border:1.5px solid var(--accfill); background:var(--plan-bg); }
+  .me-chip { font-size:11px; font-weight:700; border-radius:999px; padding:3px 9px; background:var(--cta-bg); color:var(--cta-ink); border:1.5px solid var(--cta-br); }
+  .app:not(.light) .me-chip { background:#C6E26B; color:#22290A; border-color:transparent; }
+  .nick-cta { border-radius:16px; padding:18px; text-align:center; margin-bottom:12px; background:var(--card); border:1px solid var(--cardbr); }
+  .nick-cta .t { font-size:16px; font-weight:700; font-family:"Nunito",sans-serif; color:var(--headline); }
+  .nick-cta .s { font-size:13px; color:var(--ink2); margin:6px 0 12px; line-height:1.5; }
+  .nick-in { width:100%; font-family:inherit; font-size:15px; padding:12px 14px; border-radius:12px; border:1.5px solid var(--ghost); background:var(--bg); color:var(--ink); margin-bottom:10px; }
+  .rg-row { display:flex; align-items:center; gap:14px; border-radius:16px; padding:14px; margin-bottom:10px; background:var(--card); border:1px solid var(--cardbr); cursor:pointer; }
+  .rg-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:22px; color:var(--ink2); }
+  .rg-pct.home { color:var(--acc); }
+  .rg-name { font-size:14px; font-weight:700; color:var(--headline); }
+  .rg-sub { font-size:12px; color:var(--dim); margin-top:2px; }
+  .grp { border-radius:16px; padding:2px 14px; margin-bottom:14px; background:var(--card); border:1px solid var(--cardbr); }
+  .pr-row { display:flex; justify-content:space-between; align-items:center; padding:14px 0; font-size:14px; min-height:48px; }
+  .pr-row + .pr-row { border-top:1px solid var(--hairline); }
+  .pr-row .k { font-weight:500; }
+  .avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; background:var(--sunken); }
+  .empty { text-align:center; padding:40px 24px; }
+  .empty .e { font-size:40px; margin-bottom:12px; }
+  .empty .t { font-size:15px; font-weight:700; color:var(--headline); margin-bottom:6px; }
+  .empty .s { font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:16px; }
+
+  /* ---- планировщик ---- */
+  .pl-row { display:flex; align-items:center; gap:12px; border-radius:14px; padding:14px; margin-bottom:10px; background:var(--card); border:1px solid var(--cardbr); }
+  .pl-row .when { font-weight:700; font-size:14px; color:var(--headline); }
+  .pl-row .del { margin-left:auto; color:var(--dim); cursor:pointer; padding:8px; }
+
+  /* POI состояния: в тумане / открытая / прочитанная */
+  .poi-dot.covered { opacity:.5; box-shadow:0 0 6px var(--accfill); cursor:default; }
+  .poi-dot.open { cursor:pointer; animation:pulse 2.2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 var(--plan-br); } 50% { box-shadow:0 0 0 9px transparent; } }
+  .poi-dot.visited { background:transparent; border:3px solid var(--accfill); width:6px; height:6px; box-shadow:0 0 9px var(--accfill); animation:none; cursor:pointer; }
+  /* прочее */
+  .pill { white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; text-align:center; }
+  .daychips { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+  .daychip { min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; border-radius:999px; border:1px solid var(--cardbr); background:var(--card); color:var(--dim); cursor:pointer; padding:0 10px; }
+  .daychip.on { background:var(--tint); border-color:var(--acc); color:var(--acc); font-weight:700; }
+  /* активное задание на экране прогулки */
+  .walk-task { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--headline); background:var(--plan-bg); border:1px solid var(--plan-br); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .wt-done { margin-left:auto; width:36px; height:36px; border-radius:50%; background:var(--cta-bg); color:var(--cta-ink); border:1.5px solid var(--cta-br); display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:800; flex-shrink:0; }
+  /* прочее */
+  .body { scrollbar-width:none; }
+  .body::-webkit-scrollbar { display:none; }
+  .opt .stepper { display:none; }
+  .opt.sel .stepper { display:flex; }
+  .addform { display:none; gap:8px; margin-bottom:10px; }
+  .addform.show { display:flex; }
+  .addform input { flex:1; min-width:0; font-family:inherit; font-size:14px; padding:12px; border-radius:12px; border:1.5px solid var(--ghost); background:var(--bg); color:var(--ink); }
+
+  /* ---- тост ---- */
+  .toast { position:absolute; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--bg); font-size:13px; font-weight:600; padding:10px 18px; border-radius:999px; opacity:0; transition:all .3s ease; pointer-events:none; z-index:50; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---- диалог замены задания ---- */
+  .rmodal { position:absolute; inset:0; background:rgba(10,7,18,.6); display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:60; }
+  .rmodal.show { opacity:1; pointer-events:auto; }
+  .rmodal .box { width:100%; border-radius:20px; padding:20px; background:var(--card); border:1px solid var(--cardbr); }
+  .rmodal .t { font-family:"Nunito",sans-serif; font-weight:800; font-size:17px; color:var(--headline); margin-bottom:6px; }
+  .rmodal .s { font-size:13px; line-height:1.5; color:var(--ink2); margin-bottom:14px; }
+  .rmodal .cta { margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div class="chrome">
+  <h1>WalkQuest — прототип v1</h1>
+  <button id="btn-theme">☀️ / 🌙 тема</button>
+  <button id="btn-back">← назад</button>
+  <select id="jump">
+    <option value="">перейти к экрану…</option>
+    <option value="ob1">Онбординг 1 · приветствие</option>
+    <option value="ob2">Онбординг 2 · регион</option>
+    <option value="ob3">Онбординг 3 · цель</option>
+    <option value="ob4">Онбординг 4 · геолокация</option>
+    <option value="map">Карта (главный)</option>
+    <option value="walk">Прогулка</option>
+    <option value="final">Финал прогулки</option>
+    <option value="progress">Прогресс</option>
+    <option value="quest-random">Случайное задание</option>
+    <option value="quest-pick6">Выбор из 6</option>
+    <option value="rating">Рейтинг</option>
+    <option value="regions">Регионы</option>
+    <option value="planner">Планировщик</option>
+    <option value="profile">Профиль</option>
+    <option value="settings">Настройки</option>
+    <option value="goal">Изменение цели</option>
+  </select>
+</div>
+<p class="note">Кликабельный прототип для отсмотра. «Назад» в продукте — системный жест Android, здесь — кнопка сверху. Кнопка «Завершить» на прогулке работает удержанием: зажмите на 0,6 с.</p>
+<div class="phone"><div class="app" id="app">
+
+<!-- ======== ОНБОРДИНГ ======== -->
+<section class="scr" id="ob1"><div class="ob">
+  <div class="emoji">🌫️</div><div class="ttl">Город под туманом</div>
+  <div class="vis"><div class="fog"></div><div class="revealed" style="width:80px;height:80px;left:55%;top:30%"></div></div>
+  <div class="txt">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</div>
+  <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="cta" data-go="ob2">Дальше</div>
+</div></section>
+
+<section class="scr" id="ob2"><div class="ob">
+  <div class="ttl">Где вы живёте?</div>
+  <div class="txt">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</div>
+  <div class="vis"><div class="fog" style="opacity:.6"></div><div style="position:absolute;left:46%;top:32%;font-size:26px">📍</div></div>
+  <div class="opt sel"><div class="t">Санкт-Петербург и Ленобласть</div><div class="s cap">определено по геолокации</div></div>
+  <div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+  <div class="cta" data-go="ob3">Это мой регион</div>
+  <div class="linkbtn" data-toast="Пока что ручной выбор доступен в настройках">Выбрать другой</div>
+</div></section>
+
+<section class="scr" id="ob3"><div class="ob">
+  <div class="ttl">Ваша цель</div>
+  <div class="txt">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</div>
+  <div class="opt sel" data-opt><div class="t">🚶 Прогулок в неделю</div><div class="stepper"><span class="pm" data-step="-1">−</span><span class="val">3</span><span class="pm" data-step="1">＋</span></div></div>
+  <div class="opt" data-opt><div class="t">⏱ Минут в день</div><div class="stepper"><span class="pm" data-step="-5">−</span><span class="val">30</span><span class="pm" data-step="5">＋</span></div></div>
+  <div class="opt" data-opt><div class="t">📏 Километров в день</div><div class="stepper"><span class="pm" data-step="-1">−</span><span class="val">2</span><span class="pm" data-step="1">＋</span></div></div>
+  <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+  <div class="cta" data-go="ob4">Выбрать</div>
+</div></section>
+
+<section class="scr" id="ob4"><div class="ob">
+  <div class="emoji">📍</div><div class="ttl">Доступ к геолокации</div>
+  <div class="txt">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».<br><br><b style="color:var(--headline)">Информация о ваших передвижениях не покидает телефон.</b> На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</div>
+  <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
+  <div class="cta" data-go="map">Разрешить и открыть карту</div>
+</div></section>
+
+<!-- ======== КАРТА ======== -->
+<section class="scr" id="map">
+  <div class="mapzone">
+    <div class="gl"></div><div class="fog"></div>
+    <div class="revealed" style="width:150px;height:150px;left:36%;top:20%"></div>
+    <div class="revealed" style="width:100px;height:100px;left:52%;top:34%"></div>
+    <div class="poi-dot covered" style="left:26%;top:20%" data-poi="Домик Петра I" data-poi-txt="Небольшой деревянный дом на Петровской набережной, где жил Пётр I летом 1703 года во время строительства города. Позже дом накрыли каменным футляром — так он сохранился до наших дней."></div>
+    <div class="poi-dot open" style="left:56%;top:38%" data-poi="Кронверкская дамба" data-poi-txt="Тихое место у воды с видом на Петропавловскую крепость. Лучшее время — закат, когда туман над Невой розовеет."></div>
+    <div class="me" style="left:52%;top:36%"></div>
+    <div class="topbar">
+      <span class="tgl"><span class="mt on" data-mode="walk" title="пешком">🚶</span><span class="mt" data-mode="bike" title="вело">🚲</span></span>
+      <span class="icon-btn" data-go="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82.33l.06.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    </div>
+    <div class="poi-card" id="poi-card" style="display:none">
+      <div class="poi-close" id="poi-close">✕</div>
+      <div class="photos"><div class="photo">🖼️</div><div class="photo">🖼️</div><div class="photo">🖼️</div></div>
+      <div class="pt"><div class="t" id="poi-t"></div><div class="s" id="poi-s"></div></div>
+    </div>
+  </div>
+  <div class="sheetwrap"><div class="sheet">
+    <div class="statline">
+      <div class="statcol"><div class="v">17%</div><div class="c">открыто</div></div>
+      <div class="statcol"><div class="v">4 дня</div><div class="c">серия</div></div>
+      <div class="statcol"><div class="v">12,4 км</div><div class="c">за неделю</div></div>
+    </div>
+    <div class="plan" data-go="planner">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+    <div class="cta" data-go="walk">Начать прогулку</div>
+  </div></div>
+</section>
+
+<!-- ======== ПРОГУЛКА ======== -->
+<section class="scr" id="walk">
+  <div class="mapzone">
+    <div class="gl"></div><div class="fog"></div>
+    <div class="revealed" style="width:150px;height:150px;left:32%;top:20%"></div>
+    <svg style="position:absolute;left:12%;top:12%;width:72%;height:56%" viewBox="0 0 240 260" fill="none"><path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="var(--accfill)" stroke-width="7" stroke-linecap="round" opacity="0.9"/></svg>
+    <div class="me" style="left:74%;top:18%"></div>
+    <div class="poi-dot covered" style="left:22%;top:55%" data-poi="Сквер на Карповке" data-poi-txt="Тихий сквер между каналами. Местные выгуливают здесь собак, а по утрам работает небольшая кофейня на колёсах."></div>
+    <div class="poi-dot open" style="left:60%;top:30%" data-poi="Кронверкская дамба" data-poi-txt="Тихое место у воды с видом на Петропавловскую крепость. Лучшее время — закат, когда туман над Невой розовеет."></div>
+    <div class="live" id="walk-chip"><span class="ldot"></span><span id="walk-chip-t">Идёт запись</span></div>
+    <div class="qfab" id="qfab-walk">＋ Задание</div>
+    <div class="poi-card" id="poi-card2" style="display:none">
+      <div class="poi-close" id="poi-close2">✕</div>
+      <div class="photos"><div class="photo">🖼️</div><div class="photo">🖼️</div><div class="photo">🖼️</div></div>
+      <div class="pt"><div class="t" id="poi-t2"></div><div class="s" id="poi-s2"></div></div>
+    </div>
+  </div>
+  <div class="walk-bar">
+    <div class="walk-task" id="walk-task" style="display:none"><span id="walk-task-t"></span><span class="wt-done" id="walk-task-done">✓</span></div>
+    <div class="wstats">
+      <div class="statcol"><div class="v n">48:12</div><div class="c">время</div></div>
+      <div class="statcol"><div class="v n">3,6 км</div><div class="c">расстояние</div></div>
+      <div class="statcol"><div class="v">+0,4%</div><div class="c">открыто</div></div>
+    </div>
+    <div class="wactions">
+      <div class="btn-main" id="btn-pause">Пауза</div>
+      <div class="btn-stop" id="btn-stop"><span class="fill"></span><span>Завершить</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== ФИНАЛ ======== -->
+<section class="scr" id="final"><div class="fin">
+  <div class="fin-ttl">Отличная прогулка!</div>
+  <div class="fin-sub">вечер · 48 минут</div>
+  <div class="fin-pct">17,4%</div>
+  <div class="fin-pct-l">города открыто (+0,4% сегодня)</div>
+  <div class="fin-grid">
+    <div class="fstat"><div class="v">3,6 км</div><div class="c">расстояние</div></div>
+    <div class="fstat"><div class="v">48 мин</div><div class="c">время</div></div>
+    <div class="fstat"><div class="v">5 дней</div><div class="c">серия</div></div>
+  </div>
+  <div class="ach"><div class="ach-ic">⏱️</div><div><div class="ach-t">Новое достижение: «Хороший темп»</div><div class="ach-s">одна прогулка длиннее 45 минут</div></div></div>
+  <div class="fin-actions">
+    <div class="cta" data-toast="Скриншот сохранён для шеринга">Поделиться результатом</div>
+    <div class="linkbtn" data-go="map">На карту</div>
+  </div>
+</div></section>
+
+<!-- ======== ПРОГРЕСС ======== -->
+<section class="scr" id="progress">
+  <div class="tab-head"><div class="ttl">Прогресс</div></div>
+  <div class="seg" id="seg-progress">
+    <span class="on" data-pane="p-stats">Статистика</span><span data-pane="p-ach">Достижения</span><span data-pane="p-tasks">Задания</span>
+  </div>
+  <div class="body">
+    <div class="pane" id="p-stats">
+      <div class="pr-hero"><div class="n">17,4%</div><div class="t">города<br>открыто</div></div>
+      <div class="pr-grid">
+        <div class="pr-stat"><div class="v">23</div><div class="c">прогулок всего</div></div>
+        <div class="pr-stat"><div class="v">86 км</div><div class="c">пройдено всего</div></div>
+        <div class="pr-stat"><div class="v">4 дня</div><div class="c">текущая серия</div></div>
+        <div class="pr-stat"><div class="v">8</div><div class="c">достижений</div></div>
+        <div class="pr-stat"><div class="v">3</div><div class="c">заданий выполнено</div></div>
+        <div class="pr-stat"><div class="v">2</div><div class="c">региона посещено</div></div>
+      </div>
+      <div class="nl-row"><span>Максимальная серия</span><b>6 дней</b></div>
+      <div class="nl-row"><span>В среднем за прогулку</span><b>3,7 км</b></div>
+      <div class="nl-row"><span>Среднее время прогулки</span><b>38 мин</b></div>
+    </div>
+    <div class="pane" id="p-ach" style="display:none">
+      <div class="sec-l sec-head" data-collapse="ach-open">Полученные · <span id="ach-open-n">8</span> <span>▾</span></div>
+      <div id="ach-open"></div>
+      <div class="sec-l sec-head" data-collapse="ach-lock">Неполученные · <span id="ach-lock-n">32</span> <span>▾</span></div>
+      <div id="ach-lock"></div>
+    </div>
+    <div class="pane" id="p-tasks" style="display:none">
+      <div class="task-note">Задания помогут разнообразить вашу прогулку. Их выполнение необязательно :)</div>
+      <div class="tactive" id="active-task">
+        <span class="tlabel">Активное задание</span>
+        <div class="tt">🎨 Пять вещей цвета дня</div>
+        <div class="ts">Найдите 5 вещей фиолетового цвета: знаки, двери, витрины — город полон сюрпризов.</div>
+        <span class="btn-mini cta" style="min-height:44px;display:inline-flex" data-taskdone>Выполнено</span><span class="btn-mini ghostbtn" style="min-height:44px" data-taskdecline>Отказаться</span>
+      </div>
+      <div class="task-actions">
+        <div class="tbtn" data-go="quest-random"><span class="i">🎲</span>Случайное задание</div>
+        <div class="tbtn" data-go="quest-pick6"><span class="i">🃏</span>Выбрать из 6</div>
+      </div>
+      <div class="sec-l">Выполненные · 3</div>
+      <div class="nl-row"><span>🪑 Скамейка с видом</span><b>24 сент</b></div>
+      <div class="nl-row"><span>🏛️ Лицо города</span><b>18 сент</b></div>
+      <div class="nl-row"><span>🏃 Интервалы</span><b>12 сент</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== СЛУЧАЙНОЕ ЗАДАНИЕ ======== -->
+<section class="scr" id="quest-random">
+  <div class="tab-head"><div class="ttl">Случайное задание</div></div>
+  <div class="body" style="display:flex;flex-direction:column">
+    <div class="qcard" id="qcard">
+      <div class="qi">🎨</div>
+      <div class="qt">Пять вещей цвета дня</div>
+      <div class="qs">Найдите 5 вещей одного цвета — сегодня это фиолетовый. Здорово потом составить фотоколлаж на память.</div>
+      <div class="ghostbtn" id="q-again">🎲 Ещё раз</div>
+    </div>
+    <div class="pin-bottom">
+      <div class="cta" id="q-main" data-deal>Вытянуть карту</div>
+      <div class="linkbtn quest-exit">Не сейчас</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== ВЫБОР ИЗ 6 ======== -->
+<section class="scr" id="quest-pick6">
+  <div class="tab-head"><div class="ttl">Выберите задание</div></div>
+  <div class="body" style="display:flex;flex-direction:column">
+    <div class="grid6" id="grid6"></div>
+    <div class="pin-bottom">
+      <div class="cta" data-accept>Принять задание</div>
+      <div class="linkbtn quest-exit">Не сейчас</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== РЕЙТИНГ ======== -->
+<section class="scr" id="rating">
+  <div class="tab-head"><div class="ttl">Рейтинг</div></div>
+  <div class="seg" id="seg-rating"><span class="on" data-pane="r-city">Город</span><span data-pane="r-friends">Друзья</span></div>
+  <div class="body">
+    <div class="pane" id="r-city">
+      <div class="nick-cta" id="nick-cta">
+        <div class="t">Придумайте ник</div>
+        <div class="s">Так вас увидят другие. История передвижений остаётся на устройстве — в рейтинг уходят только ник и цифры.</div>
+        <input class="nick-in" id="nick-in" placeholder="ваш ник" maxlength="20">
+        <div class="cta" id="nick-save">Выбрать ник</div>
+      </div>
+      <div class="lb-row"><span class="lb-rank accv">1</span><span class="lb-name">FogLady</span><span class="lb-val accv">41%</span></div>
+      <div class="lb-row"><span class="lb-rank">2</span><span class="lb-name">walkspb</span><span class="lb-val">38%</span></div>
+      <div class="lb-row me-row" id="me-row" style="display:none"><span class="lb-rank accv">7</span><span class="lb-name"><span id="me-nick"></span><span class="me-chip">вы</span></span><span class="lb-val accv">17%</span></div>
+      <div class="lb-row"><span class="lb-rank">8</span><span class="lb-name">пешеход92</span><span class="lb-val">16%</span></div>
+    </div>
+    <div class="pane" id="r-friends" style="display:none">
+      <div class="empty">
+        <div class="e">👥</div>
+        <div class="t">Пока здесь только вы</div>
+        <div class="s">Пригласите друга по ссылке — сравнивать прогресс веселее вместе.</div>
+        <div class="cta" data-toast="Ссылка-приглашение скопирована">Пригласить друга</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== РЕГИОНЫ ======== -->
+<section class="scr" id="regions">
+  <div class="tab-head"><div class="ttl">Регионы</div></div>
+  <div class="body">
+    <div class="rg-row" data-toast="Карта региона — в следующей итерации"><span class="rg-pct home">17%</span><div><div class="rg-name">Санкт-Петербург и Ленобласть</div><div class="rg-sub">домашний регион · 21 прогулка</div></div></div>
+    <div class="rg-row" data-toast="Карта региона — в следующей итерации"><span class="rg-pct">4%</span><div><div class="rg-name">Псков и область</div><div class="rg-sub">2 прогулки</div></div></div>
+    <div class="rg-row" data-toast="Карта региона — в следующей итерации"><span class="rg-pct">1%</span><div><div class="rg-name">Москва</div><div class="rg-sub">1 прогулка</div></div></div>
+  </div>
+</section>
+
+<!-- ======== ПЛАНИРОВЩИК ======== -->
+<section class="scr" id="planner">
+  <div class="tab-head"><div class="ttl">Планировщик</div></div>
+  <div class="body" style="display:flex;flex-direction:column">
+    <div class="pl-row"><span>📅</span><div><div class="when">Завтра, 12:00</div><div class="cap">напомним в 11:45</div></div><span class="del" data-del>✕</span></div>
+    <div class="addform" id="pl-add" style="flex-direction:column">
+      <div class="daychips" id="pl-days">
+        <span class="daychip">Пн</span><span class="daychip">Вт</span><span class="daychip">Ср</span><span class="daychip">Чт</span><span class="daychip">Пт</span><span class="daychip">Сб</span><span class="daychip">Вс</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="time" id="pl-time" value="12:00">
+        <span class="pm" id="pl-save" style="width:auto;padding:0 18px;font-size:14px;font-weight:700">OK</span>
+      </div>
+    </div>
+    <div class="pin-bottom"><div class="cta" id="pl-open">＋ Запланировать прогулку</div></div>
+  </div>
+</section>
+
+<!-- ======== ПРОФИЛЬ ======== -->
+<section class="scr" id="profile">
+  <div class="tab-head"><div class="ttl">Профиль</div></div>
+  <div class="body">
+    <div style="display:flex;align-items:center;gap:14px;padding:6px 4px 14px"><div class="avatar">🚶</div><div><div class="h-head" id="prof-name" style="font-size:17px;color:var(--headline)">Без ника</div><div class="cap" id="prof-rating-cap" style="margin-top:2px">в рейтинге не участвуете</div></div></div>
+    <div class="grp">
+      <div class="pr-row tapt" id="prof-nick-row"><span class="k">Ник в рейтинге</span><span class="pill" id="prof-nick-pill">не задан →</span></div>
+      <div class="pr-row"><span class="k">Участие в рейтинге</span><span class="pill on" data-togglepill>вкл</span></div>
+      <div class="pr-row tapt" data-go="goal"><span class="k">Моя цель</span><span class="pill" id="prof-goal-pill">3 прогулки/нед →</span></div>
+      <div class="pr-row tapt" data-go="regions"><span class="k">Мои регионы</span><span class="pill">2 →</span></div>
+      <div class="pr-row"><span class="k">Перенос прогресса</span><span class="pill" data-toast="Экспорт файла — в разработке">экспорт →</span></div>
+    </div>
+    <div class="sec-l">О приложении</div>
+    <div class="grp">
+      <div class="pr-row"><span class="k">Обратная связь</span><span class="pill" data-toast="Форма обратной связи — в разработке">→</span></div>
+      <div class="pr-row"><span class="k">Политика конфиденциальности</span><span class="pill" data-toast="Документ — в разработке">→</span></div>
+      <div class="pr-row"><span class="k">Версия</span><span class="pill">1.0</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== НАСТРОЙКИ ======== -->
+<section class="scr" id="settings">
+  <div class="tab-head"><div class="ttl">Настройки</div></div>
+  <div class="body">
+    <div class="sec-l" style="margin-top:4px">Цель</div>
+    <div class="grp">
+      <div class="pr-row tapt" data-go="goal"><span class="k">Цель</span><span class="pill on" id="set-goal-pill">3 прогулки/нед →</span></div>
+    </div>
+    <div class="sec-l">Прогулки</div>
+    <div class="grp">
+      <div class="pr-row"><span class="k">Режим по умолчанию</span><span class="pill on" data-cycle="пешком|вело">пешком</span></div>
+      <div class="pr-row"><span class="k">Кнопка «Задание» на прогулке</span><span class="pill on" data-cycle="показывать|выкл">показывать</span></div>
+      <div class="pr-row"><span class="k">Автопауза и напоминание</span><span class="pill on" data-togglepill>вкл</span></div>
+      <div class="pr-row"><span class="k">Автозавершение при заряде батареи</span><span class="pill on" data-cycle="при 10%|при 15%">при 10%</span></div>
+    </div>
+    <div class="sec-l">Уведомления</div>
+    <div class="grp">
+      <div class="pr-row"><span class="k">Напоминания по цели</span><span class="pill on" data-togglepill>вкл</span></div>
+      <div class="pr-row"><span class="k">Запланированные прогулки</span><span class="pill on" data-togglepill>вкл</span></div>
+      <div class="pr-row"><span class="k">Во время прогулки</span><span class="pill on" data-togglepill>вкл</span></div>
+    </div>
+    <div class="sec-l">Внешний вид</div>
+    <div class="grp">
+      <div class="pr-row"><span class="k">Тема</span><span class="pill on" id="theme-pill" data-cycle="системная|светлая|тёмная">системная</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== ИЗМЕНЕНИЕ ЦЕЛИ ======== -->
+<section class="scr" id="goal">
+  <div class="tab-head"><div class="ttl">Моя цель</div></div>
+  <div class="body" style="display:flex;flex-direction:column">
+    <div class="txt" style="margin-bottom:14px">От чего отталкиваемся? Число настраивается степпером и меняется в любой момент.</div>
+    <div class="opt sel" data-opt><div class="t">🚶 Прогулок в неделю</div><div class="stepper"><span class="pm" data-step="-1">−</span><span class="val">3</span><span class="pm" data-step="1">＋</span></div></div>
+    <div class="opt" data-opt><div class="t">⏱ Минут в день</div><div class="stepper"><span class="pm" data-step="-5">−</span><span class="val">30</span><span class="pm" data-step="5">＋</span></div></div>
+    <div class="opt" data-opt><div class="t">📏 Километров в день</div><div class="stepper"><span class="pm" data-step="-1">−</span><span class="val">2</span><span class="pm" data-step="1">＋</span></div></div>
+    <div class="pin-bottom"><div class="cta" id="goal-save">Сохранить</div></div>
+  </div>
+</section>
+
+<!-- ======== НИЖНЯЯ НАВИГАЦИЯ ======== -->
+<div class="bnav" id="bnav">
+  <div class="bi on" data-tab="map"><span class="ic">◈</span>Карта</div>
+  <div class="bi" data-tab="progress"><span class="ic">◎</span>Прогресс</div>
+  <div class="bi" data-tab="rating"><span class="ic">▦</span>Рейтинг</div>
+  <div class="bi" data-tab="profile"><span class="ic">◉</span>Профиль</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- диалог замены активного задания -->
+<div class="rmodal" id="replace-modal">
+  <div class="box">
+    <div class="t">У вас уже есть задание</div>
+    <div class="s">Активным может быть только одно: новое заменит текущее. Старое просто снимется — без штрафа.</div>
+    <div class="cta" id="replace-yes">Взять новое</div>
+    <div class="ghostbtn" id="replace-no">Оставить текущее</div>
+  </div>
+</div>
+
+</div></div>
+
+<script>
+const app = document.getElementById('app');
+const tabs = ['map','progress','rating','profile'];
+let hist = [];
+let cur = 'ob1';
+
+function show(id, push=true){
+  if(!document.getElementById(id)) return;
+  if(push && cur && cur!==id) hist.push(cur);
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  cur = id;
+  if(id==='progress') switchPane('seg-progress','p-stats');
+  if(id==='quest-pick6') renderGrid6();
+  document.getElementById('bnav').style.display = tabs.includes(id) ? 'flex' : 'none';
+  document.querySelectorAll('#bnav .bi').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
+  document.getElementById('jump').value = '';
+}
+function back(){ const p = hist.pop(); if(p) show(p,false); }
+
+document.getElementById('jump').addEventListener('change', e=>{ if(e.target.value) show(e.target.value); });
+document.getElementById('btn-back').addEventListener('click', back);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') back(); });
+
+document.getElementById('btn-theme').addEventListener('click', ()=>{
+  app.classList.toggle('light');
+  document.getElementById('theme-pill').textContent = app.classList.contains('light') ? 'светлая' : 'тёмная';
+});
+
+// переходы
+document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click', ()=>{
+  show(el.dataset.go);
+  if(el.dataset.paneGo) switchPane('seg-progress', el.dataset.paneGo);
+}));
+document.querySelectorAll('[data-back]').forEach(el=>el.addEventListener('click', back));
+
+// тост
+let toastT;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+document.querySelectorAll('[data-toast]').forEach(el=>el.addEventListener('click', e=>{
+  if(!el.dataset.go && !el.dataset.back){ toast(el.dataset.toast); }
+  else { toast(el.dataset.toast); }
+}));
+
+// нижняя навигация
+document.querySelectorAll('#bnav .bi').forEach(b=>b.addEventListener('click', ()=>show(b.dataset.tab)));
+
+// сегменты
+function switchPane(segId, paneId){
+  const seg = document.getElementById(segId);
+  seg.querySelectorAll('span').forEach(s=>s.classList.toggle('on', s.dataset.pane===paneId));
+  const scr = seg.closest('.scr');
+  scr.querySelectorAll('.pane').forEach(p=>p.style.display = p.id===paneId ? 'block' : 'none');
+}
+document.querySelectorAll('.seg span').forEach(s=>s.addEventListener('click', ()=>switchPane(s.parentElement.id, s.dataset.pane)));
+
+// тогл режима
+document.querySelectorAll('.mt').forEach(m=>m.addEventListener('click', ()=>{
+  document.querySelectorAll('.mt').forEach(x=>x.classList.remove('on'));
+  m.classList.add('on');
+  toast(m.dataset.mode==='bike' ? 'Режим велопрогулки' : 'Режим пешей прогулки');
+}));
+
+// POI карточки (карта и прогулка): в тумане — не кликабельны, открытые — пульсируют, прочитанные — кольцо
+let questReturn = null;
+function bindPoi(cardId, tId, sId, closeId, zoneSel){
+  const card = document.getElementById(cardId);
+  const zone = document.querySelector(zoneSel);
+  zone.querySelectorAll('.poi-dot').forEach(d=>d.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(d.classList.contains('covered')){ toast('Точка ещё в тумане — дойдите до неё'); return; }
+    document.getElementById(tId).textContent = d.dataset.poi;
+    document.getElementById(sId).textContent = d.dataset.poiTxt;
+    card.style.display = 'block';
+    if(d.classList.contains('open')){ d.classList.remove('open'); d.classList.add('visited'); }
+  }));
+  document.getElementById(closeId).addEventListener('click', ()=>card.style.display='none');
+  zone.addEventListener('click', e=>{ if(e.target===zone||e.target.classList.contains('fog')||e.target.classList.contains('gl')) card.style.display='none'; });
+}
+bindPoi('poi-card','poi-t','poi-s','poi-close','#map .mapzone');
+bindPoi('poi-card2','poi-t2','poi-s2','poi-close2','#walk .mapzone');
+
+// задание из прогулки: запоминаем, что вернуться надо в прогулку
+document.getElementById('qfab-walk').addEventListener('click', ()=>{ questReturn = 'walk'; show('quest-random'); });
+
+// прогулка: пауза/продолжить
+const btnPause = document.getElementById('btn-pause');
+const chip = document.getElementById('walk-chip');
+let paused = false;
+btnPause.addEventListener('click', ()=>{
+  paused = !paused;
+  btnPause.textContent = paused ? 'Продолжить' : 'Пауза';
+  chip.classList.toggle('paused', paused);
+  document.getElementById('walk-chip-t').textContent = paused ? 'На паузе' : 'Идёт запись';
+});
+
+// завершить удержанием
+const btnStop = document.getElementById('btn-stop');
+let holdT;
+function holdStart(e){ e.preventDefault(); btnStop.classList.add('holding'); holdT = setTimeout(()=>{ btnStop.classList.remove('holding'); paused=false; btnPause.textContent='Пауза'; chip.classList.remove('paused'); document.getElementById('walk-chip-t').textContent='Идёт запись'; show('final'); }, 620); }
+function holdEnd(){ btnStop.classList.remove('holding'); clearTimeout(holdT); }
+btnStop.addEventListener('pointerdown', holdStart);
+btnStop.addEventListener('pointerup', holdEnd);
+btnStop.addEventListener('pointerleave', holdEnd);
+
+// задания: выполнено / отказ
+document.querySelector('[data-taskdone]').addEventListener('click', ()=>clearTask('Задание выполнено — так держать!'));
+document.querySelector('[data-taskdecline]').addEventListener('click', ()=>clearTask('Задание снято'));
+
+// принятое задание становится активным во вкладке «Задания» и фиксируется на экране прогулки
+function activateTask(icon, title, desc){
+  const at = document.getElementById('active-task');
+  at.querySelector('.tt').textContent = icon + ' ' + title;
+  at.querySelector('.ts').textContent = desc;
+  at.style.display = 'block';
+  document.getElementById('walk-task-t').textContent = icon + ' ' + title;
+  document.getElementById('walk-task').style.display = 'flex';
+  document.getElementById('qfab-walk').style.display = 'none';
+}
+function clearTask(msg){
+  document.getElementById('active-task').style.display = 'none';
+  document.getElementById('walk-task').style.display = 'none';
+  document.getElementById('qfab-walk').style.display = 'block';
+  if(msg) toast(msg);
+}
+document.getElementById('walk-task-done').addEventListener('click', ()=>clearTask('Задание выполнено — так держать!'));
+// выход из потока заданий: назад в прогулку, если пришли оттуда; иначе — в Прогресс → Задания
+function questLeave(msg){
+  if(msg) toast(msg);
+  const dest = questReturn || 'progress';
+  questReturn = null;
+  qcard.classList.remove('dealt');
+  qMain.textContent = 'Вытянуть карту';
+  show(dest);
+  if(dest==='progress') switchPane('seg-progress','p-tasks');
+}
+document.querySelectorAll('.quest-exit').forEach(b=>b.addEventListener('click', ()=>questLeave()));
+
+// ===== контент из каталога: задания (T1–T22) =====
+const QUEST_COLORS = ['фиолетового','белого','чёрного','красного','жёлтого','синего','голубого','оранжевого','розового','зелёного','коричневого'];
+const TASKS = [
+  {i:'🎨', t:'Пять вещей цвета дня', d:'Найдите 5 вещей COLOR цвета: знаки, двери, витрины — город полон сюрпризов.', color:true},
+  {i:'🏛️', t:'Лицо города', d:'Найдите 3 детали архитектуры, которых раньше не замечали: наличник, дату на фасаде, старую вывеску.'},
+  {i:'🐦', t:'Птичий день', d:'Понаблюдайте за птицами, которые встретятся по пути. Голуби тоже считаются.'},
+  {i:'📚', t:'История рядом', d:'Выберите любое здание по пути и узнайте о нём пару фактов.'},
+  {i:'🐈', t:'Кот района', d:'Встретьте кота: дворового, витринного, гуляющего на поводке — любого. Можно поздороваться.'},
+  {i:'🔝', t:'Второй этаж', d:'Найдите 3 интересные детали выше первых этажей: балконы, карнизы, башенки.'},
+  {i:'🗿', t:'Кому памятник', d:'Найдите памятник или мемориальную доску по пути и узнайте, кем был этот человек.'},
+  {i:'🖼️', t:'Уличное искусство', d:'Найдите мурал, граффити или просто необычно оформленную стену.'},
+  {i:'👃', t:'Запахи города', d:'Поймайте 3 разных запаха за прогулку: выпечка, дождь, скошенная трава.'},
+  {i:'🔁', t:'Кольцевая', d:'Вернитесь домой другой дорогой, не повторяя путь туда.'},
+  {i:'🌉', t:'Мост', d:'Перейдите любой мост по пути — над водой, путями или дорогой.'},
+  {i:'🪧', t:'Именная улица', d:'Пройдите по улице, названной в честь человека, и узнайте, кем он был.'},
+  {i:'🤫', t:'Тихий двор', d:'Найдите двор, где заметно тише, чем на улице. Постойте там минуту.'},
+  {i:'🪙', t:'Монетка', d:'На трёх перекрёстках подряд выбирайте направление наугад. Куда заведёт?'},
+  {i:'🔥', t:'К огню', d:'Дойдите до ближайшего путеводного огня на карте и прочтите его историю.'},
+  {i:'🏃', t:'Интервалы', d:'3 раза смените шаг на быстрый — по 1–2 минуте. Между ними обычный темп.'},
+  {i:'🐌', t:'Замедление', d:'Пройдите 5 минут заметно медленнее обычного. Смотрите по сторонам.'},
+  {i:'⚡', t:'Быстрые десять', d:'10 минут бодрого шага — быстрее обычного, но без бега.'},
+  {i:'💬', t:'Тёплое слово', d:'Сделайте комплимент прохожему или продавцу. Искренне.'},
+  {i:'🎧', t:'Без наушников', d:'Пройдите 10 минут без музыки. Послушайте город.'},
+  {i:'📵', t:'Экран вниз', d:'Пройдите 15 минут, не доставая телефон. Туман сам расступится.'},
+  {i:'🪑', t:'Скамейка с видом', d:'Найдите скамейку в приятном месте и посидите 5 минут. Просто так.'}
+];
+function mkTask(idx){
+  const src = TASKS[idx];
+  const d = src.color ? src.d.replace('COLOR', QUEST_COLORS[Math.floor(Math.random()*QUEST_COLORS.length)]) : src.d;
+  return {idx, i:src.i, t:src.t, d};
+}
+function drawTask(excludeIdx){
+  let idx;
+  do { idx = Math.floor(Math.random()*TASKS.length); } while(idx===excludeIdx && TASKS.length>1);
+  return mkTask(idx);
+}
+
+// случайное задание: раздача из пула
+const qcard = document.getElementById('qcard');
+const qMain = document.getElementById('q-main');
+let currentDeal = null;
+function fillQcard(q){
+  qcard.querySelector('.qi').textContent = q.i;
+  qcard.querySelector('.qt').textContent = q.t;
+  qcard.querySelector('.qs').textContent = q.d;
+}
+qMain.addEventListener('click', ()=>{
+  if(!qcard.classList.contains('dealt')){
+    currentDeal = drawTask(currentDeal ? currentDeal.idx : -1);
+    fillQcard(currentDeal);
+    qcard.classList.add('dealt');
+    qMain.textContent = 'Принять задание';
+  } else {
+    offerQuest(currentDeal);
+  }
+});
+document.getElementById('q-again').addEventListener('click', ()=>{
+  currentDeal = drawTask(currentDeal ? currentDeal.idx : -1);
+  qcard.classList.remove('dealt');
+  setTimeout(()=>{ fillQcard(currentDeal); qcard.classList.add('dealt'); }, 180);
+});
+
+// выбор из 6: случайные 6 из пула при каждом открытии
+let pick6 = [];
+function renderGrid6(){
+  const pool = TASKS.map((_,n)=>n);
+  pick6 = [];
+  while(pick6.length<6) pick6.push(mkTask(pool.splice(Math.floor(Math.random()*pool.length),1)[0]));
+  const g = document.getElementById('grid6');
+  g.innerHTML = pick6.map((q,n)=>'<div class="g6'+(n===0?' sel':'')+'" data-n="'+n+'"><div class="i">'+q.i+'</div><div class="t">'+q.t+'</div><div class="dsc">'+q.d+'</div></div>').join('');
+  g.querySelectorAll('.g6').forEach(x=>x.addEventListener('click', ()=>{
+    g.querySelectorAll('.g6').forEach(y=>y.classList.remove('sel'));
+    x.classList.add('sel');
+  }));
+}
+document.querySelector('[data-accept]').addEventListener('click', ()=>{
+  const sel = document.querySelector('#grid6 .g6.sel');
+  offerQuest(pick6[+sel.dataset.n]);
+});
+
+// замена активного задания: подтверждение, прежнее снимается без штрафа
+let pendingQuest = null;
+function offerQuest(q){
+  if(document.getElementById('active-task').style.display !== 'none'){
+    pendingQuest = q;
+    document.getElementById('replace-modal').classList.add('show');
+  } else {
+    activateTask(q.i, q.t, q.d);
+    questLeave('Задание принято');
+  }
+}
+document.getElementById('replace-yes').addEventListener('click', ()=>{
+  document.getElementById('replace-modal').classList.remove('show');
+  activateTask(pendingQuest.i, pendingQuest.t, pendingQuest.d);
+  pendingQuest = null;
+  questLeave('Задание принято — прежнее снято');
+});
+document.getElementById('replace-no').addEventListener('click', ()=>{
+  document.getElementById('replace-modal').classList.remove('show');
+  pendingQuest = null;
+});
+
+// ===== достижения (40 из каталога): полученные и неполученные =====
+const ACH = [
+  {i:'🌱', t:'Первый шаг', d:'откройте первый участок тумана', got:1},
+  {i:'🧭', t:'Картограф', d:'откройте 10% своего города', got:1},
+  {i:'🏙️', t:'Знаток района', d:'откройте 25% своего города', p:70},
+  {i:'🏘️', t:'Свой человек', d:'откройте 50% своего города', p:35},
+  {i:'🏰', t:'Почти весь город', d:'откройте 70% своего города', p:25},
+  {i:'👑', t:'Хозяин города', d:'откройте 90% своего города', p:19},
+  {i:'🌳', t:'Исследователь пригорода', d:'прогулки в 2+ населённых пунктах области', p:50},
+  {i:'🎶', t:'Районы-кварталы', d:'полностью откройте один район города', p:60},
+  {i:'🗺️', t:'Два района', d:'полностью откройте 2 района'},
+  {i:'🏆', t:'Три района', d:'полностью откройте 3 района'},
+  {i:'💡', t:'Путеводный огонь', d:'откройте карточку первой точки интереса', got:1},
+  {i:'🔦', t:'Коллекционер огней', d:'прочитайте 10 точек интереса', p:40},
+  {i:'✨', t:'Тридцать огней', d:'прочитайте 30 точек интереса', p:13},
+  {i:'📖', t:'Все истории города', d:'прочитайте все точки интереса региона', p:8},
+  {i:'🌲', t:'Частичка природы', d:'посетите 1 парк'},
+  {i:'🌲🌲', t:'Натуралист', d:'посетите 3 разных парка', p:33},
+  {i:'🔥', t:'Три подряд', d:'серия 3 дня', got:1},
+  {i:'📅', t:'Неделька', d:'серия 7 дней', p:86},
+  {i:'🗓️', t:'Две недели', d:'серия 14 дней', p:43},
+  {i:'🌟', t:'Месяц в строю', d:'серия 30 дней', p:20},
+  {i:'🌅', t:'Ранняя птица', d:'прогулка, начатая до 8:00'},
+  {i:'🦉', t:'Полуночник', d:'прогулка, начатая после 22:00'},
+  {i:'🥪', t:'Обеденный перерыв', d:'прогулка в будний день между 12:00 и 14:00'},
+  {i:'👟', t:'Первые пять', d:'5 км суммарно', got:1},
+  {i:'🎽', t:'Марафонец', d:'42 км суммарно', got:1},
+  {i:'🚂', t:'Сотня', d:'100 км суммарно', p:86},
+  {i:'⏱️', t:'Хороший темп', d:'одна прогулка длиннее 45 минут'},
+  {i:'⌛', t:'Долгая прогулка', d:'одна прогулка длиннее 90 минут'},
+  {i:'🚲', t:'Ветер в волосах', d:'первая велопрогулка'},
+  {i:'🌄', t:'Дважды за день', d:'две прогулки в один день'},
+  {i:'💛', t:'Любимая тропа', d:'прогулка от 1 км по уже открытому месту'},
+  {i:'🎲', t:'Азарт', d:'примите первое задание', got:1},
+  {i:'✅', t:'Слово держу', d:'выполните 5 заданий', p:60},
+  {i:'🃏', t:'Старательный', d:'выполните 15 заданий', p:20},
+  {i:'🪪', t:'В строю', d:'вступите в рейтинг (задайте ник)'},
+  {i:'🤝', t:'Вместе весело шагать', d:'друг принял приглашение'},
+  {i:'🧳', t:'Гость', d:'прогулка в новом регионе', got:1},
+  {i:'🥾', t:'Освоение', d:'откройте 10% любого другого региона', p:40},
+  {i:'🌍', t:'След на карте', d:'прогулки в 3 регионах', p:66},
+  {i:'🧭', t:'Путешественник', d:'прогулки в 5 регионах', p:40}
+];
+function renderAch(){
+  const open = ACH.filter(a=>a.got), lock = ACH.filter(a=>!a.got);
+  document.getElementById('ach-open').innerHTML = open.map(a=>
+    '<div class="aitem"><div class="ic">'+a.i+'</div><div><div class="tt">'+a.t+'</div><div class="ts">'+a.d+'</div></div></div>').join('');
+  document.getElementById('ach-lock').innerHTML = lock.map(a=>
+    '<div class="aitem lock"><div class="ic">'+a.i+'</div><div style="flex:1"><div class="tt">'+a.t+'</div><div class="ts">'+a.d+'</div>'+
+    (a.p ? '<div class="pbar"><i style="width:'+a.p+'%"></i></div>' : '')+'</div></div>').join('');
+  document.getElementById('ach-open-n').textContent = open.length;
+  document.getElementById('ach-lock-n').textContent = lock.length;
+}
+renderAch();
+
+// сворачиваемые секции достижений
+document.querySelectorAll('[data-collapse]').forEach(h=>h.addEventListener('click', ()=>{
+  const t = document.getElementById(h.dataset.collapse);
+  t.style.display = t.style.display==='none' ? 'block' : 'none';
+}));
+
+// ник: сохранение обновляет рейтинг и профиль
+document.getElementById('nick-save').addEventListener('click', ()=>{
+  const v = document.getElementById('nick-in').value.trim();
+  if(!v){ toast('Введите ник'); return; }
+  document.getElementById('me-nick').textContent = v;
+  document.getElementById('me-row').style.display = 'flex';
+  document.getElementById('nick-cta').style.display = 'none';
+  document.getElementById('prof-name').textContent = v;
+  document.getElementById('prof-rating-cap').textContent = 'в рейтинге · участие вкл';
+  const np = document.getElementById('prof-nick-pill');
+  np.textContent = v; np.classList.add('on');
+  toast('Ник сохранён — добро пожаловать в рейтинг');
+});
+// строка ника в профиле: не задан — ведём в рейтинг; задан — смена позже
+document.getElementById('prof-nick-row').addEventListener('click', ()=>{
+  if(document.getElementById('prof-nick-pill').classList.contains('on')) toast('Смена ника появится в следующих обновлениях');
+  else show('rating');
+});
+
+// пилюли-переключатели вкл/выкл
+document.querySelectorAll('[data-togglepill]').forEach(p=>p.addEventListener('click', ()=>{
+  p.textContent = p.classList.toggle('on') ? 'вкл' : 'выкл';
+}));
+
+// степперы и опции
+document.querySelectorAll('.pm').forEach(pm=>pm.addEventListener('click', e=>{
+  e.stopPropagation();
+  const v = pm.parentElement.querySelector('.val');
+  v.textContent = Math.max(1, parseInt(v.textContent) + parseInt(pm.dataset.step));
+}));
+document.querySelectorAll('[data-opt]').forEach(o=>o.addEventListener('click', ()=>{
+  o.parentElement.querySelectorAll('[data-opt]').forEach(x=>x.classList.remove('sel'));
+  o.classList.add('sel');
+}));
+
+// удаление в планировщике
+document.querySelectorAll('[data-del]').forEach(d=>d.addEventListener('click', ()=>{ d.closest('.pl-row').remove(); toast('Прогулка удалена из плана'); }));
+
+// планировщик: добавление
+document.getElementById('pl-open').addEventListener('click', ()=>document.getElementById('pl-add').classList.toggle('show'));
+// планировщик: выбор дня недели (как в будильнике) + время
+document.querySelectorAll('#pl-days .daychip').forEach(c=>c.addEventListener('click', ()=>{
+  document.querySelectorAll('#pl-days .daychip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+}));
+document.getElementById('pl-save').addEventListener('click', ()=>{
+  const day = document.querySelector('#pl-days .daychip.on');
+  const t = document.getElementById('pl-time').value;
+  if(!day){ toast('Выберите день недели'); return; }
+  const row = document.createElement('div');
+  row.className = 'pl-row';
+  row.innerHTML = '<span>📅</span><div><div class="when">' + day.textContent + ', ' + t + '</div><div class="cap">каждую неделю · напомним за 15 минут</div></div><span class="del">✕</span>';
+  row.querySelector('.del').addEventListener('click', ()=>{ row.remove(); toast('Прогулка удалена из плана'); });
+  document.querySelector('#planner .body').insertBefore(row, document.getElementById('pl-add'));
+  document.getElementById('pl-add').classList.remove('show');
+  toast('Прогулка запланирована');
+});
+
+// пилюли с циклическим выбором (режим, батарея, тема)
+function applyTheme(mode){
+  const wantLight = mode==='светлая' || (mode==='системная' && window.matchMedia('(prefers-color-scheme: light)').matches);
+  app.classList.toggle('light', wantLight);
+}
+document.querySelectorAll('[data-cycle]').forEach(p=>p.addEventListener('click', ()=>{
+  const opts = p.dataset.cycle.split('|');
+  const next = opts[(opts.indexOf(p.textContent)+1) % opts.length];
+  p.textContent = next;
+  p.classList.toggle('on', next!=='выкл');
+  if(p.id==='theme-pill'){ applyTheme(next); toast('Тема: ' + next); }
+}));
+
+// сохранение цели обновляет значение в настройках и профиле
+document.getElementById('goal-save').addEventListener('click', ()=>{
+  const sel = document.querySelector('#goal .opt.sel');
+  const t = sel.querySelector('.t').textContent;
+  const v = sel.querySelector('.val').textContent;
+  let label;
+  if(t.includes('Прогулок')) label = v + ' прогулки/нед →';
+  else if(t.includes('Минут')) label = v + ' мин/день →';
+  else label = v + ' км/день →';
+  document.getElementById('set-goal-pill').textContent = label;
+  document.getElementById('prof-goal-pill').textContent = label;
+  toast('Цель сохранена: ' + label.replace(' →',''));
+  back();
+});
+
+// свайп от левого края — назад (симуляция системного жеста Android)
+const phoneEl = document.querySelector('.phone');
+let swipeX = null;
+phoneEl.addEventListener('pointerdown', e=>{ if(e.clientX - phoneEl.getBoundingClientRect().left < 24) swipeX = e.clientX; });
+phoneEl.addEventListener('pointerup', e=>{ if(swipeX!==null && e.clientX - swipeX > 64) back(); swipeX = null; });
+
+const initH = location.hash.slice(1);
+if(initH.endsWith('~light')){ app.classList.add('light'); document.getElementById('theme-pill').textContent='светлая'; }
+show(initH.replace('~light','') || 'ob1', false);
+</script>
+</body>
+</html>

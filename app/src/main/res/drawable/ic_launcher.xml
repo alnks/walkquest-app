@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Временная иконка scaffold: лавандовый туман (#B29ED1, токен fog) на сливовом фоне (#191423). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#191423"
+        android:pathData="M0,0h48v48h-48z" />
+    <path
+        android:fillColor="#B29ED1"
+        android:pathData="M8,8h32v32h-32z" />
+    <path
+        android:fillColor="#C6E26B"
+        android:pathData="M20,20h8v8h-8z" />
+</vector>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — главный экран, альтернатива «Кладовая карта»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Manrope","Segoe UI",-apple-system,Roboto,Arial,sans-serif; background:#0e0a07; color:#f2e9db; padding:32px 24px; }
+  h1 { font-family:"Russo One",sans-serif; font-size:22px; font-weight:400; letter-spacing:.02em; margin-bottom:4px; }
+  .sub { color:#a89a83; font-size:14px; margin-bottom:28px; max-width:760px; line-height:1.5; }
+  .wrap { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:340px; }
+  .col-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+  .col-desc { font-size:12.5px; color:#a89a83; margin-bottom:12px; line-height:1.5; }
+
+  .phone { border-radius:32px; border:2px solid #3d2e1a; overflow:hidden; background:#17100b; height:640px; display:flex; flex-direction:column; position:relative; }
+
+  /* Карта: тёплая тёмная «бумага», туман = неисследованная земля */
+  .map { position:relative; flex:1; background:linear-gradient(160deg,#1e150c,#251a0f 55%,#1c130b); overflow:hidden; }
+  .contours { position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(35deg, transparent 0 46px, rgba(217,158,78,.10) 46px 48px, transparent 48px 110px),
+      repeating-linear-gradient(-55deg, transparent 0 70px, rgba(217,158,78,.08) 70px 72px, transparent 72px 160px);
+  }
+  .foglayer { position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(14,10,7,.55), transparent 60%),
+      radial-gradient(circle at 75% 70%, rgba(14,10,7,.5), transparent 55%),
+      rgba(20,14,9,.72);
+  }
+  /* Открытые участки: «свет костра» — тёплое золотое свечение */
+  .revealed { position:absolute; border-radius:50%;
+    background:radial-gradient(circle, rgba(245,158,11,.22) 0%, rgba(245,158,11,.10) 55%, transparent 72%);
+    box-shadow:0 0 34px 6px rgba(245,158,11,.16) inset;
+  }
+  .revealed::after { content:""; position:absolute; inset:18%; border-radius:50%;
+    border:1px dashed rgba(245,178,77,.35); }
+  .poi-dot { position:absolute; width:9px; height:9px; border-radius:50%; background:#f59e0b; box-shadow:0 0 10px rgba(245,158,11,.9); }
+  .poi-dot.rare { background:#a78bfa; box-shadow:0 0 10px rgba(167,139,250,.9); }
+  .me { position:absolute; width:14px; height:14px; border-radius:50%; background:#f2e9db; border:3px solid #d97706; box-shadow:0 0 14px rgba(245,158,11,.55); }
+
+  .topbar { position:absolute; top:0; left:0; right:0; padding:14px; display:flex; justify-content:space-between; align-items:center; z-index:5; }
+  .icon-btn { width:34px; height:34px; border-radius:50%; background:rgba(29,20,12,.9); color:#d8c7a8; display:flex; align-items:center; justify-content:center; font-size:16px; border:1px solid #43321c; }
+
+  #modecheck { display:none; }
+  .mode-toggle { display:flex; background:rgba(29,20,12,.9); border-radius:999px; padding:3px; border:1px solid #43321c; cursor:pointer; user-select:none; }
+  .mt { width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px; border-radius:50%; color:#a89a83; transition:background .25s,color .25s; }
+  .phone:has(#modecheck:not(:checked)) .mt-walk { background:#f59e0b; color:#241703; }
+  .phone:has(#modecheck:checked) .mt-bike { background:#f59e0b; color:#241703; }
+
+  .rider { position:absolute; top:20px; left:56px; display:flex; align-items:center; gap:7px; pointer-events:none; opacity:0; z-index:4; }
+  .rider .icon { font-size:20px; }
+  .rider-bike .icon { transform:scaleX(-1); }
+  .rider .lbl { font-size:11.5px; color:#f2e9db; background:rgba(23,16,11,.92); padding:5px 10px; border-radius:999px; white-space:nowrap; border:1px solid #43321c; }
+  .phone:has(#modecheck:checked) .rider-bike { animation:ride 2.4s ease forwards; }
+  .phone:has(#modecheck:not(:checked)) .rider-walk { animation:ride 2.4s ease forwards; }
+  @keyframes ride { 0%{opacity:0;transform:translateX(180px)} 12%{opacity:1} 80%{opacity:1} 100%{opacity:0;transform:translateX(0)} }
+
+  /* Шторка */
+  .sheet { background:rgba(24,17,10,.95); border-top:1px solid #3d2e1a; border-radius:20px 20px 0 0; padding:10px 16px 12px; z-index:6; position:relative; }
+  .sheet-grab { width:36px; height:4px; border-radius:999px; background:#4d3a20; margin:0 auto 10px; }
+  .statline { display:flex; justify-content:space-between; font-size:12px; color:#a89a83; padding:2px 6px 0; }
+  .statline b { color:#f5b24d; font-family:"Russo One",sans-serif; font-weight:400; font-size:13px; }
+  .plan-card { margin-top:10px; display:flex; align-items:center; gap:10px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.28); border-radius:12px; padding:9px 12px; font-size:12.5px; color:#ecd9ae; }
+  .plan-card .plus { margin-left:auto; color:#f59e0b; font-weight:700; font-size:15px; }
+  .cta-wide { margin-top:10px; background:linear-gradient(180deg,#f5a623,#d97706); color:#241703; font-family:"Russo One",sans-serif; font-weight:400; font-size:15px; letter-spacing:.03em; text-align:center; padding:14px; border-radius:14px; }
+  .bottomnav { display:flex; justify-content:space-around; padding:10px 8px 16px; background:#120c07; font-size:10.5px; color:#8f8168; position:relative; z-index:7; }
+  .bottomnav .on { color:#f5b24d; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:16px; display:block; margin-bottom:3px; }
+
+  /* Легенда палитры */
+  .legend { width:300px; }
+  .swatches { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .sw { border-radius:10px; border:1px solid #3d2e1a; overflow:hidden; }
+  .sw .chip { height:44px; }
+  .sw .nm { font-size:11px; padding:6px 8px; color:#d8c7a8; background:#17100b; }
+  .sw .hx { font-size:10px; color:#a89a83; padding:0 8px 6px; background:#17100b; }
+  .type-sample { margin-top:16px; background:#17100b; border:1px solid #3d2e1a; border-radius:12px; padding:14px; }
+  .type-sample .hero { font-family:"Russo One",sans-serif; font-size:34px; color:#f5b24d; }
+  .type-sample .body { font-size:13px; color:#d8c7a8; margin-top:6px; line-height:1.5; }
+</style>
+</head>
+<body>
+<h1>Главный экран — альтернатива «Кладовая карта»</h1>
+<p class="sub">Та же структура, что и v4 (карта + шторка, тогл режима, чипы, планер, CTA). Меняется только визуальный язык: янтарное золото вместо фисташкового, тёплая тёмная «бумага» вместо лаванды, Russo One для цифр и заголовков, Manrope для текста. Фиолет — только для редких точек интереса.</p>
+
+<div class="wrap">
+<div class="col">
+  <div class="col-name">Кликните тогл 🚶/🚲</div>
+  <div class="col-desc">Активный режим подсвечен золотым; при переключении проезжает велосипед или проходит пешеход с подписью режима.</div>
+  <div class="phone">
+    <input type="checkbox" id="modecheck">
+    <div class="map">
+      <div class="contours"></div>
+      <div class="foglayer"></div>
+      <div class="revealed" style="width:130px;height:130px;left:38%;top:24%"></div>
+      <div class="revealed" style="width:86px;height:86px;left:52%;top:38%"></div>
+      <div class="poi-dot" style="left:28.5%;top:24%"></div>
+      <div class="poi-dot rare" style="left:74.5%;top:56%"></div>
+      <div class="me" style="left:52%;top:41%"></div>
+      <div class="topbar">
+        <label class="mode-toggle" for="modecheck">
+          <span class="mt mt-walk">🚶</span><span class="mt mt-bike">🚲</span>
+        </label>
+        <span class="icon-btn">⚙</span>
+      </div>
+      <div class="rider rider-bike"><span class="icon">🚲</span><span class="lbl">Режим велопрогулки</span></div>
+      <div class="rider rider-walk"><span class="icon">🚶</span><span class="lbl">Режим пешей прогулки</span></div>
+    </div>
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="statline"><span><b>17%</b> открыто</span><span><b>4 дня</b> серия</span><span><b>12,4 км</b> за неделю</span></div>
+      <div class="plan-card">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide">Начать прогулку</div>
+    </div>
+    <div class="bottomnav">
+      <div class="bn-item on"><span class="bn-ico">◈</span>Карта</div>
+      <div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div>
+      <div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div>
+      <div class="bn-item"><span class="bn-ico">◉</span>Профиль</div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="col-name">Токены направления</div>
+  <div class="col-desc">Фон тёплый тёмный; золото — главный акцент и «свет» открытых участков; фиолет дозированно, для редкого.</div>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#17100b"></div><div class="nm">Фон карты</div><div class="hx">#17100B</div></div>
+    <div class="sw"><div class="chip" style="background:#f59e0b"></div><div class="nm">Золото / CTA</div><div class="hx">#F59E0B</div></div>
+    <div class="sw"><div class="chip" style="background:#d97706"></div><div class="nm">Янтарь</div><div class="hx">#D97706</div></div>
+    <div class="sw"><div class="chip" style="background:#a78bfa"></div><div class="nm">Редкий фиолет</div><div class="hx">#A78BFA</div></div>
+    <div class="sw"><div class="chip" style="background:#f2e9db"></div><div class="nm">Текст основной</div><div class="hx">#F2E9DB</div></div>
+    <div class="sw"><div class="chip" style="background:#a89a83"></div><div class="nm">Текст приглуш.</div><div class="hx">#A89A83</div></div>
+  </div>
+  <div class="type-sample">
+    <div class="hero">17%</div>
+    <div class="body">Russo One — дисплейный, нативная кириллица, «игровой» характер. Обычный текст — Manrope, нейтральный и хорошо читаемый на ходу.</div>
+  </div>
+</div>
+</div>
+</body>
+</html>

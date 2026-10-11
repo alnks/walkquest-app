@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — карта, прогулка, финал (тёмная + светлая)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;1000&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"DM Sans","Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#efeaf7; padding:32px 24px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
+  h2 { font-size:16px; margin:34px 0 12px; color:#c9bade; }
+  .sub { color:#9d92b3; font-size:14px; margin-bottom:24px; max-width:820px; line-height:1.5; }
+  .wrap { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:272px; }
+  .col-name { font-size:13px; font-weight:600; margin-bottom:8px; }
+  .phone { border-radius:26px; overflow:hidden; height:540px; display:flex; flex-direction:column; position:relative; }
+
+  .d { background:#191423; color:#EFEAf7; border:2px solid #3a2f52; }
+  .d .dim { color:#8D83A6; }
+  .d .accent { color:#C6E26B; }
+  .d .accent-bg { background:#C6E26B; color:#22290A; }
+  .d .mapzone { background:linear-gradient(160deg,#241C36,#2C2240 55%,#231A33); }
+  .d .gl { background: repeating-linear-gradient(35deg, transparent 0 46px, rgba(178,158,209,.10) 46px 48px, transparent 48px 110px), repeating-linear-gradient(-55deg, transparent 0 70px, rgba(178,158,209,.08) 70px 72px, transparent 72px 160px); }
+  .d .fog { background:rgba(178,158,209,.30); }
+  .d .revealed { background:#241C36; }
+  .d .sheet { background:rgba(30,23,45,.96); }
+  .d .card { background:#231B33; border:1px solid #342A4D; }
+  .d .grab { background:#4A3F66; }
+  .d .bnav { background:#141020; color:#8D83A6; }
+  .d .bnav .on { color:#C6E26B; }
+  .d .icon-btn { background:rgba(35,27,51,.88); border:1px solid #342A4D; }
+  .d .icon-btn svg { stroke:#C9BADE; }
+  .d .tgl { background:rgba(35,27,51,.88); border:1px solid #342A4D; }
+  .d .mt.on { background:#EFEAf7; border:2px solid #C6E26B; }
+  .d .plan { background:rgba(198,226,107,.08); border:1px solid rgba(198,226,107,.25); color:#D9E8B0; }
+  .d .hairline { border-color:#2C2248; }
+  .l { background:#F6F3FA; color:#241C33; border:2px solid #d3cbe6; }
+  .l .dim { color:#6E6384; }
+  .l .accent { color:#587110; }
+  .l .accent-bg { background:#FFFFFF; color:#587110; border:1.5px solid #587110; }
+  .l .mapzone { background:linear-gradient(160deg,#E3DCF0,#D5CBE8); }
+  .l .gl { background: repeating-linear-gradient(35deg, transparent 0 46px, rgba(90,70,130,.10) 46px 48px, transparent 48px 110px), repeating-linear-gradient(-55deg, transparent 0 70px, rgba(90,70,130,.08) 70px 72px, transparent 72px 160px); }
+  .l .fog { background:rgba(178,158,209,.40); }
+  .l .revealed { background:#EDE7F7; }
+  .l .sheet { background:rgba(255,255,255,.95); }
+  .l .card { background:#FFFFFF; border:1px solid #E6DFF2; }
+  .l .grab { background:#D9D0EA; }
+  .l .bnav { background:#FBF9FD; color:#6E6384; border-top:1px solid #E6DFF2; }
+  .l .bnav .on { color:#587110; }
+  .l .icon-btn { background:rgba(255,255,255,.85); border:1px solid #E6DFF2; }
+  .l .icon-btn svg { stroke:#5C506E; }
+  .l .tgl { background:rgba(255,255,255,.92); border:1px solid #E6DFF2; }
+  .l .mt.on { background:#FFFFFF; border:2px solid #7A9A1F; }
+  .l .plan { background:rgba(122,154,31,.08); border:1px solid rgba(122,154,31,.3); color:#556B14; }
+  .l .hairline { border-color:#EFEAf6; }
+
+  .mapzone { position:relative; flex:1; overflow:hidden; }
+  .gl { position:absolute; inset:0; }
+  .fog { position:absolute; inset:0; }
+  .revealed { position:absolute; border-radius:50%; }
+  .poi-dot { position:absolute; width:8px; height:8px; border-radius:50%; }
+  .d .poi-dot { background:#C6E26B; box-shadow:0 0 9px rgba(198,226,107,.8); }
+  .l .poi-dot { background:#7A9A1F; box-shadow:0 0 8px rgba(122,154,31,.6); }
+  .me { position:absolute; width:14px; height:14px; border-radius:50%; border:3px solid #9379E0; }
+  .d .me { background:#EFEAf7; box-shadow:0 0 12px rgba(239,234,247,.6); }
+  .l .me { background:#fff; box-shadow:0 0 10px rgba(60,40,110,.35); }
+  .topbar { position:absolute; top:0; left:0; right:0; padding:13px; display:flex; justify-content:space-between; align-items:center; z-index:5; }
+  .tgl { display:flex; border-radius:999px; padding:3px; }
+  .mt { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:14px; border-radius:50%; }
+  .icon-btn { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .icon-btn svg { width:15px; height:15px; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .sheet { border-radius:20px 20px 0 0; padding:10px 14px 12px; position:relative; z-index:6; }
+  .grab { width:36px; height:4px; border-radius:999px; margin:0 auto 10px; }
+  .statline { display:flex; padding:2px 4px 0; }
+  .statcol { flex:1; text-align:center; }
+  .statcol .v { font-family:"Nunito",sans-serif; font-weight:800; font-size:14px; }
+  .statcol .cap { font-size:10px; margin-top:1px; }
+  .plan { margin-top:10px; display:flex; align-items:center; gap:10px; border-radius:12px; padding:9px 12px; font-size:12px; }
+  .plan .plus { margin-left:auto; font-weight:700; font-size:15px; }
+  .cta-wide { margin-top:10px; font-weight:700; font-size:14.5px; text-align:center; padding:13px; border-radius:14px; }
+  .bnav { display:flex; justify-content:space-around; padding:9px 8px 13px; font-size:9.5px; }
+  .bn-item { text-align:center; }
+  .bn-ico { font-size:14px; display:block; margin-bottom:2px; }
+  .live { position:absolute; top:13px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:7px; font-size:11px; padding:6px 12px; border-radius:999px; white-space:nowrap; }
+  .d .live { background:rgba(25,20,35,.88); color:#C6E26B; border:1px solid #342A4D; }
+  .l .live { background:rgba(255,255,255,.92); color:#556B14; border:1px solid #E6DFF2; }
+  .live-dot { width:7px; height:7px; border-radius:50%; }
+  .d .live-dot { background:#C6E26B; box-shadow:0 0 7px #C6E26B; }
+  .l .live-dot { background:#7A9A1F; box-shadow:0 0 7px rgba(122,154,31,.6); }
+  .d .paused { color:#B3A6C9; }
+  .l .paused { color:#5C506E; }
+  .pause-dot { width:7px; height:7px; border-radius:50%; }
+  .d .pause-dot { background:#8D83A6; }
+  .l .pause-dot { background:#6E6384; }
+  .qfab { position:absolute; right:13px; bottom:13px; font-size:11px; padding:8px 12px; border-radius:999px; }
+  .d .qfab { background:rgba(35,27,51,.9); border:1.5px dashed #6A5B8F; color:#B3A6C9; }
+  .l .qfab { background:rgba(255,255,255,.92); border:1.5px dashed #B6A8D4; color:#5C506E; }
+  .walk-bar { padding:10px 14px 13px; z-index:6; }
+  .d .walk-bar { background:rgba(25,20,35,.96); }
+  .l .walk-bar { background:rgba(255,255,255,.96); }
+  .wstats { display:flex; padding:0 4px 10px; }
+  .wactions { display:flex; gap:10px; }
+  .btn-pause { flex:1.7; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; text-align:center; }
+  .btn-stop { flex:1; padding:12px; border-radius:13px; font-weight:600; font-size:12.5px; text-align:center; align-self:center; }
+  .d .btn-stop { background:transparent; color:#B3A6C9; border:1.5px solid #7564A6; }
+  .l .btn-stop { background:transparent; color:#5C506E; border:1.5px solid #9A86C4; }
+  .whint { font-size:9.5px; text-align:center; margin-top:7px; }
+  .holddemo { margin-top:9px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-stop.holding { overflow:hidden; }
+  .d .btn-stop.holding { background:linear-gradient(90deg, rgba(198,226,107,.35) 62%, transparent 62%); color:#EFEAf7; }
+  .l .btn-stop.holding { background:linear-gradient(90deg, rgba(88,113,16,.28) 62%, transparent 62%); color:#241C33; }
+  .fin-body { flex:1; padding:24px 20px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .fin-title { font-family:"Nunito",sans-serif; font-weight:800; font-size:23px; margin-bottom:4px; }
+  .d .fin-title { color:#EFEAf7; }
+  .l .fin-title { color:#4A3F66; }
+  .fin-sub { font-size:12.5px; margin-bottom:16px; }
+  .fin-pct { font-family:"Nunito",sans-serif; font-weight:1000; font-size:54px; line-height:1; }
+  .d .fin-pct { color:#C6E26B; }
+  .l .fin-pct { color:#587110; }
+  .fin-pct-l { font-size:11.5px; margin:4px 0 14px; }
+  .fin-grid { display:flex; gap:9px; width:100%; }
+  .fstat { flex:1; border-radius:13px; padding:11px; }
+  .fstat .v { font-size:16px; font-weight:600; }
+  .d .fstat .v { color:#EFEAf7; }
+  .l .fstat .v { color:#4A3F66; }
+  .fstat .cap { font-size:10px; margin-top:2px; }
+  .ach { width:100%; margin-top:12px; border-radius:14px; padding:11px; display:flex; align-items:center; gap:11px; text-align:left; }
+  .d .ach { background:rgba(198,226,107,.08); border:1px solid rgba(198,226,107,.3); }
+  .l .ach { background:rgba(122,154,31,.07); border:1px solid rgba(122,154,31,.3); }
+  .ach-ic { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
+  .d .ach-ic { background:#231B33; border:1px solid rgba(198,226,107,.4); }
+  .l .ach-ic { background:#fff; border:1px solid rgba(122,154,31,.35); }
+  .ach-t { font-size:12px; font-weight:700; font-family:"Nunito",sans-serif; }
+  .d .ach-t { color:#EFEAf7; }
+  .l .ach-t { color:#4A3F66; }
+  .ach-s { font-size:10.5px; }
+  .fin-actions { margin-top:auto; width:100%; padding-top:14px; }
+  .btn-share { width:100%; padding:13px; border-radius:13px; font-weight:700; font-size:13.5px; text-align:center; }
+  .btn-home { width:100%; padding:11px; margin-top:7px; font-size:12.5px; text-align:center; }
+  .fin-tomorrow { font-size:11.5px; margin-top:11px; font-style:italic; }
+  .sec-l { font-size:10px; text-transform:uppercase; letter-spacing:.1em; margin:10px 0 6px; }
+  .rg-mini { display:flex; align-items:center; gap:10px; border-radius:11px; padding:8px 10px; margin-bottom:6px; }
+  .rg-mini .p { font-family:"Nunito",sans-serif; font-weight:1000; font-size:15px; }
+  .rg-mini .n { font-size:11.5px; font-weight:600; }
+</style>
+</head>
+<body>
+<h1>Карта · Прогулка · Финал — обе темы</h1>
+<p class="sub">Тёмная слева, светлая справа. Панель главного экрана статична: статистика, планировщик, CTA — без выдвижения.</p>
+
+<h2>Главный экран</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:38%;top:22%"></div>
+      <div class="revealed" style="width:80px;height:80px;left:52%;top:36%"></div>
+      <div class="poi-dot" style="left:28%;top:22%"></div><div class="poi-dot" style="left:74%;top:52%"></div>
+      <div class="me" style="left:52%;top:38%"></div>
+      <div class="topbar"><span class="tgl"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+      <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span></div>
+    </div>
+    <div class="mapzone" style="flex:0 0 auto;margin-top:-20px"><div class="sheet">
+      <div class="statline">
+        <div class="statcol"><div class="v accent">17%</div><div class="cap dim">открыто</div></div>
+        <div class="statcol"><div class="v accent">4 дня</div><div class="cap dim">серия</div></div>
+        <div class="statcol"><div class="v accent">12,4 км</div><div class="cap dim">за неделю</div></div>
+      </div>
+      <div class="plan">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide accent-bg">Начать прогулку</div>
+    </div></div>
+    <div class="bnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:38%;top:22%"></div>
+      <div class="revealed" style="width:80px;height:80px;left:52%;top:36%"></div>
+      <div class="poi-dot" style="left:28%;top:22%"></div><div class="poi-dot" style="left:74%;top:52%"></div>
+      <div class="me" style="left:52%;top:38%"></div>
+      <div class="topbar"><span class="tgl"><span class="mt on">🚶</span><span class="mt">🚲</span></span>
+      <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span></div>
+    </div>
+    <div class="mapzone" style="flex:0 0 auto;margin-top:-20px"><div class="sheet">
+      <div class="statline">
+        <div class="statcol"><div class="v accent">17%</div><div class="cap dim">открыто</div></div>
+        <div class="statcol"><div class="v accent">4 дня</div><div class="cap dim">серия</div></div>
+        <div class="statcol"><div class="v accent">12,4 км</div><div class="cap dim">за неделю</div></div>
+      </div>
+      <div class="plan">📅 Завтра, 12:00 — прогулка по плану <span class="plus">＋</span></div>
+      <div class="cta-wide accent-bg">Начать прогулку</div>
+    </div></div>
+    <div class="bnav"><div class="bn-item on"><span class="bn-ico">◈</span>Карта</div><div class="bn-item"><span class="bn-ico">◎</span>Прогресс</div><div class="bn-item"><span class="bn-ico">▦</span>Рейтинг</div><div class="bn-item"><span class="bn-ico">◉</span>Профиль</div></div>
+  </div></div>
+</div>
+
+<h2>Прогулка</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:34%;top:22%"></div>
+      <svg style="position:absolute;left:15%;top:14%;width:70%;height:55%" viewBox="0 0 240 260" fill="none"><path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#C6E26B" stroke-width="6" stroke-linecap="round" opacity="0.9"/></svg>
+      <div class="me" style="left:74%;top:20%"></div>
+      <div class="live"><span class="live-dot"></span>Идёт запись</div>
+      <div class="qfab">＋ Задание</div>
+    </div>
+    <div class="walk-bar">
+      <div class="wstats">
+        <div class="statcol"><div class="v" style="color:inherit">48:12</div><div class="cap dim">время</div></div>
+        <div class="statcol"><div class="v" style="color:inherit">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="statcol"><div class="v accent">+0,4%</div><div class="cap dim">открыто</div></div>
+      </div>
+      <div class="wactions"><div class="btn-pause accent-bg">Пауза</div><div class="btn-stop">Завершить</div></div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:34%;top:22%"></div>
+      <svg style="position:absolute;left:15%;top:14%;width:70%;height:55%" viewBox="0 0 240 260" fill="none"><path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#7A9A1F" stroke-width="6" stroke-linecap="round" opacity="0.9"/></svg>
+      <div class="me" style="left:74%;top:20%"></div>
+      <div class="live"><span class="live-dot"></span>Идёт запись</div>
+      <div class="qfab">＋ Задание</div>
+    </div>
+    <div class="walk-bar">
+      <div class="wstats">
+        <div class="statcol"><div class="v" style="color:inherit">48:12</div><div class="cap dim">время</div></div>
+        <div class="statcol"><div class="v" style="color:inherit">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="statcol"><div class="v accent">+0,4%</div><div class="cap dim">открыто</div></div>
+      </div>
+      <div class="wactions"><div class="btn-pause accent-bg">Пауза</div><div class="btn-stop">Завершить</div></div>
+    </div>
+  </div></div>
+</div>
+
+<h2>Прогулка — на паузе</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:34%;top:22%"></div>
+      <svg style="position:absolute;left:15%;top:14%;width:70%;height:55%" viewBox="0 0 240 260" fill="none"><path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#C6E26B" stroke-width="6" stroke-linecap="round" opacity="0.9"/></svg>
+      <div class="me" style="left:74%;top:20%"></div>
+      <div class="live paused"><span class="pause-dot"></span>На паузе</div>
+    </div>
+    <div class="walk-bar">
+      <div class="wstats">
+        <div class="statcol"><div class="v" style="color:inherit">48:12</div><div class="cap dim">время</div></div>
+        <div class="statcol"><div class="v" style="color:inherit">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="statcol"><div class="v accent">+0,4%</div><div class="cap dim">открыто</div></div>
+      </div>
+      <div class="wactions"><div class="btn-pause accent-bg">Продолжить</div><div class="btn-stop">Завершить</div></div>
+      <div class="holddemo"><span class="cap dim">удержание:</span><div class="btn-stop holding" style="flex:0 0 46%;padding:9px">Завершить</div></div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="mapzone"><div class="gl"></div><div class="fog"></div>
+      <div class="revealed" style="width:120px;height:120px;left:34%;top:22%"></div>
+      <svg style="position:absolute;left:15%;top:14%;width:70%;height:55%" viewBox="0 0 240 260" fill="none"><path d="M20 240 C 50 210, 30 170, 70 150 S 120 110, 110 80 S 160 40, 200 30" stroke="#7A9A1F" stroke-width="6" stroke-linecap="round" opacity="0.9"/></svg>
+      <div class="me" style="left:74%;top:20%"></div>
+      <div class="live paused"><span class="pause-dot"></span>На паузе</div>
+    </div>
+    <div class="walk-bar">
+      <div class="wstats">
+        <div class="statcol"><div class="v" style="color:inherit">48:12</div><div class="cap dim">время</div></div>
+        <div class="statcol"><div class="v" style="color:inherit">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="statcol"><div class="v accent">+0,4%</div><div class="cap dim">открыто</div></div>
+      </div>
+      <div class="wactions"><div class="btn-pause accent-bg">Продолжить</div><div class="btn-stop">Завершить</div></div>
+      <div class="holddemo"><span class="cap dim">удержание:</span><div class="btn-stop holding" style="flex:0 0 46%;padding:9px">Завершить</div></div>
+    </div>
+  </div></div>
+</div>
+
+<h2>Финал прогулки</h2>
+<div class="wrap">
+  <div class="col"><div class="col-name">Тёмная</div><div class="phone d">
+    <div class="fin-body">
+      <div class="fin-title">Отличная прогулка!</div>
+      <div class="fin-sub dim">вечер · 48 минут</div>
+      <div class="fin-pct">17,4%</div>
+      <div class="fin-pct-l dim">домашнего региона открыто (+0,4% сегодня)</div>
+      <div class="fin-grid">
+        <div class="fstat card"><div class="v">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="fstat card"><div class="v">48 мин</div><div class="cap dim">время</div></div>
+        <div class="fstat card"><div class="v">5 дней</div><div class="cap dim">серия</div></div>
+      </div>
+      <div class="ach"><div class="ach-ic">🏔</div><div><div class="ach-t">Новое достижение: «Исследователь кварталов»</div><div class="ach-s dim">10 дворов открыты изнутри</div></div></div>
+      <div class="fin-actions">
+        <div class="btn-share accent-bg">Поделиться результатом</div>
+        <div class="btn-home dim">На карту</div>
+      </div>
+    </div>
+  </div></div>
+  <div class="col"><div class="col-name">Светлая</div><div class="phone l">
+    <div class="fin-body">
+      <div class="fin-title">Отличная прогулка!</div>
+      <div class="fin-sub dim">вечер · 48 минут</div>
+      <div class="fin-pct">17,4%</div>
+      <div class="fin-pct-l dim">домашнего региона открыто (+0,4% сегодня)</div>
+      <div class="fin-grid">
+        <div class="fstat card"><div class="v">3,6 км</div><div class="cap dim">расстояние</div></div>
+        <div class="fstat card"><div class="v">48 мин</div><div class="cap dim">время</div></div>
+        <div class="fstat card"><div class="v">5 дней</div><div class="cap dim">серия</div></div>
+      </div>
+      <div class="ach"><div class="ach-ic">🏔</div><div><div class="ach-t">Новое достижение: «Исследователь кварталов»</div><div class="ach-s dim">10 дворов открыты изнутри</div></div></div>
+      <div class="fin-actions">
+        <div class="btn-share accent-bg">Поделиться результатом</div>
+        <div class="btn-home dim">На карту</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+</body>
+</html>
