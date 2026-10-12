@@ -1,6 +1,7 @@
 package app.walkquest.ui.rating
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,7 @@ fun RatingScreen(viewModel: RatingViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(WqTheme.colors.surfaceBase)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(WqTheme.spacing.xl),

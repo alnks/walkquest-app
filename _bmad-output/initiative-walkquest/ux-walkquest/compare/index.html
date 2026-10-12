@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalkQuest — сверка «макет ↔ реализация»</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#EFEAF7; line-height:1.55; }
+  header { padding:40px 24px 24px; max-width:1280px; margin:0 auto; }
+  h1 { font-size:26px; font-weight:800; }
+  .sub { color:#9d92b3; font-size:14px; margin-top:6px; max-width:900px; }
+  .meta { color:#8D83A6; font-size:12.5px; margin-top:10px; }
+  nav { position:sticky; top:0; z-index:10; background:rgba(16,13,24,.94); backdrop-filter:blur(6px); border-bottom:1px solid #2C2248; padding:10px 24px; display:flex; gap:8px; flex-wrap:wrap; max-width:1280px; margin:0 auto; }
+  nav a { color:#B3A6C9; text-decoration:none; font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid #342A4D; }
+  nav a:hover { color:#C6E26B; border-color:#C6E26B; }
+  main { max-width:1280px; margin:0 auto; padding:8px 24px 60px; }
+  section { margin-top:36px; }
+  h2 { font-size:19px; font-weight:800; margin-bottom:4px; }
+  .verdict { display:inline-block; font-size:11.5px; font-weight:700; border-radius:999px; padding:3px 12px; margin:6px 0 10px; border:1px solid; }
+  .v-ok  { color:#C6E26B; border-color:rgba(198,226,107,.5); background:rgba(198,226,107,.08); }
+  .v-mid { color:#E8C57A; border-color:rgba(232,197,122,.5); background:rgba(232,197,122,.08); }
+  .v-bad { color:#E88A8A; border-color:rgba(232,138,138,.5); background:rgba(232,138,138,.08); }
+  .notes { color:#B3A6C9; font-size:13.5px; max-width:900px; margin-bottom:14px; }
+  figure { border:1px solid #2C2248; border-radius:16px; overflow:hidden; background:#191423; }
+  figure img { display:block; width:100%; height:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:14px; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid #2C2248; vertical-align:top; }
+  th { color:#8D83A6; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+  td:first-child { white-space:nowrap; font-weight:700; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:2px 10px; border:1px solid; white-space:nowrap; }
+  footer { color:#8D83A6; font-size:12px; max-width:1280px; margin:0 auto; padding:0 24px 40px; }
+  code { background:#231B33; border:1px solid #342A4D; border-radius:6px; padding:1px 6px; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Сверка «макет ↔ реализация» — WalkQuest</h1>
+  <p class="sub">12 экранов спецификации (шаг 3) + состояние паузы прогулки. Слева на каждой картинке — утверждённый макет (mockups/*.html, headless Edge), справа — реальный экран приложения на эмуляторе Medium_Phone_API_37.0. Тёмная тема — все экраны, светлая — 01, 05, 08, 09, 11.</p>
+  <p class="meta">Дата прогона: 2026-10-11 · debug-сборка app-debug.apk · пакет региона spb-city/v6 · склейка Pillow · сырые материалы: <code>compare/_mock/*.png</code> и <code>_qa/emulator-run/compare-verify/*.png</code></p>
+</header>
+<nav>
+  <a href="#s01">01 Главная карта</a>
+  <a href="#s02">02 Прогулка</a>
+  <a href="#s02p">02п Пауза</a>
+  <a href="#s03">03 Финал</a>
+  <a href="#s04">04 Онбординг</a>
+  <a href="#s05">05 Статистика</a>
+  <a href="#s06">06 Достижения</a>
+  <a href="#s07">07 Задания</a>
+  <a href="#s08">08 Рейтинг</a>
+  <a href="#s09">09 Профиль</a>
+  <a href="#s10">10 Регионы</a>
+  <a href="#s11">11 Настройки</a>
+  <a href="#s12">12 POI</a>
+  <a href="#summary">Сводная таблица</a>
+</nav>
+<main>
+
+<section id="s01">
+  <h2>01 · Главная карта</h2>
+  <span class="verdict v-ok">В целом совпадает</span>
+  <p class="notes">Панель «статистика + планировщик + CTA» и ghost-кнопка в светлой теме совпали. Лишнее в реализации: плашка «% открыто» по центру шапки (в макете процент только в панели), FAB «К моей точке», debug-кнопка DBG.</p>
+  <figure><img src="01-map-home.png" alt="01-map-home"></figure>
+</section>
+
+<section id="s02">
+  <h2>02 · Прогулка (запись)</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Чип «Идёт запись» и панель «Пауза/Завершить» совпали. Расхождения: третья метрика «клеток открыто» вместо «+0,4% открыто»; «+ Задание» — FAB «+» вместо пилюли; завершение — диалог вместо удержания из макета.</p>
+  <figure><img src="02-map-walk.png" alt="02-map-walk"></figure>
+</section>
+
+<section id="s02p">
+  <h2>02п · Прогулка (пауза)</h2>
+  <span class="verdict v-ok">Совпадает</span>
+  <p class="notes">Состояние паузы снято, а не «ближайшее доступное»: чип «На паузе», кнопка «Продолжить». Удержание «Завершить» из макета в реализации отсутствует (диалог подтверждения).</p>
+  <figure><img src="02p-map-walk-paused.png" alt="02p-map-walk-paused"></figure>
+</section>
+
+<section id="s03">
+  <h2>03 · Финал прогулки</h2>
+  <span class="verdict v-bad">Расходится</span>
+  <p class="notes">Макет: hero-процент, сетка из 3 карточек (км/время/серия), карточка нового достижения, «Поделиться результатом»/«На карту». Реализация: текст похвалы, процент, строка «0.0 км · 0 мин», трофейная строка, «Поделиться»/«Закрыть» — общая структура иная.</p>
+  <figure><img src="03-walk-final.png" alt="03-walk-final"></figure>
+</section>
+
+<section id="s04">
+  <h2>04 · Онбординг</h2>
+  <span class="verdict v-bad">Расходится</span>
+  <p class="notes">Макет: 4 шага (приветствие с иллюстрацией и точками, выбор домашнего региона на мини-карте, цель со степпером, экран геолокации). Реализация: 3 текстовых шага без иллюстраций и точек + экран цели + «Пропустить». Выбора региона и экрана геолокации нет.</p>
+  <figure><img src="04-onboarding.png" alt="04-onboarding"></figure>
+</section>
+
+<section id="s05">
+  <h2>05 · Прогресс · Статистика</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Сегмент-пилюли совпали. Макет: hero «17,4%» + сетка 6 карточек + список средних. Реализация: строки «Цель/Серия/Прогулок/Расстояние» + «Планы → Запланировать». Hero-процента и сетки нет.</p>
+  <figure><img src="05-progress-stats.png" alt="05-progress-stats"></figure>
+</section>
+
+<section id="s06">
+  <h2>06 · Прогресс · Достижения</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Макет: секции «Полученные / Неполученные», заблокированные — пунктиром с прогресс-баром. Реализация: одна секция «Исследование», плоские строки с эмодзи; разделения полученные/нет нет.</p>
+  <figure><img src="06-progress-achievements.png" alt="06-progress-achievements"></figure>
+</section>
+
+<section id="s07">
+  <h2>07 · Прогресс · Задания</h2>
+  <span class="verdict v-mid">Частично (пустое состояние)</span>
+  <p class="notes">Снято корректное пустое состояние: «Вытянуть карту»/«Выбрать из 6», «Пока нет выполненных заданий». Макет показывает активное задание; копия кнопки «Случайное задание» → «Вытянуть карту».</p>
+  <figure><img src="07-progress-quests.png" alt="07-progress-quests"></figure>
+</section>
+
+<section id="s08">
+  <h2>08 · Рейтинг</h2>
+  <span class="verdict v-bad">Расходится + баг темы</span>
+  <p class="notes">Снято состояние «первый вход» (состояние «с ником» недостижимо на эмуляторе — сервер рейтинга недоступен, «Не удалось сохранить ник»). Реализация: поле «Ник» + «Вступить в рейтинг»/«Остаться невидимым»; список пуст; сегментов «Город/Друзья» нет. Баг: в тёмной системной теме фон вкладки остаётся светлым.</p>
+  <figure><img src="08-rating.png" alt="08-rating"></figure>
+</section>
+
+<section id="s09">
+  <h2>09 · Профиль</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Набор близок, но компоновка иная: крупные карточки вместо групп строк с пилюлями, «Ник не задан» вместо аватара, нет «Обратной связи» и переключателя участия в рейтинге; добавлены предупреждение о локальности данных и «Экспорт»/«Импорт».</p>
+  <figure><img src="09-profile.png" alt="09-profile"></figure>
+</section>
+
+<section id="s10">
+  <h2>10 · Мои регионы</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Строка региона с процентом и подписью «домашний регион» совпали. На чистой установке список из одного домашнего региона (в макете — 3 региона). Под оверлеем видна нижняя навигация, в макете её нет.</p>
+  <figure><img src="10-regions.png" alt="10-regions"></figure>
+</section>
+
+<section id="s11">
+  <h2>11 · Настройки</h2>
+  <span class="verdict v-mid">Частично</span>
+  <p class="notes">Макет: группы «Цель / Прогулки / Уведомления / Внешний вид» со значениями-пилюлями, включая «Тема: системная». Реализация: только «ПРОГУЛКА» (режим по умолчанию, автопауза, напоминание о забытой прогулке, кнопка «Задания»). Настроек цели, уведомлений и выбора темы нет.</p>
+  <figure><img src="11-settings.png" alt="11-settings"></figure>
+</section>
+
+<section id="s12">
+  <h2>12 · Карточка POI</h2>
+  <span class="verdict v-ok">В целом совпадает</span>
+  <p class="notes">Карточка с реальным фото из пакета открывается тапом по маркеру (сквер Василия Ракова). Расхождения: в макете карточка прибита к низу над навигацией и имеет полосу из 3 фото; в реализации — одно фото, карточка выше домашней панели, кнопка «Закрыть».</p>
+  <figure><img src="12-poi-card.png" alt="12-poi-card"></figure>
+</section>
+
+<section id="summary">
+  <h2>Сводная таблица</h2>
+  <table>
+    <tr><th>Экран</th><th>Вердикт</th><th>Главное расхождение</th></tr>
+    <tr><td>01</td><td><span class="tag v-ok" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Лишние плашка «% открыто» в шапке, FAB «К моей точке», DBG</td></tr>
+    <tr><td>02</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Метрика «клеток открыто», FAB вместо пилюли «+ Задание», диалог вместо удержания</td></tr>
+    <tr><td>02п</td><td><span class="tag" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Удержание «Завершить» не реализовано</td></tr>
+    <tr><td>03</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>Нет hero-процента, сетки 3 карточек, карточки достижения</td></tr>
+    <tr><td>04</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>3 текстовых шага вместо 4 (нет выбора региона и экрана геолокации, иллюстраций, точек)</td></tr>
+    <tr><td>05</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет hero «17,4%» и сетки 6 карточек — строки + «Планы»</td></tr>
+    <tr><td>06</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет секций «Полученные/Неполученные», пунктира заблокированных</td></tr>
+    <tr><td>07</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Снято пустое состояние; «Случайное задание» → «Вытянуть карту»</td></tr>
+    <tr><td>08</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>Нет сегментов «Город/Друзья» и списка; баг: светлый фон в тёмной теме</td></tr>
+    <tr><td>09</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Карточки вместо групп с пилюлями; нет «Обратной связи», переключателя участия</td></tr>
+    <tr><td>10</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Один домашний регион на чистой установке; навигация под оверлеем</td></tr>
+    <tr><td>11</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет групп «Цель», «Уведомления», «Внешний вид (тема)»</td></tr>
+    <tr><td>12</td><td><span class="tag" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Одно фото вместо полосы из 3; карточка выше панели, есть «Закрыть»</td></tr>
+  </table>
+
+  <h2 style="margin-top:32px">Что осталось (по убыванию заметности)</h2>
+  <p class="notes">
+    1. Баг: вкладка «Рейтинг» светлая в тёмной системной теме.<br>
+    2. Финал прогулки — привести к макету (hero-процент, сетка 3 карточек, карточка достижения, «На карту»).<br>
+    3. Онбординг — догнать макет (иллюстрации+точки, шаг региона, экран геолокации) или переутвердить макет.<br>
+    4. Статистика — hero-процент и сетка карточек.<br>
+    5. Рейтинг — сегменты «Город/Друзья», строки списка; «с ником» проверить на устройстве с сервером.<br>
+    6. Настройки — группы «Цель», «Уведомления», «Внешний вид (тема)».<br>
+    7. Мелочи 01/02: дубль «% открыто» в шапке, пилюля «+ Задание», метрика «% открыто» на прогулке.<br>
+    8. Достижения — секции «Полученные/Неполученные», пунктир заблокированных.
+  </p>
+  <p class="meta">Не проверено на устройстве: светлая тема для 02, 02п, 03, 04, 06, 07, 10, 12; рейтинг «с ником» (нужен сервер); активное задание в 07.</p>
+</section>
+
+</main>
+<footer>WalkQuest · compare · генерация: _qa/compare-stitch.py + _qa/compare-mock.py</footer>
+</body>
+</html>
