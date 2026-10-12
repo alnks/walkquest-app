@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,7 +101,7 @@ private fun WqButtonsPreview() {
             WqGhostButton(onClick = {}) { Text("Завершить") }
             WqPrimaryButton(onClick = {}, enabled = false) { Text("Загружается…") }
             // Стиль текста кнопок M3 тоже из токенов (label/metaLarge ≥13px).
-            Text("Контроль текста: Прогулка 17,4%", style = MaterialTheme.typography.labelLarge)
+            Text("Контроль текста: Прогулка 17,4%", style = WqTheme.typography.metaLarge)
         }
     }
 }

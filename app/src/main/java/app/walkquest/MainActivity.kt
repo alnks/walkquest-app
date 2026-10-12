@@ -7,10 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,15 +20,13 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.walkquest.ui.components.WqBottomNav
+import app.walkquest.ui.components.WqNavItem
 import app.walkquest.ui.map.MapScreen
 import app.walkquest.ui.regions.RegionsScreen
 import app.walkquest.ui.rating.RatingScreen
-import app.walkquest.ui.theme.AccentTextColor
-import app.walkquest.ui.theme.DimTextColor
-import app.walkquest.ui.theme.NavSurfaceColor
 import app.walkquest.ui.theme.WalkQuestTheme
 import app.walkquest.viewmodel.MapViewModel
 import app.walkquest.viewmodel.RegionsViewModel
@@ -206,31 +200,11 @@ private fun ComponentActivity.WalkQuestTabs() {
         // Навигация скрыта, пока идёт онбординг: он полноэкранный (4 вкладки,
         // EXPERIENCE; подписи 12px в одну строку — без переносов «Статистика»).
         if (!mapUiState.showOnboarding) {
-            NavigationBar(containerColor = NavSurfaceColor) {
-                AppTab.entries.forEach { entry ->
-                    NavigationBarItem(
-                        selected = tab == entry.name,
-                        onClick = { tab = entry.name },
-                        icon = { Icon(imageVector = entry.icon, contentDescription = entry.title) },
-                        label = {
-                            Text(
-                                text = entry.title,
-                                fontSize = 12.sp,
-                                maxLines = 1,
-                                softWrap = false,
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            // Активная вкладка — акцентом (DESIGN bottom-nav); в светлой теме
-                            // акцент текстом — только accent-text #587110 (контраст 5.05:1).
-                            selectedIconColor = AccentTextColor,
-                            selectedTextColor = AccentTextColor,
-                            unselectedIconColor = DimTextColor,
-                            unselectedTextColor = DimTextColor,
-                        ),
-                    )
-                }
-            }
+            WqBottomNav(
+                items = AppTab.entries.map { WqNavItem(label = it.title, icon = it.icon) },
+                selectedIndex = AppTab.entries.indexOfFirst { it.name == tab }.coerceAtLeast(0),
+                onSelect = { index -> tab = AppTab.entries[index].name },
+            )
         }
     }
 }

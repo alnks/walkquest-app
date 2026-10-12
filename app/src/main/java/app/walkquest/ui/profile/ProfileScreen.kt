@@ -12,11 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,13 +23,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.walkquest.ui.theme.AccentTextColor
-import app.walkquest.ui.theme.DimTextColor
-import app.walkquest.ui.theme.HeadlineColor
-import app.walkquest.ui.theme.InkSecondaryColor
+import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.ImportState
 import app.walkquest.viewmodel.ProfileViewModel
 import app.walkquest.viewmodel.formatCopyDate
@@ -46,6 +40,7 @@ import kotlinx.coroutines.launch
  * перенос прогресса (SAF: экспорт в выбранное место, импорт с подтверждением),
  * постоянное предупреждение о безвозвратной потере при удалении (Done when 2),
  * докачка недостающих регионов после импорта, «О приложении».
+ * Спецификация: screens-spec.md §8.
  *
  * SAF и ContentResolver живут здесь; viewmodel принимает потоки — логика тестируется на JVM.
  */
@@ -103,85 +98,97 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(WqTheme.colors.surfaceBase)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState()),
     ) {
         Text(
             text = "Профиль",
-            color = HeadlineColor,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 10.dp),
+            color = WqTheme.colors.inkHeadline,
+            style = WqTheme.typography.headingScreen,
+            modifier = Modifier.padding(
+                start = WqTheme.spacing.lg,
+                end = WqTheme.spacing.lg,
+                top = WqTheme.spacing.lg,
+                bottom = 10.dp,
+            ),
         )
 
         // Шапка: ник и участие (по макету). Без ника — предложение открыть Рейтинг.
-        ProfileHeader(
-            nickname = uiState.nickname,
-            leaderboardVisible = uiState.leaderboardVisible,
-            goalText = uiState.goalText,
-        )
+        WqCard(
+            tonalElevation = 1.dp,
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = 10.dp)) {
+                Text(
+                    text = uiState.nickname ?: "Ник не задан",
+                    color = WqTheme.colors.inkHeadline,
+                    style = WqTheme.typography.headingCard,
+                )
+                Text(
+                    text = when {
+                        uiState.nickname == null -> "задаётся при первом открытии Рейтинга"
+                        uiState.leaderboardVisible -> "в рейтинге · участие вкл"
+                        else -> "в рейтинге · участие выкл"
+                    },
+                    color = WqTheme.colors.inkDim,
+                    style = WqTheme.typography.meta,
+                )
+                uiState.goalText?.let {
+                    Text(
+                        text = "Моя цель: $it",
+                        color = WqTheme.colors.inkSecondary,
+                        style = WqTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+        }
 
         // Мои регионы (1.10; EXPERIENCE: Регионы живут здесь, а не во вкладках).
-        Surface(
+        WqCard(
             onClick = onOpenRegions,
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
             tonalElevation = 1.dp,
-            shadowElevation = 2.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.md),
             ) {
                 Text(
                     text = "Мои регионы",
-                    color = InkSecondaryColor,
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = WqTheme.colors.inkSecondary,
+                    style = WqTheme.typography.body,
                     modifier = Modifier.weight(1f),
                 )
-                Text(text = "→", color = AccentTextColor)
+                Text(text = "→", color = WqTheme.colors.accentText)
             }
         }
 
         // Предупреждение о потере — постоянная карточка (Done when 2).
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
+        WqCard(
             tonalElevation = 1.dp,
-            shadowElevation = 2.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
         ) {
             Text(
                 text = "Данные живут только на этом устройстве: удаление приложения " +
                     "без экспорта безвозвратно удалит весь прогресс.",
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                color = WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.body,
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.md),
             )
         }
 
         // Перенос прогресса.
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
+        WqCard(
             tonalElevation = 1.dp,
-            shadowElevation = 2.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.sm)) {
                 Text(
                     text = "Перенос прогресса",
-                    color = HeadlineColor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    color = WqTheme.colors.inkHeadline,
+                    style = WqTheme.typography.headingCard,
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -189,8 +196,8 @@ fun ProfileScreen(
                 ) {
                     Text(
                         text = "Экспорт / импорт копии",
-                        color = DimTextColor,
-                        style = MaterialTheme.typography.labelSmall,
+                        color = WqTheme.colors.inkDim,
+                        style = WqTheme.typography.meta,
                         modifier = Modifier.weight(1f),
                     )
                     TextButton(
@@ -201,14 +208,14 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = if (uiState.exportBusy) "Сохранение…" else "Экспорт",
-                            color = AccentTextColor,
+                            color = WqTheme.colors.accentText,
                         )
                     }
                     TextButton(
                         onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
                         enabled = uiState.importState == ImportState.Idle,
                     ) {
-                        Text(text = "Импорт", color = AccentTextColor)
+                        Text(text = "Импорт", color = WqTheme.colors.accentText)
                     }
                 }
             }
@@ -216,21 +223,15 @@ fun ProfileScreen(
 
         // Недостающие регионы копии: пакеты не входят в архив — докачка (Decision 6.1).
         if (uiState.missingRegions.isNotEmpty()) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surface,
+            WqCard(
                 tonalElevation = 1.dp,
-                shadowElevation = 2.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
             ) {
-                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.sm)) {
                     Text(
                         text = "Недостающие регионы копии",
-                        color = HeadlineColor,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
+                        color = WqTheme.colors.inkHeadline,
+                        style = WqTheme.typography.headingCard,
                     )
                     uiState.missingRegions.forEach { regionId ->
                         Row(
@@ -239,8 +240,8 @@ fun ProfileScreen(
                         ) {
                             Text(
                                 text = regionId,
-                                color = DimTextColor,
-                                style = MaterialTheme.typography.labelSmall,
+                                color = WqTheme.colors.inkDim,
+                                style = WqTheme.typography.meta,
                                 modifier = Modifier.weight(1f),
                             )
                             TextButton(
@@ -249,7 +250,7 @@ fun ProfileScreen(
                             ) {
                                 Text(
                                     text = if (uiState.downloadingRegionId == regionId) "Скачивание…" else "Скачать",
-                                    color = AccentTextColor,
+                                    color = WqTheme.colors.accentText,
                                 )
                             }
                         }
@@ -261,53 +262,48 @@ fun ProfileScreen(
         uiState.message?.let { message ->
             Text(
                 text = message,
-                color = AccentTextColor,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                color = WqTheme.colors.accentText,
+                style = WqTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
             )
         }
         uiState.lastError?.let { error ->
             Text(
                 text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                color = WqTheme.colors.error,
+                style = WqTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
             )
         }
 
         // О приложении.
         Text(
             text = "О приложении",
-            color = DimTextColor,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            color = WqTheme.colors.inkDim,
+            style = WqTheme.typography.meta,
+            modifier = Modifier.padding(start = WqTheme.spacing.lg, end = WqTheme.spacing.lg, top = WqTheme.spacing.md, bottom = 4.dp),
         )
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
+        WqCard(
             tonalElevation = 1.dp,
-            shadowElevation = 2.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.sm)) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Версия",
-                        color = InkSecondaryColor,
-                        style = MaterialTheme.typography.bodyMedium,
+                        color = WqTheme.colors.inkSecondary,
+                        style = WqTheme.typography.body,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
                         text = uiState.appVersion,
-                        color = DimTextColor,
-                        style = MaterialTheme.typography.labelSmall,
+                        color = WqTheme.colors.inkDim,
+                        style = WqTheme.typography.meta,
                     )
                 }
-                Surface(onClick = {
+                WqCard(onClick = {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uiState.privacyUrl)))
-                }, color = MaterialTheme.colorScheme.surface) {
+                }, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -316,57 +312,13 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = "Политика конфиденциальности",
-                            color = InkSecondaryColor,
-                            style = MaterialTheme.typography.bodyMedium,
+                            color = WqTheme.colors.inkSecondary,
+                            style = WqTheme.typography.body,
                             modifier = Modifier.weight(1f),
                         )
-                        Text(text = "→", color = AccentTextColor)
+                        Text(text = "→", color = WqTheme.colors.accentText)
                     }
                 }
-            }
-        }
-    }
-}
-
-/** Шапка Профиля по макету: ник + статус участия, цель. */
-@Composable
-private fun ProfileHeader(
-    nickname: String?,
-    leaderboardVisible: Boolean,
-    goalText: String?,
-) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 2.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Text(
-                text = nickname ?: "Ник не задан",
-                color = HeadlineColor,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.ExtraBold,
-            )
-            Text(
-                text = when {
-                    nickname == null -> "задаётся при первом открытии Рейтинга"
-                    leaderboardVisible -> "в рейтинге · участие вкл"
-                    else -> "в рейтинге · участие выкл"
-                },
-                color = DimTextColor,
-                style = MaterialTheme.typography.labelSmall,
-            )
-            goalText?.let {
-                Text(
-                    text = "Моя цель: $it",
-                    color = InkSecondaryColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
             }
         }
     }

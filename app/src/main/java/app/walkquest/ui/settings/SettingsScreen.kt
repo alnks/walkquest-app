@@ -9,10 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -21,15 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.walkquest.tracking.WalkMode
-import app.walkquest.ui.theme.AccentTextColor
-import app.walkquest.ui.theme.DimTextColor
-import app.walkquest.ui.theme.HeadlineColor
-import app.walkquest.ui.theme.InkSecondaryColor
-import app.walkquest.ui.theme.WalkQuestPrimaryButton
+import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.components.WqPrimaryButton
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.MapViewModel
 
 /**
@@ -38,6 +32,7 @@ import app.walkquest.viewmodel.MapViewModel
  * явной кнопкой «Готово» внизу (ergonomics: важные действия в нижней трети).
  * Источник состояния — общий MapViewModel: те же переключатели, что раньше
  * жили прототипными текстовыми кнопками посреди карты.
+ * Спецификация: screens-spec.md §10.
  */
 @Composable
 fun SettingsScreen(viewModel: MapViewModel, onClose: () -> Unit) {
@@ -46,92 +41,77 @@ fun SettingsScreen(viewModel: MapViewModel, onClose: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(WqTheme.colors.surfaceBase)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(WqTheme.spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(WqTheme.spacing.md),
     ) {
         Text(
             text = "Настройки",
-            color = HeadlineColor,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
+            color = WqTheme.colors.inkHeadline,
+            style = WqTheme.typography.headingScreen,
         )
 
         Text(
             text = "ПРОГУЛКА",
-            color = DimTextColor,
-            style = MaterialTheme.typography.labelSmall,
+            color = WqTheme.colors.inkDim,
+            style = WqTheme.typography.meta,
         )
-        SettingsCard {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Режим по умолчанию",
-                    color = InkSecondaryColor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                WalkMode.entries.forEach { mode ->
-                    val label = when (mode) {
-                        WalkMode.WALKING -> "Пешком"
-                        WalkMode.CYCLING -> "Вело"
-                    }
-                    if (uiState.walkMode == mode) {
-                        WalkQuestPrimaryButton(onClick = { viewModel.onWalkModeSelected(mode) }) {
-                            Text(text = label)
+        WqCard(tonalElevation = 1.dp) {
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.sm)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Режим по умолчанию",
+                        color = WqTheme.colors.inkSecondary,
+                        style = WqTheme.typography.body,
+                        modifier = Modifier.weight(1f),
+                    )
+                    WalkMode.entries.forEach { mode ->
+                        val label = when (mode) {
+                            WalkMode.WALKING -> "Пешком"
+                            WalkMode.CYCLING -> "Вело"
                         }
-                    } else {
+                        val selected = uiState.walkMode == mode
                         TextButton(onClick = { viewModel.onWalkModeSelected(mode) }) {
-                            Text(text = label, color = InkSecondaryColor)
+                            Text(
+                                text = label,
+                                color = if (selected) WqTheme.colors.accentText else WqTheme.colors.inkSecondary,
+                                style = if (selected) WqTheme.typography.metaLarge else WqTheme.typography.body,
+                            )
                         }
                     }
                 }
+                SwitchRow(
+                    title = "Автопауза при остановке",
+                    subtitle = "Прогулка сама встанет на паузу после 15 минут неподвижности",
+                    checked = uiState.autoPauseEnabled,
+                    onCheckedChange = { viewModel.onAutoPauseToggled() },
+                )
+                SwitchRow(
+                    title = "Напоминание о забытой прогулке",
+                    subtitle = "Спросим, если вы остановились и забыли завершить запись",
+                    checked = uiState.forgottenReminderEnabled,
+                    onCheckedChange = { viewModel.onForgottenReminderToggled() },
+                )
+                SwitchRow(
+                    title = "Кнопка «Задания» на прогулке",
+                    subtitle = "Показывать «+ Задание» во время записи",
+                    checked = uiState.showQuestButton,
+                    onCheckedChange = { viewModel.onShowQuestButtonChanged(it) },
+                )
             }
-            SwitchRow(
-                title = "Автопауза при остановке",
-                subtitle = "Прогулка сама встанет на паузу после 15 минут неподвижности",
-                checked = uiState.autoPauseEnabled,
-                onCheckedChange = { viewModel.onAutoPauseToggled() },
-            )
-            SwitchRow(
-                title = "Напоминание о забытой прогулке",
-                subtitle = "Спросим, если вы остановились и забыли завершить запись",
-                checked = uiState.forgottenReminderEnabled,
-                onCheckedChange = { viewModel.onForgottenReminderToggled() },
-            )
-            SwitchRow(
-                title = "Кнопка «Задания» на прогулке",
-                subtitle = "Показывать «+ Задание» во время записи",
-                checked = uiState.showQuestButton,
-                onCheckedChange = { viewModel.onShowQuestButtonChanged(it) },
-            )
         }
 
         Text(
             text = "Настройки применяются ко всем прогулкам и хранятся на устройстве.",
-            color = DimTextColor,
-            style = MaterialTheme.typography.bodySmall,
+            color = WqTheme.colors.inkDim,
+            style = WqTheme.typography.bodySmall,
         )
 
         // Явный выход внизу экрана (DESIGN: никаких стрелок «назад» в шапках).
-        WalkQuestPrimaryButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+        WqPrimaryButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
             Text(text = "Готово")
-        }
-    }
-}
-
-@Composable
-private fun SettingsCard(content: @Composable () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            content()
         }
     }
 }
@@ -150,20 +130,21 @@ private fun SwitchRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodyMedium,
+                color = WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.body,
             )
             Text(
                 text = subtitle,
-                color = DimTextColor,
-                style = MaterialTheme.typography.bodySmall,
+                color = WqTheme.colors.inkDim,
+                style = WqTheme.typography.bodySmall,
             )
         }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedTrackColor = AccentTextColor,
+                checkedTrackColor = WqTheme.colors.accent,
+                checkedThumbColor = WqTheme.colors.white,
             ),
         )
     }

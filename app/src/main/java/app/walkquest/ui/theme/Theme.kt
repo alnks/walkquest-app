@@ -1,13 +1,7 @@
 package app.walkquest.ui.theme
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -15,11 +9,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
@@ -33,7 +25,9 @@ import androidx.compose.ui.unit.sp
  *
  * Источник истины — _bmad-output/initiative-walkquest/ux-walkquest/DESIGN.md;
  * три слоя токенов: WqPrimitive (hex) → WqColors/WqTypography/WqShapes/WqSpacing
- * (роли) → спецификации компонентов (ui/components/).
+ * (роли) → спецификации компонентов (ui/components/). Deprecated-шимы эпохи
+ * прототипа (AccentTextColor и т.п., WalkQuestPrimaryButton) удалены в Шаге 4:
+ * весь UI на WqTheme + ui/components.
  */
 @Composable
 fun WalkQuestTheme(
@@ -122,7 +116,7 @@ private val wqDarkColorScheme = darkColorScheme(
 )
 
 /**
- * Типографика M3-инфраструктуры из токенов WalkQuest: весь M3 минимум 12sp
+ * Типографика M3-инфраструктуры из токенов WalkQuest: весь M3-кегль ≥12sp
  * (M3 по умолчанию тянет labelSmall 11sp — DESIGN запрещает кегль мельче 12px).
  */
 private val wqMaterialTypography = Typography(
@@ -151,116 +145,3 @@ private val wqMaterialShapes = Shapes(
     large = WqShapes.default.extraLarge,
     extraLarge = WqShapes.default.extraLarge,
 )
-
-// --- Обратная совместимость (шаг 4 миграции удалит эти шимы) ---
-
-/** @deprecated использовать WqTheme.colors.accentText */
-val AccentTextColor: Color
-    @Composable get() = WqTheme.colors.accentText
-
-/** @deprecated использовать WqTheme.colors.inkDim */
-val DimTextColor: Color
-    @Composable get() = WqTheme.colors.inkDim
-
-/** @deprecated использовать WqTheme.colors.fogCovered */
-val FogCoveredColor: Color
-    @Composable get() = WqTheme.colors.fogCovered
-
-/** @deprecated использовать WqTheme.colors.fogGlow */
-val FogGlowColor: Color
-    @Composable get() = WqTheme.colors.fogGlow
-
-/** @deprecated использовать WqTheme.colors.poiMarker */
-val PoiMarkerColor: Color
-    @Composable get() = WqTheme.colors.poiMarker
-
-/** @deprecated использовать WqTheme.colors.inkHeadline */
-val HeadlineColor: Color
-    @Composable get() = WqTheme.colors.inkHeadline
-
-/** @deprecated использовать WqTheme.colors.inkSecondary */
-val InkSecondaryColor: Color
-    @Composable get() = WqTheme.colors.inkSecondary
-
-/** @deprecated использовать WqTheme.colors.inkSecondary (чужие регионы) */
-val MutedLavenderTextColor: Color
-    @Composable get() = WqTheme.colors.inkSecondary
-
-/** @deprecated использовать WqTheme.colors.surfaceNav */
-val NavSurfaceColor: Color
-    @Composable get() = WqTheme.colors.surfaceNav
-
-/** @deprecated использовать WqTheme.colors.borderStrong */
-val BorderStrongColor: Color
-    @Composable get() = WqTheme.colors.borderStrong
-
-/** @deprecated использовать WqTheme.colors.cursor */
-val MeCursorColor: Color
-    @Composable get() = WqTheme.colors.cursor
-
-/** @deprecated использовать WqTheme.colors.fog */
-val FogColor: Color
-    @Composable get() = WqTheme.colors.fog
-
-// --- Deprecated-компоненты (шаг 4 миграции экранов удалит) ---
-
-/**
- * @deprecated использовать app.walkquest.ui.components.WqPrimaryButton
- * (одинаковая реализация на токенах WqTheme).
- */
-@Composable
-fun WalkQuestPrimaryButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    content: @Composable RowScope.() -> Unit,
-) {
-    if (isSystemInDarkTheme()) {
-        Button(
-            onClick = onClick,
-            modifier = modifier.heightIn(min = 48.dp),
-            enabled = enabled,
-            shape = WqTheme.shapes.large,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = WqTheme.colors.accent,
-                contentColor = WqTheme.colors.accentInk,
-            ),
-            content = content,
-        )
-    } else {
-        OutlinedButton(
-            onClick = onClick,
-            modifier = modifier.heightIn(min = 48.dp),
-            enabled = enabled,
-            shape = WqTheme.shapes.large,
-            border = BorderStroke(1.5.dp, WqTheme.colors.accentText),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = WqTheme.colors.surfaceRaised,
-                contentColor = WqTheme.colors.accentText,
-            ),
-            content = content,
-        )
-    }
-}
-
-/** @deprecated использовать app.walkquest.ui.components.WqGhostButton. */
-@Composable
-fun WalkQuestGhostButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    content: @Composable RowScope.() -> Unit,
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = 48.dp),
-        enabled = enabled,
-        shape = WqTheme.shapes.full,
-        border = BorderStroke(1.5.dp, WqTheme.colors.borderStrong),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
-            contentColor = WqTheme.colors.inkSecondary,
-        ),
-        content = content,
-    )
-}

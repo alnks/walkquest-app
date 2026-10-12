@@ -3,6 +3,7 @@ package app.walkquest.ui.regions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,9 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,14 +18,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.walkquest.ui.theme.AccentTextColor
-import app.walkquest.ui.theme.DimTextColor
-import app.walkquest.ui.theme.HeadlineColor
-import app.walkquest.ui.theme.InkSecondaryColor
-import app.walkquest.ui.theme.MutedLavenderTextColor
+import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.components.WqGhostButton
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.RegionRowUi
 import app.walkquest.viewmodel.RegionsViewModel
 import java.util.Locale
@@ -35,10 +30,9 @@ import java.util.Locale
 /**
  * Экран «Мои регионы» (история 1.10, FR-4; EXPERIENCE: Профиль → «Мои регионы»,
  * модальных стеков глубже одного уровня нет): список установленных регионов
- * строками «процент · название · подпись». Раньше был вкладкой нижней навигации;
- * после дизайн-сессии (4 вкладки Карта·Прогресс·Рейтинг·Профиль) живёт оверлеем
- * первого уровня. Процент домашнего — акцентом (AccentTextColor), чужих —
- * приглушённым лавандовым; подпись домашнего — «домашний регион». Действия:
+ * строками «процент · название · подпись». Спецификация: screens-spec.md §9.
+ * Процент домашнего — акцентом (accentText), чужих — приглушённым ink-secondary;
+ * подпись домашнего — «домашний регион». Действия:
  * тап по строке → карта региона; «Домашний» — сделать домашним (персистентно);
  * [onClose] — явный выход («Готово» внизу, стрелок «назад» нет, DESIGN).
  * Прогресс регионов не смешивается: каждая строка — доля из domain по своему
@@ -60,38 +54,44 @@ fun RegionsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(WqTheme.colors.surfaceBase)
             .statusBarsPadding(),
     ) {
         Text(
             text = "Регионы",
-            color = HeadlineColor,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 10.dp),
+            color = WqTheme.colors.inkHeadline,
+            style = WqTheme.typography.headingScreen,
+            modifier = Modifier.padding(
+                start = WqTheme.spacing.lg,
+                end = WqTheme.spacing.lg,
+                top = WqTheme.spacing.lg,
+                bottom = 10.dp,
+            ),
         )
         uiState.lastError?.let { error ->
             Text(
                 text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                color = WqTheme.colors.error,
+                style = WqTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 4.dp),
             )
         }
         if (uiState.rows.isEmpty()) {
             Text(
                 text = "Пока нет установленных регионов. Загрузите домашний регион — карточка на вкладке «Карта».",
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                color = WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.body,
+                modifier = Modifier.padding(horizontal = WqTheme.spacing.lg),
             )
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 16.dp, end = 16.dp, bottom = 16.dp,
+            contentPadding = PaddingValues(
+                start = WqTheme.spacing.lg,
+                end = WqTheme.spacing.lg,
+                bottom = WqTheme.spacing.lg,
             ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(WqTheme.spacing.sm),
         ) {
             items(uiState.rows, key = { it.regionId }) { row ->
                 RegionRow(
@@ -107,7 +107,7 @@ fun RegionsScreen(
             // внизу; видна, только когда экран открыт оверлеем из Профиля).
             if (onClose != null) {
                 item(key = "close") {
-                    app.walkquest.ui.theme.WalkQuestGhostButton(
+                    WqGhostButton(
                         onClick = onClose,
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text(text = "Готово") }
@@ -127,39 +127,30 @@ private fun RegionRow(
     onSetHome: () -> Unit,
     onUpdate: () -> Unit,
 ) {
-    Surface(
-        onClick = onOpen,
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    WqCard(onClick = onOpen, tonalElevation = 1.dp) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.md),
         ) {
             Text(
                 text = row.fraction?.let { formatPercent(it) } ?: "—",
-                color = if (row.isHome) AccentTextColor else MutedLavenderTextColor,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(end = 12.dp),
+                color = if (row.isHome) WqTheme.colors.accentText else WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.headingCard,
+                modifier = Modifier.padding(end = WqTheme.spacing.md),
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = row.name,
-                    color = HeadlineColor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    color = WqTheme.colors.inkHeadline,
+                    style = WqTheme.typography.headingCard,
                 )
                 Text(
                     text = when {
                         row.isHome -> "домашний регион"
                         else -> "установлен"
                     },
-                    color = DimTextColor,
-                    style = MaterialTheme.typography.labelSmall,
+                    color = WqTheme.colors.inkDim,
+                    style = WqTheme.typography.meta,
                 )
             }
             // Обновление пакета (дефект 7 разбора 2026-10-05): манифест предлагает
@@ -168,13 +159,13 @@ private fun RegionRow(
                 TextButton(onClick = onUpdate, enabled = !updateInProgress) {
                     Text(
                         text = if (updating) "Обновляется…" else "Обновить",
-                        color = AccentTextColor,
+                        color = WqTheme.colors.accentText,
                     )
                 }
             }
             if (!row.isHome) {
                 TextButton(onClick = onSetHome) {
-                    Text(text = "Домашний", color = InkSecondaryColor)
+                    Text(text = "Домашний", color = WqTheme.colors.inkSecondary)
                 }
             }
         }

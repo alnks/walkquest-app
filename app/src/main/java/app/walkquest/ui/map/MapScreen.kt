@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,7 +59,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -85,18 +83,20 @@ import app.walkquest.ui.onboarding.OnboardingOverlay
 import app.walkquest.viewmodel.WalkSummaryUi
 import app.walkquest.tracking.circleRing
 import app.walkquest.tracking.trailRing
-import app.walkquest.ui.theme.AccentTextColor
-import app.walkquest.ui.theme.BorderStrongColor
-import app.walkquest.ui.theme.DimTextColor
-import app.walkquest.ui.theme.FogCoveredColor
-import app.walkquest.ui.theme.FogGlowColor
-import app.walkquest.ui.theme.HeadlineColor
-import app.walkquest.ui.theme.InkSecondaryColor
-import app.walkquest.ui.theme.MeCursorColor
-import app.walkquest.ui.theme.PoiMarkerColor
-import app.walkquest.ui.theme.WalkQuestIcons
-import app.walkquest.ui.theme.WalkQuestPrimaryButton
 import app.walkquest.ui.common.PlanDateTimePicker
+import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.components.WqChip
+import app.walkquest.ui.components.WqGhostButton
+import app.walkquest.ui.components.WqIconFab
+import app.walkquest.ui.components.WqModeToggle
+import app.walkquest.ui.components.WqModeToggleEntry
+import app.walkquest.ui.components.WqPrimaryButton
+import app.walkquest.ui.components.WqQuestCard
+import app.walkquest.ui.components.WqSheet
+import app.walkquest.ui.components.WqStatColumn
+import app.walkquest.ui.theme.WalkQuestIcons
+import app.walkquest.ui.theme.WqPrimitive
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.MapUiState
 import app.walkquest.viewmodel.MapViewModel
 import app.walkquest.viewmodel.RegionSuggestionUi
@@ -385,31 +385,22 @@ fun MapScreen(
         // свежего точного фикса — честная плашка вместо маркера в случайном месте.
         // Только при выданном разрешении: без разрешения фикс не придёт никогда.
         if (locationGranted && !meFixVisible) {
-            Surface(
+            WqChip(
+                text = "Определяю местоположение…",
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
                     .padding(
                         top = if (uiState.isRecording) 140.dp else 76.dp,
                     ),
-                shape = RoundedCornerShape(percent = 50),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                shadowElevation = 4.dp,
-            ) {
-                Text(
-                    text = "Определяю местоположение…",
-                    color = InkSecondaryColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-            }
+            )
         }
         // Статус «вне области пакета» (разбор владельца 2026-10-05): принятые точки
         // записи вне всех установленных регионов не открывают туман — честная плашка
         // вместо молчания. Под карточкой предложения региона, если та видна.
         if (uiState.isRecording && uiState.outsideCoverage) {
-            Surface(
+            WqChip(
+                text = "Вы вне области пакета — прогулка не засчитывается",
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
@@ -420,18 +411,7 @@ fun MapScreen(
                             else -> 76.dp
                         },
                     ),
-                shape = RoundedCornerShape(percent = 50),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                shadowElevation = 4.dp,
-            ) {
-                Text(
-                    text = "Вы вне области пакета — прогулка не засчитывается",
-                    color = InkSecondaryColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-            }
+            )
         }
         // Карточка предложения загрузить регион (1.10, Flow 4): локация в чужом
         // регионе → «Загрузить?»; установка не прерывает запись трека.
@@ -471,12 +451,14 @@ fun MapScreen(
                     bottom = if (uiState.isRecording) FAB_BOTTOM_RECORDING else FAB_BOTTOM_IDLE,
                 ),
         )
-        // Тогл режима прогулки (2.2, FR-6; DESIGN toggle-mode): значки без текста,
-        // активная сторона — значок на белом кружке с кольцом акцента; слева сверху.
+        // Тогл режима прогулки (2.2, FR-6; DESIGN toggle-mode) — WqModeToggle:
+        // значки без текста, «всадник» — белый кружок с кольцом акцента; слева сверху.
         // Виден и до, и во время записи; во время записи тап шлёт ACTION_SET_MODE.
-        ModeToggle(
-            mode = uiState.walkMode,
-            onSelect = { mode ->
+        WqModeToggle(
+            entries = MODE_TOGGLE_ENTRIES,
+            selectedIndex = uiState.walkMode.ordinal,
+            onSelect = { index ->
+                val mode = WalkMode.entries[index]
                 viewModel.onWalkModeSelected(mode)
                 if (uiState.isRecording) {
                     context.startService(
@@ -618,7 +600,7 @@ fun MapScreen(
         if (questOverlayVisible) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background,
+                color = WqTheme.colors.surfaceBase,
             ) {
                 app.walkquest.ui.quests.QuestsContent(
                     viewModel = viewModel,
@@ -662,27 +644,17 @@ private val RECORDING_PERMISSIONS = arrayOf(
 private fun RegionProgressBadge(fraction: Double, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(percent = 50),
-        color = MaterialTheme.colorScheme.surface,
+        shape = WqTheme.shapes.full,
+        color = WqTheme.colors.surfaceRaised,
         tonalElevation = 2.dp,
         shadowElevation = 4.dp,
     ) {
-        Column(
+        // Паттерн statcol DESIGN: значение акцентом Nunito 800 над подписью meta.
+        WqStatColumn(
+            value = formatPercent(fraction),
+            label = "открыто",
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = formatPercent(fraction),
-                color = AccentTextColor,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-            )
-            Text(
-                text = "открыто",
-                color = DimTextColor,
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+        )
     }
 }
 
@@ -710,132 +682,49 @@ private val FAB_BOTTOM_RECORDING = PANEL_OFFSET_RECORDING + 12.dp
 private val FAB_BOTTOM_IDLE = 216.dp
 
 /**
- * Тогл режима прогулки (2.2, FR-6; DESIGN toggle-mode): пилюля со значками без
- * текста; активная сторона — значок на белом кружке с кольцом акцента (контраст
- * эмодзи/глифа на акцентной заливке недостаточен — значок на белом).
+ * Тогл режима прогулки (DESIGN toggle-mode) — реализация в компонентах:
+ * [WqModeToggle], записи пешеход/вело с подписями TalkBack.
  */
-@Composable
-private fun ModeToggle(
-    mode: WalkMode,
-    onSelect: (WalkMode) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(percent = 50),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
-    ) {
-        Row(modifier = Modifier.padding(4.dp)) {
-            WalkMode.entries.forEach { entry ->
-                val selected = mode == entry
-                val icon = when (entry) {
-                    WalkMode.WALKING -> WalkQuestIcons.Walk
-                    WalkMode.CYCLING -> WalkQuestIcons.Bike
-                }
-                Surface(
-                    onClick = { onSelect(entry) },
-                    shape = CircleShape,
-                    color = if (selected) Color.White else Color.Transparent,
-                    border = if (selected) {
-                        BorderStroke(1.5.dp, AccentTextColor)
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = when (entry) {
-                                WalkMode.WALKING -> "Режим: пешком"
-                                WalkMode.CYCLING -> "Режим: вело"
-                            },
-                            tint = if (selected) AccentTextColor else DimTextColor,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+private val MODE_TOGGLE_ENTRIES = listOf(
+    WqModeToggleEntry(WalkQuestIcons.Walk, "Режим: пешком"),
+    WqModeToggleEntry(WalkQuestIcons.Bike, "Режим: вело"),
+)
 
-/** Шестерёнка настроек (DESIGN: эмодзи ⚙ читался как метка локации — вектор). */
+/** Шестерёнка настроек — WqIconFab (DESIGN: эмодзи ⚙ читался как метка локации — вектор). */
 @Composable
 private fun SettingsGearButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    WqIconFab(
+        icon = WalkQuestIcons.Gear,
+        contentDescription = "Настройки",
         onClick = onClick,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
+        tint = WqTheme.colors.inkSecondary,
         modifier = modifier.size(44.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = WalkQuestIcons.Gear,
-                contentDescription = "Настройки",
-                tint = InkSecondaryColor,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
+    )
 }
 
-/** Чип состояния записи (DESIGN: «Идёт запись» / «На паузе» с точкой-индикатором). */
+/** Чип состояния записи — WqChip (DESIGN: «Идёт запись» акцентом / «На паузе» нейтрально). */
 @Composable
 private fun RecordingChip(paused: Boolean, modifier: Modifier = Modifier) {
-    Surface(
+    WqChip(
+        text = if (paused) "На паузе" else "Идёт запись",
+        dotColor = if (paused) WqTheme.colors.inkDim else WqTheme.colors.accentText,
         modifier = modifier,
-        shape = RoundedCornerShape(percent = 50),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = if (paused) DimTextColor else AccentTextColor,
-                modifier = Modifier.size(8.dp),
-            ) {}
-            Text(
-                text = if (paused) "На паузе" else "Идёт запись",
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
+    )
 }
 
-/** FAB «+ Задание» во время прогулки (EXPERIENCE: поток заданий поверх прогулки). */
+/** FAB «+ Задание» во время прогулки — WqIconFab (EXPERIENCE: поток заданий поверх прогулки). */
 @Composable
 private fun QuestFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    WqIconFab(
+        icon = WalkQuestIcons.Plus,
+        contentDescription = "Задание на прогулку",
         onClick = onClick,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
-        modifier = modifier.size(48.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = WalkQuestIcons.Plus,
-                contentDescription = "Задание на прогулку",
-                tint = AccentTextColor,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-    }
+        tint = WqTheme.colors.accentText,
+        modifier = modifier,
+    )
 }
 
-/** Карточка активного задания над панелью прогулки (DESIGN card-task). */
+/** Карточка активного задания над панелью прогулки — WqQuestCard (DESIGN card-task). */
 @Composable
 private fun ActiveQuestCard(
     quest: app.walkquest.viewmodel.QuestUi,
@@ -843,37 +732,20 @@ private fun ActiveQuestCard(
     onDeclined: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = AccentTextColor.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, AccentTextColor.copy(alpha = 0.35f)),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Text(
-                text = "Активное задание",
-                color = DimTextColor,
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                text = "${quest.icon} ${quest.name}",
-                color = HeadlineColor,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = quest.description,
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onCompleted) { Text("Выполнено", color = AccentTextColor) }
-                TextButton(onClick = onDeclined) { Text("Снять", color = InkSecondaryColor) }
+    WqQuestCard(
+        title = "${quest.icon} ${quest.name}",
+        description = quest.description,
+        badge = "Активное задание",
+        modifier = modifier.padding(horizontal = 16.dp),
+        actions = {
+            TextButton(onClick = onCompleted) {
+                Text("Выполнено", color = WqTheme.colors.accentText)
             }
-        }
-    }
+            TextButton(onClick = onDeclined) {
+                Text("Снять", color = WqTheme.colors.inkSecondary)
+            }
+        },
+    )
 }
 
 /**
@@ -891,30 +763,22 @@ private fun WalkPanel(
     onFinishRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        color = MaterialTheme.colorScheme.background,
-        tonalElevation = 1.dp,
-        shadowElevation = 8.dp,
-    ) {
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                StatMiniColumn(value = formatDuration(activeMillis), label = "время")
-                StatMiniColumn(value = "%.1f".format(distanceMeters / 1000.0), label = "км")
-                StatMiniColumn(value = openedCells.toString(), label = "клеток открыто")
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                WalkQuestPrimaryButton(
-                    onClick = onPauseResume,
-                    modifier = Modifier.weight(1f),
-                ) { Text(text = if (paused) "Продолжить" else "Пауза") }
-                app.walkquest.ui.theme.WalkQuestGhostButton(
-                    onClick = onFinishRequest,
-                    modifier = Modifier.weight(1f),
-                ) { Text(text = "Завершить") }
-            }
+    WqSheet(modifier = modifier) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            WqStatColumn(value = formatDuration(activeMillis), label = "время")
+            WqStatColumn(value = "%.1f".format(distanceMeters / 1000.0), label = "км")
+            WqStatColumn(value = openedCells.toString(), label = "клеток открыто")
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            WqPrimaryButton(
+                onClick = onPauseResume,
+                modifier = Modifier.weight(1f),
+            ) { Text(text = if (paused) "Продолжить" else "Пауза") }
+            WqGhostButton(
+                onClick = onFinishRequest,
+                modifier = Modifier.weight(1f),
+            ) { Text(text = "Завершить") }
         }
     }
 }
@@ -934,79 +798,48 @@ private fun HomeSheet(
     onStartWalk: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        color = MaterialTheme.colorScheme.background,
-        tonalElevation = 1.dp,
-        shadowElevation = 8.dp,
-    ) {
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                StatMiniColumn(
-                    value = progressFraction?.let { formatPercent(it) } ?: "—",
-                    label = "открыто",
-                )
-                StatMiniColumn(
-                    value = streakDays?.let { pluralDaysShort(it) } ?: "—",
-                    label = "серия",
-                )
-                StatMiniColumn(
-                    value = weekDistanceMeters?.let { "%.1f км".format(it / 1000.0) } ?: "—",
-                    label = "за неделю",
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            // Карточка планировщика (3.6): ближайший план; «+» — диалог даты/времени.
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 1.dp,
-                modifier = Modifier.fillMaxWidth(),
+    WqSheet(modifier = modifier) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            WqStatColumn(
+                value = progressFraction?.let { formatPercent(it) } ?: "—",
+                label = "открыто",
+            )
+            WqStatColumn(
+                value = streakDays?.let { pluralDaysShort(it) } ?: "—",
+                label = "серия",
+            )
+            WqStatColumn(
+                value = weekDistanceMeters?.let { "%.1f км".format(it / 1000.0) } ?: "—",
+                label = "за неделю",
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        // Карточка планировщика (3.6): ближайший план; «+» — диалог даты/времени.
+        WqCard(tonalElevation = 1.dp) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-                ) {
-                    Text(
-                        text = planText ?: "Нет планов — нажмите +, чтобы запланировать прогулку",
-                        color = if (planText != null) InkSecondaryColor else DimTextColor,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.weight(1f),
+                Text(
+                    text = planText ?: "Нет планов — нажмите +, чтобы запланировать прогулку",
+                    color = if (planText != null) WqTheme.colors.inkSecondary else WqTheme.colors.inkDim,
+                    style = WqTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onAddPlan) {
+                    Icon(
+                        imageVector = WalkQuestIcons.Plus,
+                        contentDescription = "Запланировать прогулку",
+                        tint = WqTheme.colors.accentText,
+                        modifier = Modifier.size(20.dp),
                     )
-                    TextButton(onClick = onAddPlan) {
-                        Icon(
-                            imageVector = WalkQuestIcons.Plus,
-                            contentDescription = "Запланировать прогулку",
-                            tint = AccentTextColor,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            WalkQuestPrimaryButton(onClick = onStartWalk, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Начать прогулку")
-            }
         }
-    }
-}
-
-/** Мини-колонка статистики (DESIGN stat-line): значение акцентом над подписью dim. */
-@Composable
-private fun StatMiniColumn(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            color = AccentTextColor,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold,
-        )
-        Text(
-            text = label,
-            color = DimTextColor,
-            style = MaterialTheme.typography.labelSmall,
-        )
+        Spacer(modifier = Modifier.height(12.dp))
+        WqPrimaryButton(onClick = onStartWalk, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Начать прогулку")
+        }
     }
 }
 
@@ -1112,14 +945,14 @@ private fun DebugOverlay(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = Color(0xB3000000),
+        color = Color(WqPrimitive.DEBUG_PANEL_BACKGROUND),
     ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
             lines.forEach { line ->
                 Text(
                     text = line,
-                    color = Color(0xFFE8E8E8),
-                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(WqPrimitive.DEBUG_PANEL_TEXT),
+                    style = WqTheme.typography.meta,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 )
             }
@@ -1185,8 +1018,8 @@ private fun DebugSlider(
     ) {
         Text(
             text = "$label: ${format(value)}",
-            color = Color(0xFFE8E8E8),
-            style = MaterialTheme.typography.labelSmall,
+            color = Color(WqPrimitive.DEBUG_PANEL_TEXT),
+            style = WqTheme.typography.meta,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
         )
     }
@@ -1207,20 +1040,22 @@ private fun DebugSlider(
  */
 @Composable
 private fun DebugToggleFab(active: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    // Стиль — как у FAB «к моей точке» (круг 48dp, surface-raised, рамка
+    // border-strong); активный режим — акцентная подпись. Глиф не вводим —
+    // короткая подпись «DBG» честнее.
     Surface(
         onClick = onClick,
         modifier = modifier.size(48.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, BorderStrongColor),
+        shape = WqTheme.shapes.full,
+        color = WqTheme.colors.surfaceRaised,
+        border = BorderStroke(1.dp, WqTheme.colors.borderStrong),
         shadowElevation = 4.dp,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = "DBG",
-                color = if (active) AccentTextColor else InkSecondaryColor,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.ExtraBold,
+                color = if (active) WqTheme.colors.accentText else WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.meta,
             )
         }
     }
@@ -1228,31 +1063,22 @@ private fun DebugToggleFab(active: Boolean, onClick: () -> Unit, modifier: Modif
 
 /**
  * FAB «к моей точке» (разбор владельца 2026-10-05, дефект 2). В макете кнопки нет,
- * поэтому стиль — icon-btn прототипа (круг 48dp, заливка surface-raised, рамка
+ * поэтому стиль — WqIconFab (круг 48dp, заливка surface-raised, рамка
  * border-strong, глиф ink-secondary). Без фикса позиции — приглушена (ink-dim)
  * и неактивна: центровать не на чём. Глиф «my location» — вектор 24dp вручную,
  * material-icons-зависимость не вводим (как TabIcons в MainActivity).
  */
 @Composable
 private fun MeLocationFab(hasFix: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    WqIconFab(
+        icon = MyLocationIcon,
+        contentDescription = "К моей точке",
         onClick = onClick,
         enabled = hasFix,
-        modifier = modifier.size(48.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, BorderStrongColor),
-        shadowElevation = 4.dp,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = MyLocationIcon,
-                contentDescription = "К моей точке",
-                tint = if (hasFix) InkSecondaryColor else DimTextColor,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
+        tint = WqTheme.colors.inkSecondary,
+        disabledTint = WqTheme.colors.inkDim,
+        modifier = modifier,
+    )
 }
 
 /** Глиф перекрестия «моя позиция» (24dp viewport; тон задаёт Icon tint). */
@@ -1288,8 +1114,8 @@ private fun RegionSuggestionCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
+        shape = WqTheme.shapes.large,
+        color = WqTheme.colors.surfaceRaised,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
     ) {
@@ -1300,9 +1126,8 @@ private fun RegionSuggestionCard(
                 } else {
                     "Похоже, вы в регионе «${suggestion.name}»"
                 },
-                color = HeadlineColor,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
+                color = WqTheme.colors.inkHeadline,
+                style = WqTheme.typography.headingSection,
             )
             Text(
                 text = if (suggestion.isInitialHome) {
@@ -1310,14 +1135,14 @@ private fun RegionSuggestionCard(
                 } else {
                     "Загрузить его карту и туман? Прогулки там будут засчитываться этому региону."
                 },
-                color = InkSecondaryColor,
-                style = MaterialTheme.typography.bodyMedium,
+                color = WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.body,
             )
             suggestion.error?.let { error ->
                 Text(
                     text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                    color = WqTheme.colors.error,
+                    style = WqTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
@@ -1325,11 +1150,11 @@ private fun RegionSuggestionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                WalkQuestPrimaryButton(onClick = onInstall, enabled = !suggestion.installing) {
+                WqPrimaryButton(onClick = onInstall, enabled = !suggestion.installing) {
                     Text(text = if (suggestion.installing) "Загружается…" else "Загрузить")
                 }
                 TextButton(onClick = onDismiss, enabled = !suggestion.installing) {
-                    Text(text = "Позже", color = InkSecondaryColor)
+                    Text(text = "Позже", color = WqTheme.colors.inkSecondary)
                 }
             }
         }
@@ -1368,8 +1193,8 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
                 },
             )
         },
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
+        shape = WqTheme.shapes.large,
+        color = WqTheme.colors.surfaceRaised,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
     ) {
@@ -1383,13 +1208,12 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = poi.displayName,
-                        color = HeadlineColor,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        color = WqTheme.colors.inkHeadline,
+                        style = WqTheme.typography.headingScreen,
                         modifier = Modifier.weight(1f),
                     )
                     TextButton(onClick = onClose) {
-                        Text(text = "Закрыть", color = InkSecondaryColor)
+                        Text(text = "Закрыть", color = WqTheme.colors.inkSecondary)
                     }
                 }
                 val description = poi.description?.takeIf { it.isNotBlank() }
@@ -1400,8 +1224,8 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
                     var truncated by remember(poi.osmId) { mutableStateOf(false) }
                     Text(
                         text = description,
-                        color = InkSecondaryColor,
-                        style = MaterialTheme.typography.bodyMedium,
+                        color = WqTheme.colors.inkSecondary,
+                        style = WqTheme.typography.body,
                         maxLines = POI_DESCRIPTION_MAX_LINES,
                         overflow = TextOverflow.Ellipsis,
                         onTextLayout = { truncated = it.hasVisualOverflow },
@@ -1411,8 +1235,8 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
                     if (truncated && url != null) {
                         Text(
                             text = "Подробнее",
-                            color = AccentTextColor,
-                            style = MaterialTheme.typography.bodyMedium,
+                            color = WqTheme.colors.accentText,
+                            style = WqTheme.typography.body,
                             textDecoration = TextDecoration.Underline,
                             modifier = Modifier
                                 .clickable {
@@ -1427,8 +1251,8 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
                     // Описания в пакете нет — показываем категорию места вместо пустоты.
                     Text(
                         text = poi.displayCategory,
-                        color = DimTextColor,
-                        style = MaterialTheme.typography.labelSmall,
+                        color = WqTheme.colors.inkDim,
+                        style = WqTheme.typography.meta,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
@@ -1457,7 +1281,7 @@ private fun PoiPhoto(photoFile: File) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(POI_PHOTO_HEIGHT)
-                .background(MaterialTheme.colorScheme.background),
+                .background(WqTheme.colors.surfaceBase),
         )
         is DecodedPoiPhoto.Ready -> Image(
             bitmap = state.bitmap,
@@ -1494,10 +1318,12 @@ private fun FogMap(
 ) {
     val mapView = rememberMapViewWithLifecycle()
     var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
-    val markerArgb = PoiMarkerColor.toArgb()
-    val cursorArgb = MeCursorColor.toArgb()
-    val fogArgb = FogCoveredColor.toArgb()
-    val glowArgb = FogGlowColor.toArgb()
+    // Цвета слоёв карты — семантические токены (ни одного hex вне токенов):
+    // маяки — poiMarker, кольцо «я» — cursor, завеса — fogCovered, свечение — fogGlow.
+    val markerArgb = WqTheme.colors.poiMarker.toArgb()
+    val cursorArgb = WqTheme.colors.cursor.toArgb()
+    val fogArgb = WqTheme.colors.fogCovered.toArgb()
+    val glowArgb = WqTheme.colors.fogGlow.toArgb()
     // Актуальные значения для асинхронных колбэков (setStyle, слушатели карты):
     // события, пришедшие до конца загрузки стиля, не должны потерять состояние.
     val currentState by rememberUpdatedState(uiState)
@@ -2383,61 +2209,62 @@ private fun WalkSummaryOverlay(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface,
+        color = WqTheme.colors.surfaceRaised,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(24.dp),
+                .padding(WqTheme.spacing.xl),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = summary.praise,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                style = WqTheme.typography.headingSection,
+                color = WqTheme.colors.inkHeadline,
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(WqTheme.spacing.xl))
             summary.progressFraction?.let { fraction ->
                 Text(
                     text = formatPercent(fraction),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = AccentTextColor,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = WqTheme.typography.displaySmall,
+                    color = WqTheme.colors.accentText,
                 )
                 Text(
                     text = "территории открыто",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = InkSecondaryColor,
+                    style = WqTheme.typography.body,
+                    color = WqTheme.colors.inkSecondary,
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
             }
             val minutes = summary.activeMillis / 60_000L
             Text(
                 text = "%.1f км · %d мин".format(summary.distanceMeters / 1000.0, minutes),
-                style = MaterialTheme.typography.titleMedium,
+                style = WqTheme.typography.headingCard,
+                color = WqTheme.colors.inkHeadline,
             )
             if (summary.achievements.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
                 summary.achievements.forEach { achievement ->
                     Text(
                         text = "🏆 $achievement",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = WqTheme.typography.body,
+                        color = WqTheme.colors.inkPrimary,
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(WqTheme.spacing.xxl))
             Text(
                 text = app.walkquest.domain.WalkPraise.TOMORROW_NOTE,
-                style = MaterialTheme.typography.bodyMedium,
-                color = InkSecondaryColor,
+                style = WqTheme.typography.body,
+                color = WqTheme.colors.inkSecondary,
             )
-            Spacer(modifier = Modifier.height(32.dp))
-            WalkQuestPrimaryButton(onClick = onShare) { Text(text = "Поделиться") }
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = onClose) { Text(text = "Закрыть") }
+            Spacer(modifier = Modifier.height(WqTheme.spacing.xxl))
+            WqPrimaryButton(onClick = onShare) { Text(text = "Поделиться") }
+            Spacer(modifier = Modifier.height(WqTheme.spacing.sm))
+            TextButton(onClick = onClose) { Text(text = "Закрыть", color = WqTheme.colors.inkSecondary) }
         }
     }
 }

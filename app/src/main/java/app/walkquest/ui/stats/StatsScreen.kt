@@ -12,27 +12,25 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.StatsViewModel
 import java.util.Locale
 
 /**
  * Экран статистики (история 3.4, FR-13): серия, число прогулок, суммарное
  * расстояние, проценты посещённых регионов. Все числа — готовые из viewmodel
- * (domain, AD-4): здесь только рендер. Источник истины — история на устройстве.
+ * (domain, AD-4): здесь только рендер. Спецификация: screens-spec.md §5a.
  */
 @Composable
 fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
@@ -45,25 +43,29 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
             .fillMaxSize()
             .then(if (embedded) Modifier else Modifier.statusBarsPadding())
             .verticalScroll(rememberScrollState())
-            .padding(if (embedded) 16.dp else 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(if (embedded) WqTheme.spacing.lg else WqTheme.spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WqTheme.spacing.xl),
     ) {
         if (!embedded) {
             Text(
                 text = "Статистика",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                style = WqTheme.typography.headingScreen,
+                color = WqTheme.colors.inkHeadline,
             )
         }
         ui.goalText?.let {
             Text(
                 text = "Цель: $it",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = WqTheme.typography.body,
+                color = WqTheme.colors.inkSecondary,
             )
         }
         if (ui.loading) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                color = WqTheme.colors.accent,
+                trackColor = WqTheme.colors.inkDim.copy(alpha = 0.3f),
+            )
             return@Column
         }
         StatRow(label = "Серия", value = pluralDays(ui.streakDays))
@@ -73,11 +75,11 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
             value = "%.1f км".format(ui.totalDistanceMeters / 1000.0),
         )
         if (ui.regions.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(WqTheme.spacing.sm))
             Text(
                 text = "Регионы",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = WqTheme.typography.headingSection,
+                color = WqTheme.colors.inkHeadline,
             )
             ui.regions.forEach { region ->
                 Column {
@@ -85,11 +87,11 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text(text = region.name, style = MaterialTheme.typography.bodyMedium)
+                        Text(text = region.name, style = WqTheme.typography.body)
                         Text(
                             text = formatPercent(region.fraction),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
+                            style = WqTheme.typography.headingCard,
+                            color = WqTheme.colors.accentText,
                         )
                     }
                     LinearProgressIndicator(
@@ -97,12 +99,14 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp),
+                        color = WqTheme.colors.accent,
+                        trackColor = WqTheme.colors.inkDim.copy(alpha = 0.3f),
                     )
                 }
             }
         }
         // Планировщик (3.6, FR-17): планы + создание через DatePicker/TimePicker.
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(WqTheme.spacing.sm))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,11 +114,15 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
         ) {
             Text(
                 text = "Планы",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = WqTheme.typography.headingSection,
+                color = WqTheme.colors.inkHeadline,
             )
             TextButton(onClick = { showPlanPicker = true }) {
-                Text(text = "Запланировать")
+                Text(
+                    text = "Запланировать",
+                    color = WqTheme.colors.accentText,
+                    style = WqTheme.typography.metaLarge,
+                )
             }
         }
         ui.plans.forEach { plan ->
@@ -130,13 +138,14 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
             ) {
                 Text(
                     text = "${formatPlanDate(plan.plannedAtEpochMillis)} — $status",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = WqTheme.typography.body,
+                    color = if (plan.past) WqTheme.colors.inkDim else WqTheme.colors.inkPrimary,
                 )
                 if (!plan.past) {
                     TextButton(onClick = {
                         viewModel.cancelPlan(plan.id)
                         app.walkquest.ui.common.cancelPlanAlarm(context, plan.id)
-                    }) { Text(text = "Отмена") }
+                    }) { Text(text = "Отмена", color = WqTheme.colors.inkSecondary) }
                 }
             }
         }
@@ -161,14 +170,19 @@ fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
     }
 }
 
+/** Строка статистики: label body слева, значение Nunito 800 справа (без разделителей). */
 @Composable
 private fun StatRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(text = label, style = WqTheme.typography.body, color = WqTheme.colors.inkPrimary)
+        Text(
+            text = value,
+            style = WqTheme.typography.headingCard,
+            color = WqTheme.colors.accentText,
+        )
     }
 }
 

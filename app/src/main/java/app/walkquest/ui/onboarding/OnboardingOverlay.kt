@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,19 +20,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import app.walkquest.domain.GoalType
 import app.walkquest.domain.WalkGoal
-import app.walkquest.ui.theme.WalkQuestPrimaryButton
+import app.walkquest.ui.components.WqPrimaryButton
+import app.walkquest.ui.theme.WqTheme
 
 /**
  * Вступительное обучение (история 3.3, FR-12) + постановка цели (FR-11).
  * ≤4 экранов, пропускаемое; «Пропустить» НЕ освобождает от цели — после пропуска
  * показывается только экран выбора цели (она обязательна, FR-11). Тексты —
  * спокойный голос продукта (EXPERIENCE, прототип ob1–ob4); финальная полировка
- * — UX-проход (deferred-work).
+ * — UX-проход (deferred-work). Спецификация: screens-spec.md §4.
  *
  * [onComplete] — цель выбрана, онбординг завершён (viewmodel персистит и скрывает).
  */
@@ -72,20 +70,20 @@ fun OnboardingOverlay(
     var goalType by rememberSaveable { mutableIntStateOf(GoalType.WALKS_PER_WEEK.ordinal) }
     var goalValue by rememberSaveable { mutableIntStateOf(3) }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    Surface(modifier = Modifier.fillMaxSize(), color = WqTheme.colors.surfaceRaised) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(24.dp),
+                .padding(WqTheme.spacing.xl),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             // Верхний ряд: пропуск (не на экране цели).
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 if (page < GOAL_PAGE_INDEX) {
                     TextButton(onClick = { page = GOAL_PAGE_INDEX }) {
-                        Text(text = "Пропустить")
+                        Text(text = "Пропустить", color = WqTheme.colors.inkSecondary)
                     }
                 }
             }
@@ -95,14 +93,15 @@ fun OnboardingOverlay(
                     val current = PAGES[page]
                     Text(
                         text = current.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                        style = WqTheme.typography.headingSection,
+                        color = WqTheme.colors.inkHeadline,
                         textAlign = TextAlign.Center,
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
                     Text(
                         text = current.body,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = WqTheme.typography.body,
+                        color = WqTheme.colors.inkSecondary,
                         textAlign = TextAlign.Center,
                     )
                 } else {
@@ -123,11 +122,11 @@ fun OnboardingOverlay(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 if (page < GOAL_PAGE_INDEX) {
-                    WalkQuestPrimaryButton(onClick = { page += 1 }) {
+                    WqPrimaryButton(onClick = { page += 1 }) {
                         Text(text = if (page == GOAL_PAGE_INDEX - 1) "Дальше: цель" else "Дальше")
                     }
                 } else {
-                    WalkQuestPrimaryButton(
+                    WqPrimaryButton(
                         onClick = {
                             val type = GoalType.entries[goalType]
                             if (WalkGoal.isValid(type, goalValue)) {
@@ -165,46 +164,62 @@ private fun GoalPicker(
 ) {
     Text(
         text = "Ваша цель",
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
+        style = WqTheme.typography.headingSection,
+        color = WqTheme.colors.inkHeadline,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
-    Spacer(modifier = Modifier.height(16.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
+    Row(horizontalArrangement = Arrangement.spacedBy(WqTheme.spacing.sm)) {
         GoalType.entries.forEach { type ->
             val label = when (type) {
                 GoalType.WALKS_PER_WEEK -> "Прогулки в неделю"
                 GoalType.MINUTES_PER_DAY -> "Минут в день"
                 GoalType.KM_PER_DAY -> "Км в день"
             }
-            if (selectedType == type) {
-                WalkQuestPrimaryButton(onClick = { onTypeChange(type) }) { Text(text = label) }
-            } else {
-                TextButton(onClick = { onTypeChange(type) }) { Text(text = label) }
+            val selected = selectedType == type
+            TextButton(onClick = { onTypeChange(type) }) {
+                Text(
+                    text = label,
+                    color = if (selected) WqTheme.colors.accentText else WqTheme.colors.inkSecondary,
+                    style = if (selected) WqTheme.typography.metaLarge else WqTheme.typography.body,
+                )
             }
         }
     }
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(WqTheme.spacing.xl))
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(WqTheme.spacing.xl),
     ) {
         TextButton(
             onClick = {
                 val min = WalkGoal.range(selectedType).first
                 if (value - step(selectedType) >= min) onValueChange(value - step(selectedType))
             },
-        ) { Text(text = "−", style = MaterialTheme.typography.headlineMedium) }
+        ) {
+            Text(
+                text = "−",
+                style = WqTheme.typography.headingSection,
+                color = WqTheme.colors.inkSecondary,
+            )
+        }
         Text(
             text = WalkGoal(selectedType, value).describe(),
-            style = MaterialTheme.typography.titleMedium,
+            style = WqTheme.typography.headingCard,
+            color = WqTheme.colors.inkHeadline,
         )
         TextButton(
             onClick = {
                 val max = WalkGoal.range(selectedType).last
                 if (value + step(selectedType) <= max) onValueChange(value + step(selectedType))
             },
-        ) { Text(text = "+", style = MaterialTheme.typography.headlineMedium) }
+        ) {
+            Text(
+                text = "+",
+                style = WqTheme.typography.headingSection,
+                color = WqTheme.colors.inkSecondary,
+            )
+        }
     }
 }

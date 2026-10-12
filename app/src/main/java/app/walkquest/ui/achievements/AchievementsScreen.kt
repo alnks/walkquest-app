@@ -11,15 +11,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.AchievementsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,6 +28,7 @@ import java.util.Locale
  * Экран наград (история 4.4): 38 достижений по категориям; у неполученных —
  * условие, у близких — полоска прогресса; rare помечены. Перепроверка по
  * истории происходит во viewmodel при входе (FR-15: задним числом).
+ * Спецификация: screens-spec.md §5b.
  */
 @Composable
 fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = false) {
@@ -38,14 +38,14 @@ fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = fal
             .fillMaxSize()
             .then(if (embedded) Modifier else Modifier.statusBarsPadding())
             .verticalScroll(rememberScrollState())
-            .padding(if (embedded) 16.dp else 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(if (embedded) WqTheme.spacing.lg else WqTheme.spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WqTheme.spacing.md),
     ) {
         if (!embedded) {
             Text(
                 text = "Награды",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                style = WqTheme.typography.headingScreen,
+                color = WqTheme.colors.inkHeadline,
             )
         }
         var lastCategory: String? = null
@@ -54,9 +54,9 @@ fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = fal
                 lastCategory = row.category
                 Text(
                     text = row.category,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 8.dp),
+                    style = WqTheme.typography.headingCard,
+                    color = WqTheme.colors.inkHeadline,
+                    modifier = Modifier.padding(top = WqTheme.spacing.sm),
                 )
             }
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -64,19 +64,27 @@ fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = fal
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = row.icon, style = MaterialTheme.typography.headlineSmall)
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(
+                        text = row.icon,
+                        style = WqTheme.typography.headingSection,
+                        modifier = Modifier.padding(end = WqTheme.spacing.md),
+                    )
+                    Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = row.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (row.earnedAt != null) FontWeight.Bold else FontWeight.Normal,
+                                style = WqTheme.typography.body,
+                                color = if (row.earnedAt != null) {
+                                    WqTheme.colors.inkPrimary
+                                } else {
+                                    WqTheme.colors.inkSecondary
+                                },
                             )
                             if (row.rare) {
                                 Text(
                                     text = " ✦",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = WqTheme.colors.accentText,
+                                    style = WqTheme.typography.body,
                                 )
                             }
                         }
@@ -88,8 +96,8 @@ fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = fal
                         }
                         Text(
                             text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = WqTheme.typography.meta,
+                            color = WqTheme.colors.inkDim,
                         )
                     }
                 }
@@ -100,6 +108,8 @@ fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = fal
                             .fillMaxWidth()
                             .height(4.dp)
                             .padding(start = 36.dp),
+                        color = WqTheme.colors.accent,
+                        trackColor = WqTheme.colors.inkDim.copy(alpha = 0.3f),
                     )
                 }
             }

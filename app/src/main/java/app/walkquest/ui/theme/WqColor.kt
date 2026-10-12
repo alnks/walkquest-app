@@ -72,6 +72,11 @@ object WqPrimitive {
     // Error — M3-дефолты как примитивы (в DESIGN.md не задан).
     const val ERROR_LIGHT = 0xFFB3261E
     const val ERROR_DARK = 0xFFF2B8B5
+
+    // Debug-панель карты (1.14; только debuggable-сборки, в продукте не видна):
+    // полупрозрачная чёрная подложка и почти-белый моноширинный текст поверх.
+    const val DEBUG_PANEL_BACKGROUND = 0xB3000000
+    const val DEBUG_PANEL_TEXT = 0xFFE8E8E8
 }
 
 /**
