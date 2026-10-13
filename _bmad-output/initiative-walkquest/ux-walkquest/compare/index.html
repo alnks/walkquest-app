@@ -3,185 +3,300 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WalkQuest — сверка «макет ↔ реализация»</title>
+<title>WalkQuest — сверка «макет ↔ реализация» · 2026-10-12</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#100d18; color:#EFEAF7; line-height:1.55; }
-  header { padding:40px 24px 24px; max-width:1280px; margin:0 auto; }
-  h1 { font-size:26px; font-weight:800; }
-  .sub { color:#9d92b3; font-size:14px; margin-top:6px; max-width:900px; }
-  .meta { color:#8D83A6; font-size:12.5px; margin-top:10px; }
-  nav { position:sticky; top:0; z-index:10; background:rgba(16,13,24,.94); backdrop-filter:blur(6px); border-bottom:1px solid #2C2248; padding:10px 24px; display:flex; gap:8px; flex-wrap:wrap; max-width:1280px; margin:0 auto; }
-  nav a { color:#B3A6C9; text-decoration:none; font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid #342A4D; }
-  nav a:hover { color:#C6E26B; border-color:#C6E26B; }
-  main { max-width:1280px; margin:0 auto; padding:8px 24px 60px; }
-  section { margin-top:36px; }
-  h2 { font-size:19px; font-weight:800; margin-bottom:4px; }
-  .verdict { display:inline-block; font-size:11.5px; font-weight:700; border-radius:999px; padding:3px 12px; margin:6px 0 10px; border:1px solid; }
-  .v-ok  { color:#C6E26B; border-color:rgba(198,226,107,.5); background:rgba(198,226,107,.08); }
-  .v-mid { color:#E8C57A; border-color:rgba(232,197,122,.5); background:rgba(232,197,122,.08); }
-  .v-bad { color:#E88A8A; border-color:rgba(232,138,138,.5); background:rgba(232,138,138,.08); }
-  .notes { color:#B3A6C9; font-size:13.5px; max-width:900px; margin-bottom:14px; }
-  figure { border:1px solid #2C2248; border-radius:16px; overflow:hidden; background:#191423; }
-  figure img { display:block; width:100%; height:auto; }
-  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:14px; }
-  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid #2C2248; vertical-align:top; }
-  th { color:#8D83A6; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
-  td:first-child { white-space:nowrap; font-weight:700; }
-  .tag { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:2px 10px; border:1px solid; white-space:nowrap; }
-  footer { color:#8D83A6; font-size:12px; max-width:1280px; margin:0 auto; padding:0 24px 40px; }
-  code { background:#231B33; border:1px solid #342A4D; border-radius:6px; padding:1px 6px; font-size:12px; }
+  /* ===== Токены отчёта = тёмная тема WalkQuest (WqColors) ===== */
+  :root {
+    --surface-base: #191423;
+    --surface-raised: #231B33;
+    --surface-sunken: #2C2248;
+    --ink: #EFEAF7;
+    --ink-2: #B3A6C9;
+    --ink-dim: #8D83A6;
+    --accent: #C6E26B;
+    --accent-ink: #22290A;
+    --accent-soft: rgba(198, 226, 107, 0.08);
+    --accent-soft-border: rgba(198, 226, 107, 0.35);
+    --border: #342A4D;
+    --ok: #C6E26B;
+    --mid: #E8C57A;
+    --bad: #E88A8A;
+    --mid-soft: rgba(232, 197, 122, 0.08);
+    --mid-border: rgba(232, 197, 122, 0.35);
+    --bad-soft: rgba(232, 138, 138, 0.08);
+    --bad-border: rgba(232, 138, 138, 0.35);
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+    --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
+  }
+  @font-face { font-family: "Nunito"; src: url("_assets/fonts/nunito_extrabold.ttf") format("truetype"); font-weight: 800; }
+  @font-face { font-family: "Nunito"; src: url("_assets/fonts/nunito_extrablack.ttf") format("truetype"); font-weight: 1000; }
+  @font-face { font-family: "Manrope"; src: url("_assets/fonts/manrope_regular.ttf") format("truetype"); font-weight: 400; }
+  @font-face { font-family: "Manrope"; src: url("_assets/fonts/manrope_medium.ttf") format("truetype"); font-weight: 500; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  body {
+    background: var(--surface-base);
+    color: var(--ink);
+    font-family: "Manrope", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 22px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1160px; margin: 0 auto; padding: 0 var(--s5); }
+
+  /* ===== Шапка ===== */
+  header { padding: var(--s6) 0 var(--s5); border-bottom: 1px solid var(--border); }
+  .kicker {
+    font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: var(--s3);
+  }
+  h1 {
+    font-family: "Nunito", sans-serif; font-weight: 800;
+    font-size: 28px; line-height: 34px; letter-spacing: -0.01em;
+  }
+  .lead { color: var(--ink-2); max-width: 860px; margin-top: var(--s3); }
+  .meta { color: var(--ink-dim); font-size: 12px; line-height: 18px; margin-top: var(--s4); }
+  .meta code {
+    font-family: ui-monospace, Consolas, monospace; font-size: 11.5px;
+    background: var(--surface-raised); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1px 6px;
+  }
+  .fixed-badge {
+    display: inline-block; margin-top: var(--s4);
+    background: var(--accent-soft); border: 1px solid var(--accent-soft-border);
+    color: var(--accent); border-radius: var(--r-md);
+    padding: var(--s3) var(--s4); font-size: 13px; line-height: 20px;
+  }
+
+  /* ===== Навигация ===== */
+  nav {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(20, 16, 32, 0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; gap: var(--s2); flex-wrap: wrap; padding: var(--s3) 0; }
+  .nav-inner a {
+    color: var(--ink-2); text-decoration: none; font-size: 12px; font-weight: 500;
+    padding: 6px var(--s3); border-radius: 999px; border: 1px solid var(--border);
+    transition: color 120ms, border-color 120ms;
+    white-space: nowrap;
+  }
+  .nav-inner a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Сводная таблица ===== */
+  .summary { padding: var(--s6) 0 var(--s5); }
+  h2 {
+    font-family: "Nunito", sans-serif; font-weight: 800;
+    font-size: 20px; line-height: 26px; margin-bottom: var(--s4);
+  }
+  .table-wrap {
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    overflow-x: auto; background: var(--surface-raised);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 20px; }
+  th, td { text-align: left; padding: var(--s3) var(--s4); vertical-align: top; }
+  th {
+    color: var(--ink-dim); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border); background: var(--surface-sunken);
+  }
+  td { border-bottom: 1px solid var(--border); color: var(--ink-2); }
+  tr:last-child td { border-bottom: none; }
+  td.id { color: var(--ink); font-weight: 500; white-space: nowrap; }
+  td .cell-title { color: var(--ink); font-weight: 500; }
+
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    border-radius: 999px; padding: 3px 10px; border: 1px solid; white-space: nowrap;
+  }
+  .t-ok  { color: var(--ok);  border-color: var(--accent-soft-border); background: var(--accent-soft); }
+  .t-mid { color: var(--mid); border-color: var(--mid-border); background: var(--mid-soft); }
+  .t-bad { color: var(--bad); border-color: var(--bad-border); background: var(--bad-soft); }
+
+  /* ===== Секции экранов ===== */
+  section { padding: var(--s6) 0; border-top: 1px solid var(--border); }
+  .sec-head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s3); }
+  .sec-num {
+    font-family: "Nunito", sans-serif; font-weight: 1000; font-size: 20px;
+    color: var(--accent); min-width: 44px;
+  }
+  .sec-title {
+    font-family: "Nunito", sans-serif; font-weight: 800; font-size: 20px; line-height: 26px;
+  }
+  .sec-head .tag { margin-left: auto; align-self: center; }
+  .notes { color: var(--ink-2); max-width: 880px; margin-bottom: var(--s5); }
+  .notes b { color: var(--ink); font-weight: 500; }
+
+  .theme-label {
+    font-size: 12px; font-weight: 500; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 0 0 var(--s3);
+  }
+  .theme-label + .theme-label, .pair + .theme-label { margin-top: var(--s6); }
+
+  /* Пара «макет ↔ реализация»: ровные колонки, воздух держит ритм */
+  .pair {
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5);
+    align-items: start; margin-bottom: var(--s5);
+  }
+  .shot {
+    background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+  .shot-bar {
+    display: flex; align-items: center; height: 40px;
+    padding: 0 var(--s4); border-bottom: 1px solid var(--border);
+    background: var(--surface-sunken);
+  }
+  .shot-chip {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    border-radius: 999px; padding: 3px 10px; border: 1px solid;
+  }
+  .chip-mock { color: var(--ink-2); border-color: var(--border); }
+  .chip-app  { color: var(--accent); border-color: var(--accent-soft-border); background: var(--accent-soft); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot-solo { max-width: calc(50% - 12px); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    color: var(--ink-dim); font-size: 12px; line-height: 18px;
+    padding: var(--s5) 0 var(--s6); margin-top: var(--s6);
+  }
+  @media (max-width: 860px) {
+    .pair { grid-template-columns: 1fr; }
+    .shot-solo { max-width: 100%; }
+  }
 </style>
 </head>
 <body>
+
 <header>
-  <h1>Сверка «макет ↔ реализация» — WalkQuest</h1>
-  <p class="sub">12 экранов спецификации (шаг 3) + состояние паузы прогулки. Слева на каждой картинке — утверждённый макет (mockups/*.html, headless Edge), справа — реальный экран приложения на эмуляторе Medium_Phone_API_37.0. Тёмная тема — все экраны, светлая — 01, 05, 08, 09, 11.</p>
-  <p class="meta">Дата прогона: 2026-10-11 · debug-сборка app-debug.apk · пакет региона spb-city/v6 · склейка Pillow · сырые материалы: <code>compare/_mock/*.png</code> и <code>_qa/emulator-run/compare-verify/*.png</code></p>
+  <div class="container">
+    <div class="kicker">WalkQuest · Дизайн-система · Шаг 5</div>
+    <h1>Сверка «макет ↔ реализация»</h1>
+    <p class="lead">12 экранов спецификации (screens-spec.md) + состояние паузы прогулки. Слева в каждой паре — утверждённый макет (<code>mockups/*.html</code>, headless Edge, 2×), справа — реальный экран приложения на эмуляторе. Тёмная тема — все экраны, светлая — 01, 05, 08, 09, 11. Повторный прогон после внедрения кодовой дизайн-системы (токены WqTheme, компоненты ui/components, шрифты Nunito/Manrope/Rubik Bubbles).</p>
+    <p class="meta">Дата: 2026-10-12 · устройство: эмулятор Medium_Phone_API_37.0 · debug-сборка app-debug.apk · пакет региона spb-city/v6 · сценарии: wq.py (чистая установка → онбординг → прогулка с паузой и финалом → вкладки → POI) · сырые материалы: <code>_mock/*.png</code>, <code>_app/*.png</code></p>
+    <div class="fixed-badge">Поправлено по итогам сверки: фон вкладки «Рейтинг» в тёмной теме — был системно-белым, теперь surface-base (коммит e6f12b6).</div>
+  </div>
 </header>
+
 <nav>
-  <a href="#s01">01 Главная карта</a>
-  <a href="#s02">02 Прогулка</a>
-  <a href="#s02p">02п Пауза</a>
-  <a href="#s03">03 Финал</a>
-  <a href="#s04">04 Онбординг</a>
-  <a href="#s05">05 Статистика</a>
-  <a href="#s06">06 Достижения</a>
-  <a href="#s07">07 Задания</a>
-  <a href="#s08">08 Рейтинг</a>
-  <a href="#s09">09 Профиль</a>
-  <a href="#s10">10 Регионы</a>
-  <a href="#s11">11 Настройки</a>
-  <a href="#s12">12 POI</a>
-  <a href="#summary">Сводная таблица</a>
+  <div class="container nav-inner" id="nav"></div>
 </nav>
-<main>
 
-<section id="s01">
-  <h2>01 · Главная карта</h2>
-  <span class="verdict v-ok">В целом совпадает</span>
-  <p class="notes">Панель «статистика + планировщик + CTA» и ghost-кнопка в светлой теме совпали. Лишнее в реализации: плашка «% открыто» по центру шапки (в макете процент только в панели), FAB «К моей точке», debug-кнопка DBG.</p>
-  <figure><img src="01-map-home.png" alt="01-map-home"></figure>
-</section>
+<div class="container">
+  <div class="summary">
+    <h2>Сводная таблица</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:64px">Экран</th><th style="width:220px">Название</th><th style="width:170px">Вердикт</th><th>Расхождения (макет → реализация)</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <main id="sections"></main>
+</div>
 
-<section id="s02">
-  <h2>02 · Прогулка (запись)</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Чип «Идёт запись» и панель «Пауза/Завершить» совпали. Расхождения: третья метрика «клеток открыто» вместо «+0,4% открыто»; «+ Задание» — FAB «+» вместо пилюли; завершение — диалог вместо удержания из макета.</p>
-  <figure><img src="02-map-walk.png" alt="02-map-walk"></figure>
-</section>
+<footer>
+  <div class="container">
+    Не проверено на устройстве: светлая тема для 02/02п/03/04/06/07/10/12; рейтинг «с ником» (нужен сервер); активное задание в 07; динамический кегль системы. Подробности и приоритеты остатка работ — compare/README.md.
+  </div>
+</footer>
 
-<section id="s02p">
-  <h2>02п · Прогулка (пауза)</h2>
-  <span class="verdict v-ok">Совпадает</span>
-  <p class="notes">Состояние паузы снято, а не «ближайшее доступное»: чип «На паузе», кнопка «Продолжить». Удержание «Завершить» из макета в реализации отсутствует (диалог подтверждения).</p>
-  <figure><img src="02p-map-walk-paused.png" alt="02p-map-walk-paused"></figure>
-</section>
+<script>
+const VERDICTS = {
+  ok:  { cls: "t-ok",  label: "В целом совпадает" },
+  mid: { cls: "t-mid", label: "Частично" },
+  bad: { cls: "t-bad", label: "Расходится" },
+};
 
-<section id="s03">
-  <h2>03 · Финал прогулки</h2>
-  <span class="verdict v-bad">Расходится</span>
-  <p class="notes">Макет: hero-процент, сетка из 3 карточек (км/время/серия), карточка нового достижения, «Поделиться результатом»/«На карту». Реализация: текст похвалы, процент, строка «0.0 км · 0 мин», трофейная строка, «Поделиться»/«Закрыть» — общая структура иная.</p>
-  <figure><img src="03-walk-final.png" alt="03-walk-final"></figure>
-</section>
+/* themes: [{theme, mock?, app?}] — mock без пары: бонусный кадр реализации */
+const SCREENS = [
+  { id: "01", anchor: "s01", file: "01-map-home", title: "Главная карта", verdict: "ok",
+    notes: "Панель «статистика колонками · планировщик · CTA» и призрак CTA в светлой — совпали, шрифты токенов на месте. Лишнее в реализации: плашка «% открыто» в шапке, FAB «К моей точке», кнопка DBG (только debug-сборка). Нули статистики — чистая установка.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
+  { id: "02", anchor: "s02", file: "02-map-walk", title: "Прогулка (запись)", verdict: "mid",
+    notes: "Чип «Идёт запись» с акцентной точкой, «Пауза» акцентом + «Завершить» призраком — совпали. Третья метрика «клеток открыто» вместо «+0,4% открыто»; «+ Задание» — FAB «+» вместо пилюли; завершение — диалог вместо удержания из макета.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "02п", anchor: "s02p", file: "02p-map-walk-paused", title: "Прогулка (пауза)", verdict: "ok",
+    notes: "Снято честное состояние паузы: чип «На паузе» нейтральной точкой, кнопка «Продолжить» — есть. Удержание «Завершить» из макета не реализовано — решение за владельцем.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "03", anchor: "s03", file: "03-walk-final", title: "Финал прогулки", verdict: "bad",
+    notes: "Герой-цифра Nunito 1000 акцентом и подпись «территории открыто» — совпали по стилю. Структура иная: в макете сетка из 3 карточек (км/время/серия) + карточка нового достижения + «На карту»; в реализации компактная сводка и «Закрыть»; навигация под оверлеем видна.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "04", anchor: "s04", file: "04-onboarding", title: "Онбординг", verdict: "mid",
+    notes: "Заголовок (Nunito 800), тело по центру, «Пропустить», CTA внизу — совпали, тексты идентичны. В макете: иллюстрация-туман и точки шагов; 4 шага (регион на мини-карте, геолокация) против 3 текстовых + цель в реализации. Бонус: шаг выбора цели.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: null, mock: 0, app: 1, appFile: "_app/04b-goal-dark.png", label: "Реализация · шаг цели" }] },
+  { id: "05", anchor: "s05", file: "05-progress-stats", title: "Прогресс · Статистика", verdict: "mid",
+    notes: "Заголовок и сегмент-пилюли (≥48dp, 13sp, светлая корректна) — совпали. В макете hero «17,4%» + сетка 6 карточек + список прогулок; в реализации — строки Серия/Прогулок/Расстояние + раздел «Планы».",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
+  { id: "06", anchor: "s06", file: "06-progress-achievements", title: "Прогресс · Достижения", verdict: "mid",
+    notes: "Секции, строки «значок · название · условие», полоски прогресса у близких — близко. Нет деления «Полученные/Неполученные» со сворачиванием и пунктира заблокированных.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "07", anchor: "s07", file: "07-progress-quests", title: "Прогресс · Задания", verdict: "mid",
+    notes: "Снято корректное пустое состояние: «Вытянуть карту»/«Выбрать из 6» + «Пока нет выполненных». Макет показывает активное задание (card-active). Копия «Случайное задание» → «Вытянуть карту» (утверждено EXPERIENCE).",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "08", anchor: "s08", file: "08-rating", title: "Рейтинг (первый вход)", verdict: "bad",
+    notes: "Снят честный «первый вход» (поле ника, «Вступить в рейтинг», «Остаться невидимым») — по EXPERIENCE корректно; макет показывает состояние «с ником» (сегменты, лидерборд). Баг прошлого прогона исправлен: фон вкладки теперь surface-base в обеих темах. Бонус: ошибка сети при сохранении ника.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }, { theme: null, mock: 0, app: 1, appFile: "_app/08b-rating-nick.png", label: "Реализация · ошибка сети" }] },
+  { id: "09", anchor: "s09", file: "09-profile", title: "Профиль", verdict: "mid",
+    notes: "Набор блоков близок (ник/цель, «Мои регионы», перенос прогресса, политика, версия). Иная компоновка (крупные карточки вместо групп строк), нет «Обратной связи» и переключателя участия; добавлены предупреждение о локальности данных и «Экспорт»/«Импорт».",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
+  { id: "10", anchor: "s10", file: "10-regions", title: "Мои регионы", verdict: "mid",
+    notes: "Строка «процент акцентом · домашний регион» — совпала. Список из одного региона (чистая установка). Выход «Готово» призраком; в макете навигации под оверлеем нет, в реализации видна.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+  { id: "11", anchor: "s11", file: "11-settings", title: "Настройки", verdict: "mid",
+    notes: "Реализована группа «ПРОГУЛКА» (режим, автопауза, напоминание, кнопка «Задания») со свитчами на акцентных токенах. Нет групп «Цель», «Уведомления», «Внешний вид (тема)» из макета.",
+    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
+  { id: "12", anchor: "s12", file: "12-poi-card", title: "Карточка POI", verdict: "ok",
+    notes: "Открыт тапом по маяку: фото из пакета, название Nunito 800, описание body с обрезкой, «Подробнее» акцентом — по спецификации. Иное: одно фото вместо полосы из трёх; карточка выше панели прогулки (снято во время записи); явная кнопка «Закрыть».",
+    themes: [{ theme: "dark", mock: 1, app: 1 }] },
+];
 
-<section id="s04">
-  <h2>04 · Онбординг</h2>
-  <span class="verdict v-bad">Расходится</span>
-  <p class="notes">Макет: 4 шага (приветствие с иллюстрацией и точками, выбор домашнего региона на мини-карте, цель со степпером, экран геолокации). Реализация: 3 текстовых шага без иллюстраций и точек + экран цели + «Пропустить». Выбора региона и экрана геолокации нет.</p>
-  <figure><img src="04-onboarding.png" alt="04-onboarding"></figure>
-</section>
+const THEME_NAME = { dark: "Тёмная тема", light: "Светлая тема" };
 
-<section id="s05">
-  <h2>05 · Прогресс · Статистика</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Сегмент-пилюли совпали. Макет: hero «17,4%» + сетка 6 карточек + список средних. Реализация: строки «Цель/Серия/Прогулок/Расстояние» + «Планы → Запланировать». Hero-процента и сетки нет.</p>
-  <figure><img src="05-progress-stats.png" alt="05-progress-stats"></figure>
-</section>
+function shotCard(kind, src, label) {
+  const chip = kind === "mock" ? "chip-mock" : "chip-app";
+  return `<figure class="shot shot-solo">
+    <div class="shot-bar"><span class="shot-chip ${chip}">${label || (kind === "mock" ? "Макет" : "Реализация")}</span></div>
+    <img src="${src}" alt="${label || kind}" loading="lazy">
+  </figure>`;
+}
 
-<section id="s06">
-  <h2>06 · Прогресс · Достижения</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Макет: секции «Полученные / Неполученные», заблокированные — пунктиром с прогресс-баром. Реализация: одна секция «Исследование», плоские строки с эмодзи; разделения полученные/нет нет.</p>
-  <figure><img src="06-progress-achievements.png" alt="06-progress-achievements"></figure>
-</section>
+const nav = document.getElementById("nav");
+const tbody = document.getElementById("tbody");
+const main = document.getElementById("sections");
 
-<section id="s07">
-  <h2>07 · Прогресс · Задания</h2>
-  <span class="verdict v-mid">Частично (пустое состояние)</span>
-  <p class="notes">Снято корректное пустое состояние: «Вытянуть карту»/«Выбрать из 6», «Пока нет выполненных заданий». Макет показывает активное задание; копия кнопки «Случайное задание» → «Вытянуть карту».</p>
-  <figure><img src="07-progress-quests.png" alt="07-progress-quests"></figure>
-</section>
+nav.innerHTML = SCREENS.map(s => `<a href="#${s.anchor}">${s.id} ${s.title.split(" (")[0].split(" · ")[0]}</a>`).join("");
 
-<section id="s08">
-  <h2>08 · Рейтинг</h2>
-  <span class="verdict v-bad">Расходится + баг темы</span>
-  <p class="notes">Снято состояние «первый вход» (состояние «с ником» недостижимо на эмуляторе — сервер рейтинга недоступен, «Не удалось сохранить ник»). Реализация: поле «Ник» + «Вступить в рейтинг»/«Остаться невидимым»; список пуст; сегментов «Город/Друзья» нет. Баг: в тёмной системной теме фон вкладки остаётся светлым.</p>
-  <figure><img src="08-rating.png" alt="08-rating"></figure>
-</section>
+tbody.innerHTML = SCREENS.map(s => {
+  const v = VERDICTS[s.verdict];
+  return `<tr><td class="id">${s.id}</td><td><span class="cell-title">${s.title}</span></td><td><span class="tag ${v.cls}">${v.label}</span></td><td>${s.notes}</td></tr>`;
+}).join("");
 
-<section id="s09">
-  <h2>09 · Профиль</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Набор близок, но компоновка иная: крупные карточки вместо групп строк с пилюлями, «Ник не задан» вместо аватара, нет «Обратной связи» и переключателя участия в рейтинге; добавлены предупреждение о локальности данных и «Экспорт»/«Импорт».</p>
-  <figure><img src="09-profile.png" alt="09-profile"></figure>
-</section>
-
-<section id="s10">
-  <h2>10 · Мои регионы</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Строка региона с процентом и подписью «домашний регион» совпали. На чистой установке список из одного домашнего региона (в макете — 3 региона). Под оверлеем видна нижняя навигация, в макете её нет.</p>
-  <figure><img src="10-regions.png" alt="10-regions"></figure>
-</section>
-
-<section id="s11">
-  <h2>11 · Настройки</h2>
-  <span class="verdict v-mid">Частично</span>
-  <p class="notes">Макет: группы «Цель / Прогулки / Уведомления / Внешний вид» со значениями-пилюлями, включая «Тема: системная». Реализация: только «ПРОГУЛКА» (режим по умолчанию, автопауза, напоминание о забытой прогулке, кнопка «Задания»). Настроек цели, уведомлений и выбора темы нет.</p>
-  <figure><img src="11-settings.png" alt="11-settings"></figure>
-</section>
-
-<section id="s12">
-  <h2>12 · Карточка POI</h2>
-  <span class="verdict v-ok">В целом совпадает</span>
-  <p class="notes">Карточка с реальным фото из пакета открывается тапом по маркеру (сквер Василия Ракова). Расхождения: в макете карточка прибита к низу над навигацией и имеет полосу из 3 фото; в реализации — одно фото, карточка выше домашней панели, кнопка «Закрыть».</p>
-  <figure><img src="12-poi-card.png" alt="12-poi-card"></figure>
-</section>
-
-<section id="summary">
-  <h2>Сводная таблица</h2>
-  <table>
-    <tr><th>Экран</th><th>Вердикт</th><th>Главное расхождение</th></tr>
-    <tr><td>01</td><td><span class="tag v-ok" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Лишние плашка «% открыто» в шапке, FAB «К моей точке», DBG</td></tr>
-    <tr><td>02</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Метрика «клеток открыто», FAB вместо пилюли «+ Задание», диалог вместо удержания</td></tr>
-    <tr><td>02п</td><td><span class="tag" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Удержание «Завершить» не реализовано</td></tr>
-    <tr><td>03</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>Нет hero-процента, сетки 3 карточек, карточки достижения</td></tr>
-    <tr><td>04</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>3 текстовых шага вместо 4 (нет выбора региона и экрана геолокации, иллюстраций, точек)</td></tr>
-    <tr><td>05</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет hero «17,4%» и сетки 6 карточек — строки + «Планы»</td></tr>
-    <tr><td>06</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет секций «Полученные/Неполученные», пунктира заблокированных</td></tr>
-    <tr><td>07</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Снято пустое состояние; «Случайное задание» → «Вытянуть карту»</td></tr>
-    <tr><td>08</td><td><span class="tag" style="color:#E88A8A;border-color:rgba(232,138,138,.5)">расходится</span></td><td>Нет сегментов «Город/Друзья» и списка; баг: светлый фон в тёмной теме</td></tr>
-    <tr><td>09</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Карточки вместо групп с пилюлями; нет «Обратной связи», переключателя участия</td></tr>
-    <tr><td>10</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Один домашний регион на чистой установке; навигация под оверлеем</td></tr>
-    <tr><td>11</td><td><span class="tag" style="color:#E8C57A;border-color:rgba(232,197,122,.5)">частично</span></td><td>Нет групп «Цель», «Уведомления», «Внешний вид (тема)»</td></tr>
-    <tr><td>12</td><td><span class="tag" style="color:#C6E26B;border-color:rgba(198,226,107,.5)">совпадает</span></td><td>Одно фото вместо полосы из 3; карточка выше панели, есть «Закрыть»</td></tr>
-  </table>
-
-  <h2 style="margin-top:32px">Что осталось (по убыванию заметности)</h2>
-  <p class="notes">
-    1. Баг: вкладка «Рейтинг» светлая в тёмной системной теме.<br>
-    2. Финал прогулки — привести к макету (hero-процент, сетка 3 карточек, карточка достижения, «На карту»).<br>
-    3. Онбординг — догнать макет (иллюстрации+точки, шаг региона, экран геолокации) или переутвердить макет.<br>
-    4. Статистика — hero-процент и сетка карточек.<br>
-    5. Рейтинг — сегменты «Город/Друзья», строки списка; «с ником» проверить на устройстве с сервером.<br>
-    6. Настройки — группы «Цель», «Уведомления», «Внешний вид (тема)».<br>
-    7. Мелочи 01/02: дубль «% открыто» в шапке, пилюля «+ Задание», метрика «% открыто» на прогулке.<br>
-    8. Достижения — секции «Полученные/Неполученные», пунктир заблокированных.
-  </p>
-  <p class="meta">Не проверено на устройстве: светлая тема для 02, 02п, 03, 04, 06, 07, 10, 12; рейтинг «с ником» (нужен сервер); активное задание в 07.</p>
-</section>
-
-</main>
-<footer>WalkQuest · compare · генерация: _qa/compare-stitch.py + _qa/compare-mock.py</footer>
+main.innerHTML = SCREENS.map(s => {
+  const v = VERDICTS[s.verdict];
+  const blocks = s.themes.map(t => {
+    if (t.theme === null) {
+      return `<p class="theme-label">${t.label}</p>
+      <div class="pair">${shotCard("app", t.appFile, "Реализация")}</div>`;
+    }
+    const label = `<p class="theme-label">${THEME_NAME[t.theme]}</p>`;
+    const pair = `<div class="pair">${shotCard("mock", `_mock/${s.file}-${t.theme}.png`)}${shotCard("app", `_app/${s.file}-${t.theme}.png`)}</div>`;
+    return label + pair;
+  }).join("");
+  return `<section id="${s.anchor}">
+    <div class="sec-head">
+      <span class="sec-num">${s.id}</span>
+      <span class="sec-title">${s.title}</span>
+      <span class="tag ${v.cls}">${v.label}</span>
+    </div>
+    <p class="notes">${s.notes}</p>
+    ${blocks}
+  </section>`;
+}).join("");
+</script>
 </body>
 </html>
