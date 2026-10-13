@@ -1,0 +1,149 @@
+# tickets.toml — стори эпика «Сведение дизайна экранов к утверждённым макетам».
+# Порядок таблиц = порядок сборки (задан владельцем): онбординг → финал → профиль →
+# остальные по заметности расхождений → карта в конце. Одна стори = один экран.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Онбординг по макету (4 шага, иллюстрация, точки)"
+description = "Пересобирает OnboardingOverlay по mockups/onboarding-duo.html и EXPERIENCE: приветствие с иллюстрацией-туманом и точками шагов, шаг выбора домашнего региона, цель со степпером, экран доступа к геолокации; обучение непропускаемо, «Пропустить» ведёт к цели. Токены/компоненты — через ui-ux-pro-max."
+verify = "Эмулятор: чистая установка показывает 4 шага с иллюстрацией и точками; сверка 04-onboarding в compare даёт «совпадает»; тесты и compileDebugKotlin зелёные."
+covers = ["AL-1"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/onboarding-duo.html", "ux-walkquest/screens-spec.md#§4"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Финал прогулки по макету (hero, сетка карточек, «На карту»)"
+description = "Пересобирает WalkSummaryOverlay по mockups/map-duo «Финал»: hero-процент Nunito 1000, сетка из 3 карточек (км/время/серия), карточка нового достижения, «Поделиться результатом» и «На карту»; весь экран без прокрутки, нижняя навигация под оверлеем скрыта. Через ui-ux-pro-max."
+verify = "Эмулятор: завершённая прогулка показывает экран по макету в обеих темах, без прокрутки; сверка 03-walk-final — «совпадает»; тесты зелёные."
+covers = ["AL-2"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/map-duo.html", "ux-walkquest/screens-spec.md#§3"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Профиль по макету (шапка, группы строк с пилюлями)"
+description = "Пересобирает ProfileScreen по mockups/remaining-screens «Профиль»: шапка с ником/статусом, группы строк со значениями-пилюлями (Ник в рейтинге, Участие в рейтинге, Моя цель, Мои регионы, Перенос прогресса, Обратная связь), секция «О приложении». Тексты — только утверждённые. Через ui-ux-pro-max."
+verify = "Сверка 09-profile в обеих темах — «совпадает»; действия (экспорт/импорт, регионы, политика) работают как прежде; тесты зелёные."
+covers = ["AL-3"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/remaining-screens.html", "ux-walkquest/screens-spec.md#§8"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Статистика: hero-процент и сетка карточек"
+description = "Доводит сегмент «Статистика» до mockups/progress-tasks-duo: hero «17,4%» домашнего региона, сетка из 6 карточек метрик, список средних значений; планировщик остаётся. Данные — готовые из StatsViewModel, при нехватке агрегатов — минимальный диф viewmodel. Через ui-ux-pro-max."
+verify = "Сверка 05-progress-stats в обеих темах — «совпадает»; на чистой установке честные нули/плейсхолдеры вместо пустых блоков; тесты зелёные."
+covers = ["AL-4"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/progress-tasks-duo.html", "ux-walkquest/screens-spec.md#§5a"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Достижения: секции «Полученные/Неполученные»"
+description = "Пересобирает AchievementsScreen по макету: сворачиваемые секции «Полученные»/«Неполученные», пунктирная рамка и приглушение неполученных, полоска прогресса у близких. Через ui-ux-pro-max."
+verify = "Сверка 06-progress-achievements — «совпадает»; сворачивание секций работает; тесты зелёные."
+covers = ["AL-5"]
+after = []
+hitl = false
+risk = "low"
+references = ["ux-walkquest/mockups/progress-tasks-duo.html", "ux-walkquest/screens-spec.md#§5b"]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Задания: сверка card-active и истории"
+description = "Сверяет сегмент «Задания» с макетом: активное задание строго WqQuestCard/card-active, история «Выполненные» по макету, формулировки кнопок EXPERIENCE («Вытянуть карту» сохраняется). Через ui-ux-pro-max."
+verify = "Сверка 07-progress-quests (включая состояние активного задания, снятое во время прогулки) — «совпадает»; тесты зелёные."
+covers = ["AL-6"]
+after = []
+hitl = false
+risk = "low"
+references = ["ux-walkquest/mockups/progress-tasks-duo.html", "ux-walkquest/screens-spec.md#§6"]
+
+[[entry]]
+id = 7
+type = "story"
+title = "Рейтинг: сегменты, лидерборд, подсветка «вы»"
+description = "Пересобирает RatingScreen по макету: сегменты «Город/Друзья» (WqSegmentPill), строки лидерборда, подсветка текущего пользователя WqCardActive (минимальный диф RatingViewModel: флаг isCurrentUser), состояние первого входа как CTA-карточка. Через ui-ux-pro-max."
+verify = "Сверка 08-rating — «совпадает»; на эмуляторе проверены состояния первого входа и пустого списка; состояние «с ником» с сервером — на устройстве владельца (hitl)."
+covers = ["AL-7"]
+after = []
+hitl = true
+risk = "medium"
+unknown = "Проверка списка лидерборда и подсветки «вы» живая требует доступный сервер рейтинга — на эмуляторе покрывается только первый вход."
+references = ["ux-walkquest/mockups/remaining-screens.html", "ux-walkquest/screens-spec.md#§7"]
+
+[[entry]]
+id = 8
+type = "story"
+title = "Настройки: группы «Цель/Прогулки/Уведомления/Внешний вид»"
+description = "Пересобирает SettingsScreen по макету: четыре группы со значениями-пилюлями, включая «Тема: системная» (переключатель темы — только если подтверждён владельцем, иначе пилюля «системная» без действия); существующие переключатели сохраняются. Через ui-ux-pro-max."
+verify = "Сверка 11-settings в обеих темах — «совпадает»; все действующие настройки работают как прежде; тесты зелёные."
+covers = ["AL-8"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/remaining-screens.html", "ux-walkquest/screens-spec.md#§10"]
+
+[[entry]]
+id = 9
+type = "story"
+title = "Регионы: мелкая сверка строк и оверлея"
+description = "Сверяет RegionsScreen с макетом: строки «процент · название · подпись», поведение оверлея (навигация под ним не дублирует «Готово»), действия строк. Через ui-ux-pro-max."
+verify = "Сверка 10-regions — «совпадает»; установка/обновление/домашний регион работают как прежде; тесты зелёные."
+covers = ["AL-9"]
+after = []
+hitl = false
+risk = "low"
+references = ["ux-walkquest/mockups/remaining-screens.html", "ux-walkquest/screens-spec.md#§9"]
+
+[[entry]]
+id = 10
+type = "story"
+title = "POI-карточка: полоса фото и прибивка к низу"
+description = "Доводит PoiCard до макета: полоса до 3 фото из пакета, прибивка карточки к нижней зоне над навигацией в idle-состоянии (во время прогулки — над панелью, как сейчас), закрытие тапом вне/свайпом. Через ui-ux-pro-max."
+verify = "Сверка 12-poi-card — «совпадает»; карточка открывается/закрывается в обоих состояниях карты; тесты зелёные."
+covers = ["AL-10"]
+after = []
+hitl = false
+risk = "low"
+references = ["ux-walkquest/mockups/remaining-screens.html", "ux-walkquest/screens-spec.md#§11"]
+
+[[entry]]
+id = 11
+type = "story"
+title = "Карта главная: убрать дубль процента, панель по макету"
+description = "Сверяет главный экран карты с макетом: процент открытия только в панели (плашка в шапке убирается либо выносится на переутверждение — см. Open question эпика; TalkBack-описание прогресса сохраняется), панель «статистика·планировщик·CTA» строго по макету. Через ui-ux-pro-max."
+verify = "Сверка 01-map-home в обеих темах — «совпадает»; панель, планировщик, CTA работают как прежде; тесты зелёные."
+covers = ["AL-11"]
+after = []
+hitl = false
+risk = "medium"
+references = ["ux-walkquest/mockups/map-duo.html", "ux-walkquest/screens-spec.md#§1"]
+
+[[entry]]
+id = 12
+type = "story"
+title = "Прогулка: метрика «% открыто», «+ Задание» пилюлей, завершение удержанием"
+description = "Сверяет экран прогулки с макетом и EXPERIENCE: третья метрика «+0,4% открыто», «+ Задание» кнопкой-пилюлей, «Завершить» — призрак с подтверждением удержанием ~600 мс (раннее отпускание откатывает заполнение) вместо AlertDialog. Через ui-ux-pro-max."
+verify = "Сверка 02/02п в обеих темах — «совпадает»; обрыв случайным тапом невозможен, удержание завершает прогулку; тесты зелёные."
+covers = ["AL-12"]
+after = []
+hitl = false
+risk = "high"
+unknown = "Удержание «Завершить» меняет проверенный диалог — UX-проверка на эмуляторе обязательна в Verify (сценарий: пауза → удержание → откат → удержание до конца)."
+references = ["ux-walkquest/mockups/map-duo.html", "ux-walkquest/screens-spec.md#§2"]
