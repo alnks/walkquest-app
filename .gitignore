@@ -19,3 +19,7 @@ _qa/emulator-run/
 _qa/phone-run/
 _qa/*$f.png
 ui.xml
+
+# QA-служебное: логи серверов и состояние wq.py
+*.log
+_qa/.wq-state.json

@@ -1,8 +1,0 @@
-127.0.0.1 - - [14/Oct/2026 00:13:21] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:13:23] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:15:35] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:15:35] "GET /region-spb-city-v6.zip HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:17:45] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:17:46] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:17:58] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Oct/2026 00:17:58] "GET /region-spb-city-v6.zip HTTP/1.1" 200 -
