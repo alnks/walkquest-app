@@ -29,4 +29,22 @@ class StreakCalculator(
         }
         return streak
     }
+
+    /**
+     * Максимальная серия за всю историю: длина самого длинного подряд идущего
+     * отрезка локальных дней с ≥1 прогулкой (эпик design-alignment 7.4: строка
+     * «Максимальная серия» списка средних метрик сегмента «Статистика»).
+     * 0 — ни одного дня с прогулкой.
+     */
+    fun maxStreak(): Int {
+        val sorted = history.walkDates().sorted()
+        if (sorted.isEmpty()) return 0
+        var best = 1
+        var run = 1
+        for (i in 1 until sorted.size) {
+            run = if (sorted[i] == sorted[i - 1].plusDays(1)) run + 1 else 1
+            if (run > best) best = run
+        }
+        return best
+    }
 }

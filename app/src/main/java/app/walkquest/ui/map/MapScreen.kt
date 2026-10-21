@@ -17,6 +17,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,10 +28,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -45,8 +49,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -59,6 +67,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,9 +98,11 @@ import app.walkquest.viewmodel.WalkSummaryUi
 import app.walkquest.tracking.circleRing
 import app.walkquest.tracking.trailRing
 import app.walkquest.ui.common.PlanDateTimePicker
+import app.walkquest.ui.common.HoldToConfirmLogic
+import app.walkquest.ui.common.WqFormat
 import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.components.WqCardActive
 import app.walkquest.ui.components.WqChip
-import app.walkquest.ui.components.WqGhostButton
 import app.walkquest.ui.components.WqIconFab
 import app.walkquest.ui.components.WqModeToggle
 import app.walkquest.ui.components.WqModeToggleEntry
@@ -104,6 +120,7 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -182,9 +199,9 @@ fun MapScreen(
         }
     }
 
-    // Маркер «я»: разрешение на геолокацию запрашивается при первом входе на карту
-    // (EXPERIENCE Flow 2: онбординг — эпик 2, до него карта сама честно спрашивает;
-    // отказ → карта работает, маркера нет, запись спросит своё при старте).
+    // Маркер «я»: разрешение на геолокацию запрашивается при первом входе на карту.
+    // Исключение — первый запуск: пока идёт онбординг (4 шага, 7.1), его спрашивает
+    // финальный шаг «Доступ к геолокации» (EXPERIENCE Flow 2), а не карта под оверлеем.
     var locationGranted by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -200,7 +217,7 @@ fun MapScreen(
             grants[Manifest.permission.ACCESS_COARSE_LOCATION] == true
     }
     LaunchedEffect(Unit) {
-        if (!locationGranted) {
+        if (!locationGranted && !uiState.showOnboarding) {
             mapPermissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -264,8 +281,6 @@ fun MapScreen(
     // Оверлей заданий прогулки (4.5): «+ Задание» справа во время записи открывает
     // поток заданий поверх прогулки (EXPERIENCE: запись не останавливается).
     var questOverlayVisible by remember { mutableStateOf(false) }
-    // Подтверждение обрыва сессии (DESIGN: «Завершить» — призрак с подтверждением).
-    var finishConfirmVisible by remember { mutableStateOf(false) }
     // Планировщик панели главного экрана: «+» на карточке плана.
     var planPickerVisible by remember { mutableStateOf(false) }
     val statsUi = statsViewModel?.uiState?.collectAsStateWithLifecycle()?.value
@@ -357,8 +372,9 @@ fun MapScreen(
             )
         }
         // Тогл debug-режима (2026-10-09): видимая кнопка в debuggable-сборке —
-        // без неё режим доступен только тайным жестом 5 тапов.
-        if (debuggable) {
+        // без неё режим доступен только тайным жестом 5 тапов. Пока открыта карточка
+        // POI в idle — скрыта: не нависает над карточкой (макет poi-card, 7.10).
+        if (debuggable && !(uiState.selectedPoi != null && !uiState.isRecording)) {
             DebugToggleFab(
                 active = debugOverlayVisible,
                 onClick = { debugOverlayVisible = !debugOverlayVisible },
@@ -370,17 +386,12 @@ fun MapScreen(
                     ),
             )
         }
-        // Индикатор процента открытия (1.8): готовая доля из domain, здесь только формат.
-        // Edge-to-edge: отступ от статус-бара, иначе плашка уезжает под шторку.
-        uiState.progressFraction?.let { fraction ->
-            RegionProgressBadge(
-                fraction = fraction,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(top = 16.dp),
-            )
-        }
+        // Плашка «% открыто» по центру шапки УБРАНА (решение AL-11, дизайн-эпик
+        // 7.11): дублировала процент первой колонкой панели, в макете map-duo её
+        // нет; screens-spec §1 устарел в этой части — переутверждение макета
+        // владельцем-делегатом. Доступность не просела: семантическое описание
+        // прогресса перенесено в TalkBack-подпись колонки «открыто» панели
+        // (HomeSheet, contentDescription на WqStatColumn).
         // Состояние «определяю местоположение» (полевой тест 2, дефект 3): пока нет
         // свежего точного фикса — честная плашка вместо маркера в случайном месте.
         // Только при выданном разрешении: без разрешения фикс не придёт никогда.
@@ -427,30 +438,41 @@ fun MapScreen(
                     .fillMaxWidth(),
             )
         }
-        // Карточка места (1.9): поверх карты и над прототипными кнопками записи.
+        // Карточка места (1.9; дизайн-эпик 7.10, AL-10): поверх карты. Idle —
+        // прибита к нижней зоне над навигацией (макет poi-card, поле 12dp снизу;
+        // панель главного экрана на время карточки убрана). Во время записи —
+        // над панелью прогулки (состояние «над прототипными кнопками записи»).
         uiState.selectedPoi?.let { poi ->
             PoiCard(
                 poi = poi,
-                photoFile = uiState.selectedPoiPhoto,
+                photoFiles = uiState.selectedPoiPhotos,
                 onClose = viewModel::onPoiCardDismissed,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(start = 16.dp, end = 16.dp, bottom = 228.dp)
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = if (uiState.isRecording) POI_CARD_BOTTOM_RECORDING else 12.dp,
+                    )
                     .fillMaxWidth(),
             )
         }
         // FAB «к моей точке»: справа внизу над кнопкой записи (в макете её нет —
         // позиция по брифу владельца), стиль icon-btn прототипа (круг sheet + рамка).
-        MeLocationFab(
-            hasFix = meFixVisible,
-            onClick = { recenterRequest += 1 },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 16.dp,
-                    bottom = if (uiState.isRecording) FAB_BOTTOM_RECORDING else FAB_BOTTOM_IDLE,
-                ),
-        )
+        // Пока открыта карточка POI в idle — скрыта: не перекрывает фото-полосу
+        // (макет poi-card, 7.10); во время записи видна как прежде.
+        if (uiState.selectedPoi == null || uiState.isRecording) {
+            MeLocationFab(
+                hasFix = meFixVisible,
+                onClick = { recenterRequest += 1 },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(
+                        end = 16.dp,
+                        bottom = if (uiState.isRecording) FAB_BOTTOM_RECORDING else FAB_BOTTOM_IDLE,
+                    ),
+            )
+        }
         // Тогл режима прогулки (2.2, FR-6; DESIGN toggle-mode) — WqModeToggle:
         // значки без текста, «всадник» — белый кружок с кольцом акцента; слева сверху.
         // Виден и до, и во время записи; во время записи тап шлёт ACTION_SET_MODE.
@@ -494,10 +516,12 @@ fun MapScreen(
         }
         if (uiState.regionInstalled) {
             if (uiState.isRecording) {
-                // FAB «+ Задание» (EXPERIENCE: поток заданий поверх прогулки; запись
-                // не останавливается) — справа, над панелью прогулки.
-                if (uiState.showQuestButton) {
-                    QuestFab(
+                // «+ Задание» справа над панелью (EXPERIENCE: поток заданий поверх
+                // прогулки; запись не останавливается). Пока открыта карточка POI —
+                // скрыта: не перекрывается её углом (7.12, правка pre-existing
+                // перекрытия FAB углом карточки).
+                if (uiState.showQuestButton && uiState.selectedPoi == null) {
+                    QuestPillButton(
                         onClick = { questOverlayVisible = true },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -515,12 +539,15 @@ fun MapScreen(
                             .padding(bottom = PANEL_OFFSET_RECORDING + 8.dp),
                     )
                 }
-                // Панель прогулки (DESIGN): агрегаты мини-колонками + «Пауза» акцентом
-                // (крупное частое действие) + «Завершить» призраком с подтверждением.
+                // Панель прогулки (DESIGN + EXPERIENCE 7.12): агрегаты мини-колонками
+                // (время / км / прирост «+0,4% открыто») + «Пауза» акцентом (крупное
+                // частое действие) + «Завершить» призраком с подтверждением УДЕРЖАНИЕМ
+                // ~600 мс (заполнение кнопки; AlertDialog убран — спина важнее макета
+                // screens-spec §2, source conflict зафиксирован в эпике).
                 WalkPanel(
                     distanceMeters = uiState.walkDistanceMeters,
                     activeMillis = uiState.walkActiveMillis,
-                    openedCells = uiState.recordedPoints,
+                    gainFraction = uiState.walkGainFraction,
                     paused = uiState.walkState == WalkState.PAUSED,
                     onPauseResume = {
                         context.startService(
@@ -533,47 +560,33 @@ fun MapScreen(
                             ),
                         )
                     },
-                    onFinishRequest = { finishConfirmVisible = true },
+                    onFinishHoldConfirmed = {
+                        context.startService(
+                            Intent(context, TrackingService::class.java)
+                                .setAction(TrackingService.ACTION_STOP),
+                        )
+                    },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             } else {
                 // Статичная панель главного экрана (DESIGN sheet): статистика
                 // мини-колонками без разделителей, карточка планировщика, CTA.
-                // Не выдвигается, ручки-grab нет.
-                HomeSheet(
-                    progressFraction = uiState.progressFraction,
-                    streakDays = statsUi?.streakDays,
-                    weekDistanceMeters = statsUi?.weekDistanceMeters,
-                    planText = statsUi?.plans?.firstOrNull { !it.past }
-                        ?.let { formatPlanShort(it.plannedAtEpochMillis) + " — прогулка по плану" },
-                    onAddPlan = { planPickerVisible = true },
-                    onStartWalk = { permissionLauncher.launch(RECORDING_PERMISSIONS) },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
+                // Не выдвигается, ручки-grab нет. Пока открыта карточка POI —
+                // панель убрана: карточка прибита к нижней зоне над навигацией
+                // (макет poi-card, 7.10).
+                if (uiState.selectedPoi == null) {
+                    HomeSheet(
+                        progressFraction = uiState.progressFraction,
+                        streakDays = statsUi?.streakDays,
+                        weekDistanceMeters = statsUi?.weekDistanceMeters,
+                        planText = statsUi?.plans?.firstOrNull { !it.past }
+                            ?.let { formatPlanShort(it.plannedAtEpochMillis) + " — прогулка по плану" },
+                        onAddPlan = { planPickerVisible = true },
+                        onStartWalk = { permissionLauncher.launch(RECORDING_PERMISSIONS) },
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
             }
-        }
-        // Подтверждение обрыва сессии (DESIGN: «Завершить» — призрак с подтверждением,
-        // не одним случайным тапом).
-        if (finishConfirmVisible) {
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { finishConfirmVisible = false },
-                title = { Text("Завершить прогулку?") },
-                text = { Text("Прогулка будет сохранена в историю.") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        finishConfirmVisible = false
-                        context.startService(
-                            Intent(context, TrackingService::class.java)
-                                .setAction(TrackingService.ACTION_STOP),
-                        )
-                    }) { Text("Завершить") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { finishConfirmVisible = false }) {
-                        Text("Продолжить прогулку")
-                    }
-                },
-            )
         }
         // Планировщик панели (3.6): «+» на карточке плана — диалог даты/времени;
         // напоминание — тот же PlanReminderReceiver, что и в статистике.
@@ -618,10 +631,29 @@ fun MapScreen(
                 onClose = { viewModel.onWalkSummaryDismissed() },
             )
         }
-        // Онбординг первого запуска (3.3, FR-12): поверх всего, до первой прогулки.
+        // Онбординг первого запуска (3.3, FR-12; дизайн-эпик 7.1 — 4 шага по макету):
+        // поверх всего, до первой прогулки. Шаг региона живёт на том же предложении
+        // установки, что и карточка на карте (onInstallSuggested/onOnboardingRegionPicked).
         if (uiState.showOnboarding) {
             OnboardingOverlay(
-                onComplete = { goal -> viewModel.onOnboardingComplete(goal) },
+                regionSuggestion = uiState.suggestion,
+                regionOptions = uiState.regionOptions,
+                homeRegionId = uiState.homeRegionId,
+                onInstallRegion = viewModel::onInstallSuggested,
+                onPickRegion = viewModel::onOnboardingRegionPicked,
+                onComplete = { goal ->
+                    // Разрешение мог дать шаг геолокации оверлея — перечитываем флаг,
+                    // чтобы слушатель маркера «я» стартовал сразу, а не со следующего запроса.
+                    locationGranted = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                    ) == PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ) == PackageManager.PERMISSION_GRANTED
+                    viewModel.onOnboardingComplete(goal)
+                },
             )
         }
     }
@@ -633,30 +665,6 @@ private val RECORDING_PERMISSIONS = arrayOf(
     Manifest.permission.ACCESS_COARSE_LOCATION,
     Manifest.permission.POST_NOTIFICATIONS,
 )
-
-/**
- * Плашка процента открытия над картой (история 1.8): значение акцентом + подпись
- * «открыто» — паттерн statcol из DESIGN-макета карты. Доля приходит готовой из
- * domain (AD-4); форматирование «17,4%» (русская локаль, запятая, 1 знак) живёт
- * только здесь (Consistency Conventions).
- */
-@Composable
-private fun RegionProgressBadge(fraction: Double, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = WqTheme.shapes.full,
-        color = WqTheme.colors.surfaceRaised,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
-    ) {
-        // Паттерн statcol DESIGN: значение акцентом Nunito 800 над подписью meta.
-        WqStatColumn(
-            value = formatPercent(fraction),
-            label = "открыто",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-        )
-    }
-}
 
 /**
  * Единственное место форматирования процента: доля → «17,4%» (ru-локаль, запятая).
@@ -702,26 +710,67 @@ private fun SettingsGearButton(onClick: () -> Unit, modifier: Modifier = Modifie
     )
 }
 
-/** Чип состояния записи — WqChip (DESIGN: «Идёт запись» акцентом / «На паузе» нейтрально). */
+/** Чип состояния записи — WqChip (макет .live: «Идёт запись» текстом акцентом со
+ *  свечением точки; «На паузе» — нейтрально, ink-secondary, точка dim без свечения). */
 @Composable
 private fun RecordingChip(paused: Boolean, modifier: Modifier = Modifier) {
     WqChip(
         text = if (paused) "На паузе" else "Идёт запись",
         dotColor = if (paused) WqTheme.colors.inkDim else WqTheme.colors.accentText,
+        dotGlow = !paused,
+        textColor = if (paused) WqTheme.colors.inkSecondary else WqTheme.colors.accentText,
         modifier = modifier,
     )
 }
 
-/** FAB «+ Задание» во время прогулки — WqIconFab (EXPERIENCE: поток заданий поверх прогулки). */
+/**
+ * Кнопка «+ Задание» во время прогулки — пилюля по макету map-duo (.qfab: плюс,
+ * призрак с ПУНКТИРНОЙ рамкой; EXPERIENCE: «＋ Задание» — кнопка-призрак).
+ * Открывает поток заданий поверх прогулки (запись не останавливается).
+ * TalkBack: «Задание на прогулку» (screens-spec §2, копии).
+ */
 @Composable
-private fun QuestFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    WqIconFab(
-        icon = WalkQuestIcons.Plus,
-        contentDescription = "Задание на прогулку",
+private fun QuestPillButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val borderColor = WqTheme.colors.borderStrong
+    Surface(
         onClick = onClick,
-        tint = WqTheme.colors.accentText,
-        modifier = modifier,
-    )
+        modifier = modifier
+            .heightIn(min = 48.dp) // тач-зона (EXPERIENCE: hit-area ≥48dp)
+            .drawBehind {
+                // Пунктирную рамку M3-BorderStroke не умеет — рисуем сами (dash 12/8 px).
+                drawRoundRect(
+                    color = borderColor,
+                    cornerRadius = CornerRadius(size.minDimension / 2f),
+                    style = Stroke(
+                        width = 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)),
+                    ),
+                )
+            }
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Задание на прогулку"
+            },
+        shape = WqTheme.shapes.full,
+        color = WqTheme.colors.surfaceRaised,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = WalkQuestIcons.Plus,
+                contentDescription = null,
+                tint = WqTheme.colors.inkSecondary,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = "Задание",
+                color = WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.metaLarge,
+            )
+        }
+    }
 }
 
 /** Карточка активного задания над панелью прогулки — WqQuestCard (DESIGN card-task). */
@@ -749,36 +798,130 @@ private fun ActiveQuestCard(
 }
 
 /**
- * Панель прогулки (DESIGN): агрегаты мини-колонками (время / км / клетки),
- * «Пауза» (или «Продолжить») — крупная акцентная, «Завершить» — призрак
- * (обрыв сессии только с подтверждением).
+ * Панель прогулки (макет map-duo .walk-bar, EXPERIENCE «Экран прогулки», 7.12):
+ * агрегаты мини-колонками (время / км / прирост «+0,4% открыто» вместо бывшей
+ * «клеток открыто»), «Пауза» (или «Продолжить») — крупная акцентная (weight 1.7),
+ * «Завершить» — меньший призрак (weight 1) с подтверждением УДЕРЖАНИЕМ ~600 мс:
+ * удержание заполняет кнопку акцентом, раннее отпускание откатывает заполнение
+ * и не завершает прогулку (HoldToConfirmLogic). AlertDialog не используется.
  */
 @Composable
 private fun WalkPanel(
     distanceMeters: Double,
     activeMillis: Long,
-    openedCells: Int,
+    gainFraction: Double?,
     paused: Boolean,
     onPauseResume: () -> Unit,
-    onFinishRequest: () -> Unit,
+    onFinishHoldConfirmed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     WqSheet(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            WqStatColumn(value = formatDuration(activeMillis), label = "время")
-            WqStatColumn(value = "%.1f".format(distanceMeters / 1000.0), label = "км")
-            WqStatColumn(value = openedCells.toString(), label = "клеток открыто")
+            // Макет: время и км — цветом панели, прирост — акцентом (.v.accent).
+            WqStatColumn(
+                value = formatDuration(activeMillis),
+                label = "время",
+                valueColor = WqTheme.colors.inkPrimary,
+            )
+            WqStatColumn(
+                value = WqFormat.km(distanceMeters),
+                label = "км",
+                valueColor = WqTheme.colors.inkPrimary,
+            )
+            WqStatColumn(
+                value = WqFormat.walkGain(gainFraction),
+                label = "открыто",
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             WqPrimaryButton(
                 onClick = onPauseResume,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1.7f),
             ) { Text(text = if (paused) "Продолжить" else "Пауза") }
-            WqGhostButton(
-                onClick = onFinishRequest,
+            FinishHoldButton(
+                onConfirmed = onFinishHoldConfirmed,
                 modifier = Modifier.weight(1f),
-            ) { Text(text = "Завершить") }
+            )
+        }
+    }
+}
+
+/**
+ * «Завершить» с подтверждением удержанием (7.12, EXPERIENCE): призрак-пилюля,
+ * при удержании заполняется акцентом слева за [HoldToConfirmLogic.THRESHOLD_MS],
+ * достижение порога завершает прогулку; раннее отпускание откатывает заполнение
+ * за [HoldToConfirmLogic.ROLLBACK_MS] и НИЧЕГО не делает. Механика читается
+ * анимацией — текстовых подсказок нет (EXPERIENCE). TalkBack: семантическое
+ * описание жеста.
+ */
+@Composable
+private fun FinishHoldButton(onConfirmed: () -> Unit, modifier: Modifier = Modifier) {
+    val progress = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val holding = progress.value > 0f
+    // Макет .btn-stop.holding: заливка accent @ 35% (тёмная) / @ 28% (светлая).
+    val fillAlpha = if (isSystemInDarkTheme()) 0.35f else 0.28f
+    Surface(
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .pointerInput(onConfirmed) {
+                detectTapGestures(
+                    onPress = {
+                        val startedAtMs = System.currentTimeMillis()
+                        val fillJob = scope.launch {
+                            progress.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = HoldToConfirmLogic.THRESHOLD_MS.toInt(),
+                                    easing = LinearEasing,
+                                ),
+                            )
+                        }
+                        val released = tryAwaitRelease()
+                        fillJob.cancel()
+                        if (released &&
+                            HoldToConfirmLogic.isConfirmed(
+                                startedAtMs,
+                                System.currentTimeMillis(),
+                            )
+                        ) {
+                            // Порог достигнут — завершаем; заполнение не откатываем
+                            // (кнопка сразу уходит вместе с панелью прогулки).
+                            progress.snapTo(1f)
+                            onConfirmed()
+                        } else {
+                            // Раннее отпускание / жест сорван — откат, прогулка живёт.
+                            scope.launch {
+                                progress.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(HoldToConfirmLogic.ROLLBACK_MS),
+                                )
+                            }
+                        }
+                    },
+                )
+            }
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Завершить прогулку. Удерживайте кнопку для подтверждения."
+            },
+        shape = WqTheme.shapes.full,
+        color = Color.Transparent,
+        border = BorderStroke(1.5.dp, WqTheme.colors.borderStrong),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            // Прогресс заполнения — акцент слева, высота кнопки.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress.value)
+                    .height(48.dp)
+                    .background(WqTheme.colors.accent.copy(alpha = fillAlpha)),
+            )
+            Text(
+                text = "Завершить",
+                color = if (holding) WqTheme.colors.inkPrimary else WqTheme.colors.inkSecondary,
+                style = WqTheme.typography.bodySmall,
+            )
         }
     }
 }
@@ -800,16 +943,29 @@ private fun HomeSheet(
 ) {
     WqSheet(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            // Доступность (AL-11, 7.11): плашка «% открыто» из шапки убрана — её
+            // семантическое описание живает здесь: колонка сливается в один узел
+            // семантики с contentDescription, TalkBack читает «Открыто территории…»
+            // вместо разрозненных «17,4%» / «открыто».
             WqStatColumn(
                 value = progressFraction?.let { formatPercent(it) } ?: "—",
                 label = "открыто",
+                modifier = Modifier
+                    .then(
+                        progressFraction?.let { fraction ->
+                            Modifier.semantics(mergeDescendants = true) {
+                                contentDescription =
+                                    "Открыто территории домашнего региона: ${formatPercent(fraction)}"
+                            }
+                        } ?: Modifier,
+                    ),
             )
             WqStatColumn(
                 value = streakDays?.let { pluralDaysShort(it) } ?: "—",
                 label = "серия",
             )
             WqStatColumn(
-                value = weekDistanceMeters?.let { "%.1f км".format(it / 1000.0) } ?: "—",
+                value = weekDistanceMeters?.let { WqFormat.km(it) + " км" } ?: "—",
                 label = "за неделю",
             )
         }
@@ -857,16 +1013,18 @@ private fun formatDuration(activeMillis: Long): String {
 }
 
 /** «1 день» / «2 дня» / «5 дней» — короткая форма серии для мини-колонки. */
-private fun pluralDaysShort(n: Int): String {
+private fun pluralDaysShort(n: Int): String = "$n ${pluralDaysWord(n)}"
+
+/** Только слово: «день» / «дня» / «дней» (финал: число и единица разными кеглями). */
+private fun pluralDaysWord(n: Int): String {
     val mod100 = n % 100
     val mod10 = n % 10
-    val word = when {
+    return when {
         mod100 in 11..19 -> "дней"
         mod10 == 1 -> "день"
         mod10 in 2..4 -> "дня"
         else -> "дней"
     }
-    return "$n $word"
 }
 
 /** Ближайший план для карточки панели: «Сегодня, 12:00» / «Завтра, 19:30» / «12.10, 19:30». */
@@ -1162,25 +1320,28 @@ private fun RegionSuggestionCard(
 }
 
 /**
- * Карточка места (история 1.9, токен poi-card): нижняя зона поверх карты,
- * фон surface-raised, радиус rounded.lg (16dp); заголовок — heading (Nunito-эквивалент
- * titleLarge ExtraBold, цвет ink-headline), описание — body (ink-secondary).
- * Фото (пакет v2, разбор 2026-10-05 дефект 6): поле `photo` в poi.json — относительный
- * путь от корня пакета; файл читается с диска установленного пакета (офлайн) и
- * показывается полосой сверху, как .photos в макете poi-card. Фото нет (старый
- * пакет v1) или файл не читается — полосы нет, карточка как прежде (fallback).
+ * Карточка места (история 1.9, токен poi-card; дизайн-эпик 7.10, AL-10): нижняя
+ * зона поверх карты, фон surface-raised, радиус rounded.lg (16dp). Заголовок —
+ * headingSection (Nunito 800, цвет ink-headline), описание — body (ink-secondary).
+ * Фото: полоса сверху во всю ширину — ряд из до [Poi.MAX_PHOTOS] фото из пакета
+ * (макет poi-card .photos: ячейки 1:1 по ширине, зазор 4dp, высота ~96dp crop).
+ * Пути — [Poi.photoPaths] (`photos` в poi.json или одиночное `photo` пакетов v2–v6),
+ * файлы читаются с диска установленного пакета (офлайн). Фото нет или ни один файл
+ * не читается — полосы нет, карточка текстовая (fallback).
  * Если описания нет в данных пакета (description: null — деградация генератора 1.3),
  * вместо пустоты — человекочитаемая категория места строкой meta (разумный fallback:
  * макет состояния без описания не задаёт, категория — существующие данные, не выдумка).
  * Длинное описание (полевой тест 3): обрезка до ~4 строк с многоточием; если обрезано
  * и у POI есть `url` (пакет v5) — ссылка «Подробнее» акцентным текстом (токен
  * accent-text, DESIGN) открывает браузер (ACTION_VIEW); без url — просто обрезка.
- * Закрытие: кнопка или свайп вниз (DESIGN);
- * тап вне карточки обрабатывает карта (onMapTappedOutside → onPoiCardDismissed).
+ * Закрытие: свайп вниз (EXPERIENCE Interaction Primitives) и тап вне карточки —
+ * его обрабатывает карта (onMapTappedOutside → onPoiCardDismissed). Явной кнопки
+ * «Закрыть» нет: в утверждённом макете (remaining-screens.html, poi-card) её нет,
+ * а EXPERIENCE/DESIGN закрытие описывают только свайпом и тапом вне (решение 7.10).
  * Данные — из уже загруженного poi.json пакета: сеть не нужна (AD-2).
  */
 @Composable
-private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: Modifier = Modifier) {
+private fun PoiCard(poi: Poi, photoFiles: List<File>, onClose: () -> Unit, modifier: Modifier = Modifier) {
     var dragDown by remember(poi.osmId) { mutableStateOf(0f) }
     val context = LocalContext.current
     Surface(
@@ -1199,23 +1360,24 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
         shadowElevation = 8.dp,
     ) {
         Column {
-            // Фото места (пакет v2): полоса во всю ширину сверху, Surface обрезает
-            // по радиусу карточки. Без фото (старый пакет) полосы нет вообще.
-            if (photoFile != null) {
-                PoiPhoto(photoFile)
-            }
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = poi.displayName,
-                        color = WqTheme.colors.inkHeadline,
-                        style = WqTheme.typography.headingScreen,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = onClose) {
-                        Text(text = "Закрыть", color = WqTheme.colors.inkSecondary)
+            // Фото-полоса (макет .photos): ряд ячеек, Surface обрезает по радиусу
+            // карточки. Без фото (старый пакет) полосы нет вообще.
+            if (photoFiles.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    photoFiles.forEach { file ->
+                        PoiPhoto(photoFile = file, modifier = Modifier.weight(1f))
                     }
                 }
+            }
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Text(
+                    text = poi.displayName,
+                    color = WqTheme.colors.inkHeadline,
+                    style = WqTheme.typography.headingSection,
+                )
                 val description = poi.description?.takeIf { it.isNotBlank() }
                 if (description != null) {
                     // Полевой тест 3: длинное описание — максимум ~4 строки с многоточием;
@@ -1262,13 +1424,13 @@ private fun PoiCard(poi: Poi, photoFile: File?, onClose: () -> Unit, modifier: M
 }
 
 /**
- * Фото POI из установленного пакета (офлайн, AD-2): декодирование JPEG с диска
- * в фоне (BitmapFactory, без Coil — зависимость не вводим ради одной полосы).
- * Пока декодируется — плашка surface-base высотой полосы (макет .photos, ~96dp);
- * файл битый — полоса схлопывается, карточка остаётся текстовой (fallback).
+ * Одно фото ячейки полосы POI из установленного пакета (офлайн, AD-2): декодирование
+ * JPEG с диска в фоне (BitmapFactory, без Coil — зависимость не вводим ради полосы).
+ * Пока декодируется — плашка surface-sunken высотой полосы (спека §11, ~96dp);
+ * файл битый — ячейка схлопывается, соседние растягиваются (fallback).
  */
 @Composable
-private fun PoiPhoto(photoFile: File) {
+private fun PoiPhoto(photoFile: File, modifier: Modifier = Modifier) {
     val decoded by produceState<DecodedPoiPhoto>(initialValue = DecodedPoiPhoto.Loading, photoFile) {
         value = withContext(Dispatchers.IO) {
             val bitmap = runCatching { BitmapFactory.decodeFile(photoFile.absolutePath) }.getOrNull()
@@ -1276,19 +1438,16 @@ private fun PoiPhoto(photoFile: File) {
         }
     }
     when (val state = decoded) {
-        DecodedPoiPhoto.Failed -> Unit // файл не читается — полосы нет вообще
+        DecodedPoiPhoto.Failed -> Unit // файл не читается — ячейки нет
         DecodedPoiPhoto.Loading -> Box(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = modifier
                 .height(POI_PHOTO_HEIGHT)
-                .background(WqTheme.colors.surfaceBase),
+                .background(WqTheme.colors.surfaceSunken),
         )
         is DecodedPoiPhoto.Ready -> Image(
             bitmap = state.bitmap,
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(POI_PHOTO_HEIGHT),
+            modifier = modifier.height(POI_PHOTO_HEIGHT),
             contentScale = ContentScale.Crop,
         )
     }
@@ -1324,6 +1483,7 @@ private fun FogMap(
     val cursorArgb = WqTheme.colors.cursor.toArgb()
     val fogArgb = WqTheme.colors.fogCovered.toArgb()
     val glowArgb = WqTheme.colors.fogGlow.toArgb()
+    val whiteArgb = WqTheme.colors.white.toArgb() // ядра POI/«я» — токен white, не Color.White
     // Актуальные значения для асинхронных колбэков (setStyle, слушатели карты):
     // события, пришедшие до конца загрузки стиля, не должны потерять состояние.
     val currentState by rememberUpdatedState(uiState)
@@ -1332,6 +1492,7 @@ private fun FogMap(
     val currentCursorArgb by rememberUpdatedState(cursorArgb)
     val currentFogArgb by rememberUpdatedState(fogArgb)
     val currentGlowArgb by rememberUpdatedState(glowArgb)
+    val currentWhiteArgb by rememberUpdatedState(whiteArgb)
     val currentDebugParams by rememberUpdatedState(debugParams)
     val currentOnViewport by rememberUpdatedState(onViewportChanged)
     val currentOnPoiTapped by rememberUpdatedState(onPoiTapped)
@@ -1434,8 +1595,14 @@ private fun FogMap(
                 strength = currentDebugParams.featherStrength,
             )
             updateWaterVectorLayer(style, currentState)
-            updatePoiLayer(style, currentState, markerArgb = currentMarkerArgb)
-            updateMeLayer(style, currentState, cursorArgb = currentCursorArgb, visible = currentMeFixVisible)
+            updatePoiLayer(style, currentState, markerArgb = currentMarkerArgb, whiteArgb = currentWhiteArgb)
+            updateMeLayer(
+                style,
+                currentState,
+                cursorArgb = currentCursorArgb,
+                whiteArgb = currentWhiteArgb,
+                visible = currentMeFixVisible,
+            )
         }
     }
 
@@ -1504,7 +1671,7 @@ private fun FogMap(
     // Новая выдача POI (visiblePois) или смена темы → перестроение слоя маяков.
     LaunchedEffect(mapLibreMap, uiState.visiblePois, markerArgb) {
         val style = mapLibreMap?.style ?: return@LaunchedEffect
-        updatePoiLayer(style, uiState, markerArgb = markerArgb)
+        updatePoiLayer(style, uiState, markerArgb = markerArgb, whiteArgb = whiteArgb)
     }
 
     // Новый фикс позиции, его достоинство или смена темы → перестроение маркера «я».
@@ -1518,7 +1685,7 @@ private fun FogMap(
         cursorArgb,
     ) {
         val style = mapLibreMap?.style ?: return@LaunchedEffect
-        updateMeLayer(style, uiState, cursorArgb = cursorArgb, visible = meFixVisible)
+        updateMeLayer(style, uiState, cursorArgb = cursorArgb, whiteArgb = whiteArgb, visible = meFixVisible)
     }
 }
 
@@ -1912,7 +2079,7 @@ private fun fogPolygon(grid: FogGrid, trails: List<List<DoubleArray>>): Polygon 
  * Слой добавляется после fog-слоя (в setStyle-колбэке) → рисуется поверх тумана (FR-18).
  * osmId уезжает в свойства Feature — по нему тап находит POI в состоянии viewmodel.
  */
-private fun updatePoiLayer(style: Style, state: MapUiState, markerArgb: Int) {
+private fun updatePoiLayer(style: Style, state: MapUiState, markerArgb: Int, whiteArgb: Int) {
     val pois = state.visiblePois
     if (pois.isEmpty()) {
         style.removeLayer(POI_LAYER_ID)
@@ -1942,7 +2109,7 @@ private fun updatePoiLayer(style: Style, state: MapUiState, markerArgb: Int) {
                 ),
                 PropertyFactory.circleBlur(POI_CIRCLE_BLUR), // мягкое свечение маяка
                 PropertyFactory.circleOpacity(POI_CIRCLE_OPACITY),
-                PropertyFactory.circleStrokeColor(Color.White.toArgb()),
+                PropertyFactory.circleStrokeColor(whiteArgb),
                 PropertyFactory.circleStrokeWidth(POI_STROKE_WIDTH),
             ),
         )
@@ -1968,7 +2135,7 @@ private fun DoubleArray.toPoint(): Point = Point.fromLngLat(this[0], this[1])
  * UI вместо маркера показывает «Определяю местоположение…».
  * Камера за маркером не следует: кнопки «моё местоположение» в макете нет (DESIGN/прототип).
  */
-private fun updateMeLayer(style: Style, state: MapUiState, cursorArgb: Int, visible: Boolean) {
+private fun updateMeLayer(style: Style, state: MapUiState, cursorArgb: Int, whiteArgb: Int, visible: Boolean) {
     val lat = state.userLatitude
     val lon = state.userLongitude
     if (lat == null || lon == null || !visible) {
@@ -2020,7 +2187,7 @@ private fun updateMeLayer(style: Style, state: MapUiState, cursorArgb: Int, visi
         // Белое ядро с кольцом cursor (токен me-marker).
         style.addLayer(
             CircleLayer(ME_CORE_LAYER_ID, ME_SOURCE_ID).withProperties(
-                PropertyFactory.circleColor(Color.White.toArgb()),
+                PropertyFactory.circleColor(whiteArgb),
                 PropertyFactory.circleRadius(ME_CORE_RADIUS),
                 PropertyFactory.circleStrokeColor(cursorArgb),
                 PropertyFactory.circleStrokeWidth(ME_RING_WIDTH),
@@ -2167,7 +2334,9 @@ private const val POI_CIRCLE_OPACITY = 0.95f
 private const val POI_STROKE_WIDTH = 1.5f
 private const val POI_TAP_TOLERANCE_PX = 24f // допуск попадания пальцем в маркер
 private const val POI_CARD_DISMISS_DRAG_PX = 120f // свайп вниз, закрывающий карточку
-private val POI_PHOTO_HEIGHT = 96.dp // полоса фото карточки (макет poi-card .photos)
+/** Карточка над панелью прогулки во время записи (состояние 7.10 сохранено). */
+private val POI_CARD_BOTTOM_RECORDING = 228.dp
+private val POI_PHOTO_HEIGHT = 96.dp // высота фото-полосы (спека §11: ~96dp crop)
 /** Описание карточки: максимум строк с многоточием (полевой тест 3); дальше — «Подробнее». */
 private const val POI_DESCRIPTION_MAX_LINES = 4
 
@@ -2196,10 +2365,14 @@ private const val ME_LOCATION_MIN_INTERVAL_MS = 2_000L
 private const val ME_LOCATION_MIN_DISTANCE_METERS = 2f
 
 /**
- * Финальный экран прогулки (история 2.8, FR-8): похвала, процент открытия,
- * время, дистанция, новые ачивки (порт; пусто до epic-achievements), подпись
- * про завтра, «Поделиться» и «Закрыть». Все значения сводки — готовые из
- * viewmodel/domain (AD-4): здесь только рендер и форматирование.
+ * Финальный экран прогулки (история 2.8, FR-8; приведён к макету «Финал»
+ * map-duo.html, эпик design-alignment 7.2): похвала, герой-процент Nunito 1000
+ * акцентом с подписью «территории открыто», сетка из 3 карточек (км / время /
+ * серия), карточка нового достижения, TOMORROW_NOTE, «Поделиться результатом»
+ * и «На карту» (вместо прежнего «Закрыть» — выход на карту). Все значения
+ * сводки — готовые из viewmodel/domain (AD-4): здесь только рендер и
+ * форматирование. Полноэкранный, без прокрутки; навигация под ним скрыта
+ * (MainActivity). Герой-цифра — displaySmall 38sp (токен §3 screens-spec).
  */
 @Composable
 private fun WalkSummaryOverlay(
@@ -2239,21 +2412,38 @@ private fun WalkSummaryOverlay(
                 )
                 Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
             }
-            val minutes = summary.activeMillis / 60_000L
-            Text(
-                text = "%.1f км · %d мин".format(summary.distanceMeters / 1000.0, minutes),
-                style = WqTheme.typography.headingCard,
-                color = WqTheme.colors.inkHeadline,
-            )
-            if (summary.achievements.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(WqTheme.spacing.lg))
-                summary.achievements.forEach { achievement ->
-                    Text(
-                        text = "🏆 $achievement",
-                        style = WqTheme.typography.body,
-                        color = WqTheme.colors.inkPrimary,
-                    )
-                }
+            // Сетка из 3 карточек (макет .fin-grid: card, зазор 9px ≈ sm,
+            // паддинг 11px ≈ md, скругление 13px → shapes.medium). Число крупное
+            // (headingCard), единица мельче (meta) в одной строке; разделитель
+            // десятичных — запятая (ru-локаль, как у formatPercent).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(WqTheme.spacing.sm),
+            ) {
+                WalkFinalStatCard(
+                    value = WqFormat.km(summary.distanceMeters),
+                    unit = "км",
+                    label = "расстояние",
+                    modifier = Modifier.weight(1f),
+                )
+                WalkFinalStatCard(
+                    value = (summary.activeMillis / 60_000L).toString(),
+                    unit = "мин",
+                    label = "время",
+                    modifier = Modifier.weight(1f),
+                )
+                WalkFinalStatCard(
+                    value = summary.streakDays.toString(),
+                    unit = pluralDaysWord(summary.streakDays),
+                    label = "серия",
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            // Карточка нового достижения (макет .ach: заливка/рамка accent —
+            // токены accentSoft/accentSoftBorder, иконка вместо эмодзи-плейсхолдера).
+            summary.achievements.forEach { achievement ->
+                Spacer(modifier = Modifier.height(WqTheme.spacing.md))
+                WalkFinalAchievementCard(name = achievement)
             }
             Spacer(modifier = Modifier.height(WqTheme.spacing.xxl))
             Text(
@@ -2262,9 +2452,82 @@ private fun WalkSummaryOverlay(
                 color = WqTheme.colors.inkSecondary,
             )
             Spacer(modifier = Modifier.height(WqTheme.spacing.xxl))
-            WqPrimaryButton(onClick = onShare) { Text(text = "Поделиться") }
+            WqPrimaryButton(onClick = onShare) { Text(text = "Поделиться результатом") }
             Spacer(modifier = Modifier.height(WqTheme.spacing.sm))
-            TextButton(onClick = onClose) { Text(text = "Закрыть", color = WqTheme.colors.inkSecondary) }
+            TextButton(onClick = onClose) { Text(text = "На карту", color = WqTheme.colors.inkSecondary) }
+        }
+    }
+}
+
+/**
+ * Карточка метрики сетки финала (макет .fstat): строка «число + единица»
+ * (число headingCard, единица meta в той же строке) над подписью meta ink-dim.
+ */
+@Composable
+private fun WalkFinalStatCard(
+    value: String,
+    unit: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    WqCard(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(WqTheme.spacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = value,
+                    style = WqTheme.typography.headingCard,
+                    color = WqTheme.colors.inkHeadline,
+                )
+                Spacer(modifier = Modifier.width(WqTheme.spacing.xs))
+                Text(
+                    text = unit,
+                    style = WqTheme.typography.meta,
+                    color = WqTheme.colors.inkHeadline,
+                )
+            }
+            Text(
+                text = label,
+                style = WqTheme.typography.meta,
+                color = WqTheme.colors.inkDim,
+            )
+        }
+    }
+}
+
+/** Карточка нового достижения финала (макет .ach): иконка-кубок + название. */
+@Composable
+private fun WalkFinalAchievementCard(name: String) {
+    WqCardActive {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(WqTheme.spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WqTheme.spacing.md),
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(11.dp),
+                color = WqTheme.colors.surfaceRaised,
+                border = BorderStroke(1.dp, WqTheme.colors.accentSoftBorder),
+            ) {
+                Icon(
+                    imageVector = WalkQuestIcons.Trophy,
+                    contentDescription = null,
+                    tint = WqTheme.colors.accentText,
+                    modifier = Modifier.padding(10.dp),
+                )
+            }
+            Text(
+                text = "Новое достижение: «$name»",
+                style = WqTheme.typography.headingCard,
+                color = WqTheme.colors.inkHeadline,
+            )
         }
     }
 }
@@ -2273,7 +2536,7 @@ private fun WalkSummaryOverlay(
 private fun shareWalkIntent(summary: WalkSummaryUi): Intent {
     val percent = summary.progressFraction?.let { " · " + formatPercent(it) } ?: ""
     val text = "${summary.praise}\n" +
-        "%.1f км · %d мин$percent\n".format(summary.distanceMeters / 1000.0, summary.activeMillis / 60_000L) +
+        "${WqFormat.km(summary.distanceMeters)} км · ${summary.activeMillis / 60_000L} мин$percent\n" +
         "\nWalkQuest — город под туманом"
     return Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

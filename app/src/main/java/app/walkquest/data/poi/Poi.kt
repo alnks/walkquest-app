@@ -32,8 +32,16 @@ data class Poi(
     /**
      * Фото места (пакет v2): относительный путь от корня пакета (`photos/poi-<osmId>.jpg`).
      * Поле опциональное — в пакете v1 его нет, карточка показывается без фото-полосы.
+     * Если задано массивом [photos] — одиночное поле игнорируется (массив приоритетнее).
      */
     val photo: String? = null,
+    /**
+     * Полоса фото карточки (дизайн-эпик 7.10, AL-10): до [MAX_PHOTOS] относительных
+     * путей от корня пакета, как в макете poi-card (.photos — ряд из 3 фото).
+     * Поле опциональное — пакеты до v6 знают только одиночное `photo`; обратная
+     * совместимость: пустой список → карточка берёт одиночное фото.
+     */
+    val photos: List<String> = emptyList(),
     /**
      * Ссылка на статью Википедии (пакет v5, полевой тест 3): карточка обрезает
      * длинное описание и показывает «Подробнее» → браузер. Поле опциональное —
@@ -53,6 +61,19 @@ data class Poi(
      */
     val displayCategory: String
         get() = category.replace("=", ": ")
+
+    /**
+     * Пути фото-полосы карточки: массив [photos] (до [MAX_PHOTOS]) или одиночное
+     * `photo` как список из одного элемента; оба отсутствуют — пусто (без полосы).
+     */
+    val photoPaths: List<String>
+        get() = photos.takeIf { it.isNotEmpty() }?.take(MAX_PHOTOS)
+            ?: listOfNotNull(photo?.takeIf { it.isNotBlank() })
+
+    companion object {
+        /** Макет poi-card: ряд из трёх фото — больше в полосу не влезает. */
+        const val MAX_PHOTOS = 3
+    }
 }
 
 /** Корень poi.json: {"pois": [...]} — фактический формат region-spb-city-v1.zip (1.3). */
@@ -65,7 +86,8 @@ internal data class PoiFile(
  * DTO записи poi.json. Поля snake_case — контракт генератора (tools/region-pack),
  * сверены с фактическим файлом: osm_id, name, name_ru, category, lon, lat,
  * wikidata, description (последние три nullable). Пакет v2 добавил `photo`,
- * пакет v5 — `url` (Википедия); оба опциональные: v4 без них парсится как прежде.
+ * пакет v5 — `url` (Википедия), дизайн-эпик 7.10 — `photos` (полоса до 3 фото);
+ * все опциональные: v4 без них парсится как прежде.
  */
 @Serializable
 internal data class PoiJson(
@@ -80,11 +102,13 @@ internal data class PoiJson(
     val description: String? = null,
     /** Фото места (пакет v2): относительный путь от корня пакета; поле опциональное. */
     val photo: String? = null,
+    /** Полоса фото (дизайн-эпик 7.10): до 3 путей; опциональное — пакеты v2–v6 без него. */
+    @SerialName("photos") val photos: List<String> = emptyList(),
     /** Ссылка на Википедию (пакет v5); опциональное — в v1–v4 отсутствует. */
     val url: String? = null,
 ) {
     /** Категория интернируется: 514 уникальных значений на 58 580 записей пакета. */
-    fun toPoi(): Poi = Poi(osmId, name, nameRu, category.intern(), lon, lat, wikidata, description, photo, url)
+    fun toPoi(): Poi = Poi(osmId, name, nameRu, category.intern(), lon, lat, wikidata, description, photo, photos, url)
 }
 
 /**

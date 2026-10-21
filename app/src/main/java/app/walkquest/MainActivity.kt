@@ -60,8 +60,21 @@ class MainActivity : ComponentActivity() {
             (application as WalkQuestApplication).container.settingsRepository.goalReminderHour(),
         )
         setContent {
-            WalkQuestTheme {
-                WalkQuestTabs()
+            // Тема (7.16): корневой композабл подписан на настройку (StateFlow
+            // MapViewModel) и сам решает палитру — переключение на лету, без
+            // пересоздания активности. MapViewModel создаём здесь же, чтобы и
+            // тема, и вкладки делили одну инстанцию (viewModel() от активности).
+            val container = (application as WalkQuestApplication).container
+            val mapViewModel: MapViewModel = viewModel(factory = container.mapViewModelFactory)
+            val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val mapUiState by mapViewModel.uiState.collectAsStateWithLifecycle()
+            val darkTheme = when (mapUiState.themeMode) {
+                app.walkquest.data.settings.ThemeMode.SYSTEM -> systemDark
+                app.walkquest.data.settings.ThemeMode.LIGHT -> false
+                app.walkquest.data.settings.ThemeMode.DARK -> true
+            }
+            WalkQuestTheme(darkTheme = darkTheme) {
+                WalkQuestTabs(mapViewModel)
             }
         }
     }
@@ -132,9 +145,8 @@ private object TabIcons {
 }
 
 @Composable
-private fun ComponentActivity.WalkQuestTabs() {
+private fun ComponentActivity.WalkQuestTabs(mapViewModel: MapViewModel) {
     val container = (application as WalkQuestApplication).container
-    val mapViewModel: MapViewModel = viewModel(factory = container.mapViewModelFactory)
     val regionsViewModel: RegionsViewModel = viewModel(factory = container.regionsViewModelFactory)
     val statsViewModel: StatsViewModel = viewModel(factory = container.statsViewModelFactory)
     val achievementsViewModel: AchievementsViewModel = viewModel(factory = container.achievementsViewModelFactory)
@@ -175,6 +187,8 @@ private fun ComponentActivity.WalkQuestTabs() {
                 AppTab.Profile -> app.walkquest.ui.profile.ProfileScreen(
                     viewModel = profileViewModel,
                     onOpenRegions = { regionsOverlayVisible = true },
+                    onOpenRating = { tab = AppTab.Rating.name },
+                    onOpenSettings = { settingsOverlayVisible = true },
                 )
             }
             // «Мои регионы» (1.10): список регионов поверх вкладки; тап по региону —
@@ -199,7 +213,11 @@ private fun ComponentActivity.WalkQuestTabs() {
         }
         // Навигация скрыта, пока идёт онбординг: он полноэкранный (4 вкладки,
         // EXPERIENCE; подписи 12px в одну строку — без переносов «Статистика»).
-        if (!mapUiState.showOnboarding) {
+        // Экран финала прогулки тоже полноэкранный (макет «Финал», 7.2) — под ним
+        // нижняя навигация не видна. Оверлей «Регионы» — тот же полноэкранный
+        // паттерн (история 7.9, AL-9): выход — «Готово» на оверлее, навигация
+        // под ним не дублирует выход, как в макете.
+        if (!mapUiState.showOnboarding && mapUiState.walkSummary == null && !regionsOverlayVisible) {
             WqBottomNav(
                 items = AppTab.entries.map { WqNavItem(label = it.title, icon = it.icon) },
                 selectedIndex = AppTab.entries.indexOfFirst { it.name == tab }.coerceAtLeast(0),

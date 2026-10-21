@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WalkQuest — сверка «макет ↔ реализация» · 2026-10-12</title>
+<title>WalkQuest — сверка «макет ↔ реализация» · 2026-10-15 (финал 7.14)</title>
 <style>
   /* ===== Токены отчёта = тёмная тема WalkQuest (WqColors) ===== */
   :root {
@@ -19,12 +19,9 @@
     --accent-soft-border: rgba(198, 226, 107, 0.35);
     --border: #342A4D;
     --ok: #C6E26B;
-    --mid: #E8C57A;
-    --bad: #E88A8A;
-    --mid-soft: rgba(232, 197, 122, 0.08);
-    --mid-border: rgba(232, 197, 122, 0.35);
-    --bad-soft: rgba(232, 138, 138, 0.08);
-    --bad-border: rgba(232, 138, 138, 0.35);
+    --open: #E8C57A;
+    --open-soft: rgba(232, 197, 122, 0.08);
+    --open-border: rgba(232, 197, 122, 0.35);
     --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
     --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
   }
@@ -55,7 +52,7 @@
     font-family: "Nunito", sans-serif; font-weight: 800;
     font-size: 28px; line-height: 34px; letter-spacing: -0.01em;
   }
-  .lead { color: var(--ink-2); max-width: 860px; margin-top: var(--s3); }
+  .lead { color: var(--ink-2); max-width: 900px; margin-top: var(--s3); }
   .meta { color: var(--ink-dim); font-size: 12px; line-height: 18px; margin-top: var(--s4); }
   .meta code {
     font-family: ui-monospace, Consolas, monospace; font-size: 11.5px;
@@ -110,9 +107,8 @@
     display: inline-block; font-size: 11px; font-weight: 500;
     border-radius: 999px; padding: 3px 10px; border: 1px solid; white-space: nowrap;
   }
-  .t-ok  { color: var(--ok);  border-color: var(--accent-soft-border); background: var(--accent-soft); }
-  .t-mid { color: var(--mid); border-color: var(--mid-border); background: var(--mid-soft); }
-  .t-bad { color: var(--bad); border-color: var(--bad-border); background: var(--bad-soft); }
+  .t-ok    { color: var(--ok);   border-color: var(--accent-soft-border); background: var(--accent-soft); }
+  .t-open  { color: var(--open); border-color: var(--open-border); background: var(--open-soft); }
 
   /* ===== Секции экранов ===== */
   section { padding: var(--s6) 0; border-top: 1px solid var(--border); }
@@ -125,7 +121,7 @@
     font-family: "Nunito", sans-serif; font-weight: 800; font-size: 20px; line-height: 26px;
   }
   .sec-head .tag { margin-left: auto; align-self: center; }
-  .notes { color: var(--ink-2); max-width: 880px; margin-bottom: var(--s5); }
+  .notes { color: var(--ink-2); max-width: 920px; margin-bottom: var(--s5); }
   .notes b { color: var(--ink); font-weight: 500; }
 
   .theme-label {
@@ -133,40 +129,30 @@
     text-transform: uppercase; letter-spacing: 0.08em;
     margin: 0 0 var(--s3);
   }
-  .theme-label + .theme-label, .pair + .theme-label { margin-top: var(--s6); }
+  .theme-label + .theme-label, .stitch + .theme-label { margin-top: var(--s6); }
 
-  /* Пара «макет ↔ реализация»: ровные колонки, воздух держит ритм */
-  .pair {
-    display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5);
-    align-items: start; margin-bottom: var(--s5);
-  }
-  .shot {
+  /* Склейка «макет ↔ реализация» — один файл на тему */
+  .stitch {
     background: var(--surface-raised);
     border: 1px solid var(--border); border-radius: var(--r-lg);
-    overflow: hidden;
+    overflow: hidden; margin-bottom: var(--s5);
   }
-  .shot-bar {
+  .stitch-bar {
     display: flex; align-items: center; height: 40px;
     padding: 0 var(--s4); border-bottom: 1px solid var(--border);
     background: var(--surface-sunken);
   }
-  .shot-chip {
+  .stitch-chip {
     font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
-    border-radius: 999px; padding: 3px 10px; border: 1px solid;
+    color: var(--accent); border-radius: 999px; padding: 3px 10px;
+    border: 1px solid var(--accent-soft-border); background: var(--accent-soft);
   }
-  .chip-mock { color: var(--ink-2); border-color: var(--border); }
-  .chip-app  { color: var(--accent); border-color: var(--accent-soft-border); background: var(--accent-soft); }
-  .shot img { display: block; width: 100%; height: auto; }
-  .shot-solo { max-width: calc(50% - 12px); }
+  .stitch img { display: block; width: 100%; height: auto; }
 
   footer {
     border-top: 1px solid var(--border);
     color: var(--ink-dim); font-size: 12px; line-height: 18px;
     padding: var(--s5) 0 var(--s6); margin-top: var(--s6);
-  }
-  @media (max-width: 860px) {
-    .pair { grid-template-columns: 1fr; }
-    .shot-solo { max-width: 100%; }
   }
 </style>
 </head>
@@ -174,16 +160,38 @@
 
 <header>
   <div class="container">
-    <div class="kicker">WalkQuest · Дизайн-система · Шаг 5</div>
-    <h1>Сверка «макет ↔ реализация»</h1>
-    <p class="lead">12 экранов спецификации (screens-spec.md) + состояние паузы прогулки. Слева в каждой паре — утверждённый макет (<code>mockups/*.html</code>, headless Edge, 2×), справа — реальный экран приложения на эмуляторе. Тёмная тема — все экраны, светлая — 01, 05, 08, 09, 11. Повторный прогон после внедрения кодовой дизайн-системы (токены WqTheme, компоненты ui/components, шрифты Nunito/Manrope/Rubik Bubbles).</p>
-    <p class="meta">Дата: 2026-10-12 · устройство: эмулятор Medium_Phone_API_37.0 · debug-сборка app-debug.apk · пакет региона spb-city/v6 · сценарии: wq.py (чистая установка → онбординг → прогулка с паузой и финалом → вкладки → POI) · сырые материалы: <code>_mock/*.png</code>, <code>_app/*.png</code></p>
-    <div class="fixed-badge">Поправлено по итогам сверки: фон вкладки «Рейтинг» в тёмной теме — был системно-белым, теперь surface-base (коммит e6f12b6).</div>
+    <div class="kicker">WalkQuest · Эпик design-alignment · Сторя 7.14 · Финальная сверка</div>
+    <h1>Сверка «макет ↔ реализация» — итог по 12 экранам, обе темы</h1>
+    <p class="lead">Все 12 экранов спецификации (плюс состояние паузы прогулки) сверены в тёмной и
+    светлой темах после экранных сторий 7.1–7.12 и sweep 7.13. Каждый кадр ниже — склейка Pillow
+    (<code>_qa/compare-stitch.py</code>): слева «МАКЕТ» (утверждённый HTML, headless Edge, 2×),
+    справа «РЕАЛИЗАЦИЯ» (эмулятор <code>Medium_Phone_API_37.0</code>, debug-сборка, пакет spb-city/v6).
+    Склейки канонично лежат в <code>_qa/emulator-run/compare-verify/</code>.</p>
+    <p class="meta">Дата прогона: 2026-10-15 · сценарии: wq.py (чистая установка → онбординг → прогулка с
+    паузой и удержанием «Завершить» → вкладки → POI) · сырые материалы:
+    <code>_qa/emulator-run/compare-verify/raw/</code> · журнал и список открытых решений:
+    <code>compare/README.md</code></p>
+    <div class="fixed-badge">Итог: все 12 экранов — «Сверено» в обеих темах. Открытых правок вёрстки нет;
+    остались только переутверждения владельцем (10 пунктов — см. README сверки).</div>
   </div>
 </header>
 
 <nav>
-  <div class="container nav-inner" id="nav"></div>
+  <div class="container nav-inner">
+    <a href="#s01">01 Карта</a>
+    <a href="#s02">02 Прогулка</a>
+    <a href="#s02p">02п Пауза</a>
+    <a href="#s03">03 Финал</a>
+    <a href="#s04">04 Онбординг</a>
+    <a href="#s05">05 Статистика</a>
+    <a href="#s06">06 Достижения</a>
+    <a href="#s07">07 Задания</a>
+    <a href="#s08">08 Рейтинг</a>
+    <a href="#s09">09 Профиль</a>
+    <a href="#s10">10 Регионы</a>
+    <a href="#s11">11 Настройки</a>
+    <a href="#s12">12 POI</a>
+  </div>
 </nav>
 
 <div class="container">
@@ -191,112 +199,243 @@
     <h2>Сводная таблица</h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th style="width:64px">Экран</th><th style="width:220px">Название</th><th style="width:170px">Вердикт</th><th>Расхождения (макет → реализация)</th></tr></thead>
-        <tbody id="tbody"></tbody>
+        <thead><tr><th style="width:64px">Экран</th><th style="width:200px">Название</th><th style="width:150px">Вердикт</th><th>Зафиксировано</th></tr></thead>
+        <tbody>
+          <tr><td class="id">01</td><td><span class="cell-title">Главная карта</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Плашка «% открыто» удалена (AL-11, TalkBack перенесён в колонку панели). Открыто: FAB «К моей точке» (макет vs spec §1 — владелец), DBG — debug-only.</td></tr>
+          <tr><td class="id">02</td><td><span class="cell-title">Прогулка (запись)</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Метрика «+0,4% открыто», пилюля «+ Задание», ru-локаль чисел. Завершение — удержание 600 мс (EXPERIENCE важнее макета-диалога — переутверждено).</td></tr>
+          <tr><td class="id">02п</td><td><span class="cell-title">Прогулка (пауза)</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Чип «На паузе», «Продолжить» акцентом. Подсказка удержания раскрывается при удержании — принятое расхождение.</td></tr>
+          <tr><td class="id">03</td><td><span class="cell-title">Финал прогулки</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Hero → сетка 3 карточек → достижение → «Поделиться»/«На карту»; навигация под оверлеем скрыта; отступления по spec §3.</td></tr>
+          <tr><td class="id">04</td><td><span class="cell-title">Онбординг (s1–s4)</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>4 шага по макету (туман, мини-карта региона, степпер цели, геолокация); векторные иконки вместо эмодзи, пин токеном. Остаточные: кегли по потолку DESIGN, имя региона — из манифеста.</td></tr>
+          <tr><td class="id">05</td><td><span class="cell-title">Прогресс · Статистика</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Hero + сетка 6 карточек + средние метрики + планировщик (AL-4); активная сегмент-пилюля контурная, как в макете.</td></tr>
+          <tr><td class="id">06</td><td><span class="cell-title">Прогресс · Достижения</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>«Полученные/Неполученные» со сворачиванием, пунктир и приглушение; полоска только при прогрессе ≥ 1% цели.</td></tr>
+          <tr><td class="id">07</td><td><span class="cell-title">Прогресс · Задания</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Активное задание снято на устройстве; «Вытянуть карту» (утверждено EXPERIENCE). Открыто: даты в истории (store не хранит).</td></tr>
+          <tr><td class="id">08</td><td><span class="cell-title">Рейтинг</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Состояния «первый вход»/«невидимый»/«с ником» (mock PostgREST). Открыто: живая проверка против боевого Supabase — HITL владельца.</td></tr>
+          <tr><td class="id">09</td><td><span class="cell-title">Профиль</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Шапка → 5 строк с пилюлями (акцентные — ник/участие) → блоки спеки §8 → «О приложении»; тоггл участия и «Обратная связь» проверены тапами.</td></tr>
+          <tr><td class="id">10</td><td><span class="cell-title">Мои регионы</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Строки сверены без правок; навигация скрыта под оверлеем; meta по spec §9 (без счётчиков прогулок — принято по спеке).</td></tr>
+          <tr><td class="id">11</td><td><span class="cell-title">Настройки</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>4 группы по AL-8; «Уведомления»/«Внешний вид» — пилюли без действия (источники молчат). Открыто: автозавершение при разряде (нет в коде, решение владельца).</td></tr>
+          <tr><td class="id">12</td><td><span class="cell-title">Карточка POI</span></td><td><span class="tag t-ok">Сверено · обе темы</span></td>
+            <td>Фото-полоса (до 3), прибивка к навигации/панели, «Закрыть» удалён (свайп/tap-outside), перекрытие пилюлей устранено.</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
-  <main id="sections"></main>
+
+  <main>
+
+  <section id="s01">
+    <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">Главная карта</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Плашка «% открыто» из шапки удалена (AL-11, переутверждение макетом; TalkBack-описание — в колонке панели).
+    Панель «3 колонки · планировщик · CTA» совпала. Открыто: FAB «К моей точке» (макет не рисует, spec §1 описывает — владелец).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">01-map-home-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/01-map-home-dark.png" alt="01 главная карта, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">01-map-home-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/01-map-home-light.png" alt="01 главная карта, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s02">
+    <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Прогулка (запись)</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Метрика-прирост «+0,4% открыто» вместо «клеток открыто», «+ Задание» — призрачная пилюля вместо FAB,
+    формат чисел — ru-локаль (WqFormat). Завершение — удержание 600 мс с анимацией заполнения (EXPERIENCE важнее
+    макетного диалога — переутверждённое расхождение). Поведение удержания подтверждено кадрами в raw/.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">02-map-walk-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/02-map-walk-dark.png" alt="02 прогулка запись, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">02-map-walk-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/02-map-walk-light.png" alt="02 прогулка запись, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s02p">
+    <div class="sec-head"><span class="sec-num">02п</span><span class="sec-title">Прогулка (пауза)</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Чип «На паузе» нейтральной точкой без свечения, «Продолжить» — акцентная кнопка (вес 1.7 против 1.0
+    у «Завершить», макет .btn-pause flex 1.7). Подсказка удержания в макете видна постоянно, в реализации раскрывается
+    при удержании — принятое расхождение.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">02p-map-walk-paused-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/02p-map-walk-paused-dark.png" alt="02п пауза, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">02p-map-walk-paused-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/02p-map-walk-paused-light.png" alt="02п пауза, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s03">
+    <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Финал прогулки</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Структура приведена к макету: похвала → hero-процент (displaySmall 38sp, акцент) → сетка 3 карточек
+    (км/время/серия) → карточки новых достижений → «Поделиться результатом»/«На карту». Нижняя навигация под оверлеем
+    скрыта (паттерн MainActivity). Отступления по spec §3: подпись «территории открыто», TOMORROW_NOTE.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">03-walk-final-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/03-walk-final-dark.png" alt="03 финал прогулки, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">03-walk-final-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/03-walk-final-light.png" alt="03 финал прогулки, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s04">
+    <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">Онбординг (шаги s1–s4)</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">4 шага по утверждённому макету: приветствие с иллюстрацией-туманом (контраст светлой темы исправлен
+    итерацией 3), домашний регион на мини-карте («Выбрать другой» всегда), цель со степпером, доступ к геолокации.
+    Эмодзи заменены векторными иконками (DESIGN Shapes), пин — токеном WqColors.pin (#F53871). Остаточные: кегли по
+    потолку шкалы DESIGN (24sp/28sp), имя региона — честное из манифеста пакета.</p>
+    <p class="theme-label">Тёмная тема · Шаг 1 — Приветствие</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-dark-s1.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-dark-s1.png" alt="04 онбординг шаг 1, тёмная тема" loading="lazy"></div>
+    <p class="theme-label">Тёмная тема · Шаг 2 — Домашний регион</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-dark-s2.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-dark-s2.png" alt="04 онбординг шаг 2, тёмная тема" loading="lazy"></div>
+    <p class="theme-label">Тёмная тема · Шаг 3 — Цель</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-dark-s3.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-dark-s3.png" alt="04 онбординг шаг 3, тёмная тема" loading="lazy"></div>
+    <p class="theme-label">Тёмная тема · Шаг 4 — Доступ к геолокации</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-dark-s4.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-dark-s4.png" alt="04 онбординг шаг 4, тёмная тема" loading="lazy"></div>
+    <p class="theme-label">Светлая тема · Шаг 1 — Приветствие</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-light-s1.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-light-s1.png" alt="04 онбординг шаг 1, светлая тема" loading="lazy"></div>
+    <p class="theme-label">Светлая тема · Шаг 2 — Домашний регион</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-light-s2.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-light-s2.png" alt="04 онбординг шаг 2, светлая тема" loading="lazy"></div>
+    <p class="theme-label">Светлая тема · Шаг 3 — Цель</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-light-s3.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-light-s3.png" alt="04 онбординг шаг 3, светлая тема" loading="lazy"></div>
+    <p class="theme-label">Светлая тема · Шаг 4 — Доступ к геолокации</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">04-onboarding-light-s4.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/04-onboarding-light-s4.png" alt="04 онбординг шаг 4, светлая тема" loading="lazy"></div>
+  </section>
+
+  <section id="s05">
+    <div class="sec-head"><span class="sec-num">05</span><span class="sec-title">Прогресс · Статистика</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Hero-процент + сетка 6 карточек + список средних метрик + планировщик (AL-4). Активная сегмент-пилюля —
+    контурная (accentSoft + accentSoftBorder + accentText) в обеих темах, как в макете (исправлено итерацией 2).
+    Честные нули чистой установки — согласованное расхождение состояния, не вёрстки.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">05-progress-stats-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/05-progress-stats-dark.png" alt="05 статистика, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">05-progress-stats-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/05-progress-stats-light.png" alt="05 статистика, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s06">
+    <div class="sec-head"><span class="sec-num">06</span><span class="sec-title">Прогресс · Достижения</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Секции «Полученные/Неполученные» со сворачиванием (проверено тапом на устройстве), пунктирная рамка
+    и приглушение неполученных. Полоска прогресса — только при нормированном прогрессе ≥ 1% цели: у суб-пороговых
+    «&lt;0,1%» ни трека, ни индикатора (итерация 2 по ревью).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">06-progress-achievements-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/06-progress-achievements-dark.png" alt="06 достижения, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">06-progress-achievements-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/06-progress-achievements-light.png" alt="06 достижения, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s07">
+    <div class="sec-head"><span class="sec-num">07</span><span class="sec-title">Прогресс · Задания</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Снято состояние с активным заданием (выдано во время прогулки): подсказка-плашка → карточка
+    card-active → «Вытянуть карту»/«Выбрать из 6» → «Выполненные · N». Копия «Вытянуть карту» вместо макетного
+    «Случайное задание» — утверждено EXPERIENCE. Открыто: даты в истории (store хранит только doneIds).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">07-progress-quests-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/07-progress-quests-dark.png" alt="07 задания, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">07-progress-quests-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/07-progress-quests-light.png" alt="07 задания, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s08">
+    <div class="sec-head"><span class="sec-num">08</span><span class="sec-title">Рейтинг</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Склейки — состояние «с ником» на локальном mock PostgREST: сегменты «Город/Друзья», строки
+    лидерборда, своя строка card-active с чипом «вы». Зафиксированные отличия от макета: метрика «км · %» (spec §7),
+    строка «Вы: …» и «Обновить» (spec §7), чип «вы» 12sp (минимальный кегль), акцент ранга лидера — по макету.
+    Открыто: живая проверка против боевого Supabase — HITL на устройстве владельца (проект недоступен).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">08-rating-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/08-rating-dark.png" alt="08 рейтинг, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">08-rating-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/08-rating-light.png" alt="08 рейтинг, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s09">
+    <div class="sec-head"><span class="sec-num">09</span><span class="sec-title">Профиль</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Шапка (аватар-иконка/ник/статус участия) → группа из 5 строк с пилюлями (акцентные — «Ник в рейтинге»
+    и «Участие в рейтинге») → предупреждение о локальности + перенос прогресса (спека §8 важнее макета) → «О приложении»
+    («Обратная связь»/«Политика»/«Версия»). Тоггл участия и уведомление обратной связи проверены тапами на устройстве.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">09-profile-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/09-profile-dark.png" alt="09 профиль, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">09-profile-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/09-profile-light.png" alt="09 профиль, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s10">
+    <div class="sec-head"><span class="sec-num">10</span><span class="sec-title">Мои регионы</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Строки региона сверены без правок: процент домашнего акцентом, meta «домашний регион»/«установлен»
+    по spec §9, ru-локаль. Нижняя навигация скрыта под оверлеем (паттерн финала 7.2) — расхождение нижней зоны склейки
+    с макет-сырьём, рисующим bottomnav, ожидаемо и правильное. Один регион — честное состояние сида.</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">10-regions-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/10-regions-dark.png" alt="10 регионы, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">10-regions-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/10-regions-light.png" alt="10 регионы, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s11">
+    <div class="sec-head"><span class="sec-num">11</span><span class="sec-title">Настройки</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">4 группы по AL-8: «Цель» (пилюля describe(), фикс чтения цели после онбординга), «Прогулки» (режим,
+    автопауза, напоминание, кнопка заданий — свитчи с подписями по spec §10 важнее пилюль макета), «Уведомления» и
+    «Внешний вид» — пилюли без действия: своих настроек нет, ручной выбор темы не предусмотрен ни одним источником
+    истины. Открыто: «Автозавершение при разряде» (в макете есть, в коде нет — решение владельца).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">11-settings-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/11-settings-dark.png" alt="11 настройки, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">11-settings-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/11-settings-light.png" alt="11 настройки, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  <section id="s12">
+    <div class="sec-head"><span class="sec-num">12</span><span class="sec-title">Карточка POI</span><span class="tag t-ok">Сверено · обе темы</span></div>
+    <p class="notes">Фото-полоса до 3 фото (пакет v6 несёт одно — ряд из 3 покрыт тестом и сверкой компоновки), прибивка:
+    к навигации в idle, над панелью в записи; в idle скрыты FAB «К моей точке» и DBG. Кнопка «Закрыть» удалена —
+    закрытие свайпом вниз и tap-outside (EXPERIENCE/DESIGN важнее spec §11). Перекрытие пилюлей карточки в записи
+    устранено (скрытие «+ Задание» при открытой карточке).</p>
+    <p class="theme-label">Тёмная тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">12-poi-card-dark.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/12-poi-card-dark.png" alt="12 карточка POI, тёмная тема: макет ↔ реализация" loading="lazy"></div>
+    <p class="theme-label">Светлая тема</p>
+    <div class="stitch"><div class="stitch-bar"><span class="stitch-chip">12-poi-card-light.png</span></div>
+      <img src="../../../../_qa/emulator-run/compare-verify/12-poi-card-light.png" alt="12 карточка POI, светлая тема: макет ↔ реализация" loading="lazy"></div>
+  </section>
+
+  </main>
 </div>
 
 <footer>
   <div class="container">
-    Не проверено на устройстве: светлая тема для 02/02п/03/04/06/07/10/12; рейтинг «с ником» (нужен сервер); активное задание в 07; динамический кегль системы. Подробности и приоритеты остатка работ — compare/README.md.
+    WalkQuest · сверка «макет ↔ реализация» · 2026-10-15 · Склейки:
+    <code>_qa/emulator-run/compare-verify/*.png</code> · Склейщик: <code>_qa/compare-stitch.py</code> ·
+    Журнал и 10 открытых решений: <code>compare/README.md</code> · Проверки 7.14:
+    compileDebugKotlin / testDebugUnitTest (JDK 17) — зелёно, 395 тестов, 0 падений; hex-цвета — только
+    <code>ui/theme/WqColor.kt</code>.
   </div>
 </footer>
 
-<script>
-const VERDICTS = {
-  ok:  { cls: "t-ok",  label: "В целом совпадает" },
-  mid: { cls: "t-mid", label: "Частично" },
-  bad: { cls: "t-bad", label: "Расходится" },
-};
-
-/* themes: [{theme, mock?, app?}] — mock без пары: бонусный кадр реализации */
-const SCREENS = [
-  { id: "01", anchor: "s01", file: "01-map-home", title: "Главная карта", verdict: "ok",
-    notes: "Панель «статистика колонками · планировщик · CTA» и призрак CTA в светлой — совпали, шрифты токенов на месте. Лишнее в реализации: плашка «% открыто» в шапке, FAB «К моей точке», кнопка DBG (только debug-сборка). Нули статистики — чистая установка.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
-  { id: "02", anchor: "s02", file: "02-map-walk", title: "Прогулка (запись)", verdict: "mid",
-    notes: "Чип «Идёт запись» с акцентной точкой, «Пауза» акцентом + «Завершить» призраком — совпали. Третья метрика «клеток открыто» вместо «+0,4% открыто»; «+ Задание» — FAB «+» вместо пилюли; завершение — диалог вместо удержания из макета.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "02п", anchor: "s02p", file: "02p-map-walk-paused", title: "Прогулка (пауза)", verdict: "ok",
-    notes: "Снято честное состояние паузы: чип «На паузе» нейтральной точкой, кнопка «Продолжить» — есть. Удержание «Завершить» из макета не реализовано — решение за владельцем.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "03", anchor: "s03", file: "03-walk-final", title: "Финал прогулки", verdict: "bad",
-    notes: "Герой-цифра Nunito 1000 акцентом и подпись «территории открыто» — совпали по стилю. Структура иная: в макете сетка из 3 карточек (км/время/серия) + карточка нового достижения + «На карту»; в реализации компактная сводка и «Закрыть»; навигация под оверлеем видна.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "04", anchor: "s04", file: "04-onboarding", title: "Онбординг", verdict: "mid",
-    notes: "Заголовок (Nunito 800), тело по центру, «Пропустить», CTA внизу — совпали, тексты идентичны. В макете: иллюстрация-туман и точки шагов; 4 шага (регион на мини-карте, геолокация) против 3 текстовых + цель в реализации. Бонус: шаг выбора цели.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: null, mock: 0, app: 1, appFile: "_app/04b-goal-dark.png", label: "Реализация · шаг цели" }] },
-  { id: "05", anchor: "s05", file: "05-progress-stats", title: "Прогресс · Статистика", verdict: "mid",
-    notes: "Заголовок и сегмент-пилюли (≥48dp, 13sp, светлая корректна) — совпали. В макете hero «17,4%» + сетка 6 карточек + список прогулок; в реализации — строки Серия/Прогулок/Расстояние + раздел «Планы».",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
-  { id: "06", anchor: "s06", file: "06-progress-achievements", title: "Прогресс · Достижения", verdict: "mid",
-    notes: "Секции, строки «значок · название · условие», полоски прогресса у близких — близко. Нет деления «Полученные/Неполученные» со сворачиванием и пунктира заблокированных.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "07", anchor: "s07", file: "07-progress-quests", title: "Прогресс · Задания", verdict: "mid",
-    notes: "Снято корректное пустое состояние: «Вытянуть карту»/«Выбрать из 6» + «Пока нет выполненных». Макет показывает активное задание (card-active). Копия «Случайное задание» → «Вытянуть карту» (утверждено EXPERIENCE).",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "08", anchor: "s08", file: "08-rating", title: "Рейтинг (первый вход)", verdict: "bad",
-    notes: "Снят честный «первый вход» (поле ника, «Вступить в рейтинг», «Остаться невидимым») — по EXPERIENCE корректно; макет показывает состояние «с ником» (сегменты, лидерборд). Баг прошлого прогона исправлен: фон вкладки теперь surface-base в обеих темах. Бонус: ошибка сети при сохранении ника.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }, { theme: null, mock: 0, app: 1, appFile: "_app/08b-rating-nick.png", label: "Реализация · ошибка сети" }] },
-  { id: "09", anchor: "s09", file: "09-profile", title: "Профиль", verdict: "mid",
-    notes: "Набор блоков близок (ник/цель, «Мои регионы», перенос прогресса, политика, версия). Иная компоновка (крупные карточки вместо групп строк), нет «Обратной связи» и переключателя участия; добавлены предупреждение о локальности данных и «Экспорт»/«Импорт».",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
-  { id: "10", anchor: "s10", file: "10-regions", title: "Мои регионы", verdict: "mid",
-    notes: "Строка «процент акцентом · домашний регион» — совпала. Список из одного региона (чистая установка). Выход «Готово» призраком; в макете навигации под оверлеем нет, в реализации видна.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-  { id: "11", anchor: "s11", file: "11-settings", title: "Настройки", verdict: "mid",
-    notes: "Реализована группа «ПРОГУЛКА» (режим, автопауза, напоминание, кнопка «Задания») со свитчами на акцентных токенах. Нет групп «Цель», «Уведомления», «Внешний вид (тема)» из макета.",
-    themes: [{ theme: "dark", mock: 1, app: 1 }, { theme: "light", mock: 1, app: 1 }] },
-  { id: "12", anchor: "s12", file: "12-poi-card", title: "Карточка POI", verdict: "ok",
-    notes: "Открыт тапом по маяку: фото из пакета, название Nunito 800, описание body с обрезкой, «Подробнее» акцентом — по спецификации. Иное: одно фото вместо полосы из трёх; карточка выше панели прогулки (снято во время записи); явная кнопка «Закрыть».",
-    themes: [{ theme: "dark", mock: 1, app: 1 }] },
-];
-
-const THEME_NAME = { dark: "Тёмная тема", light: "Светлая тема" };
-
-function shotCard(kind, src, label) {
-  const chip = kind === "mock" ? "chip-mock" : "chip-app";
-  return `<figure class="shot shot-solo">
-    <div class="shot-bar"><span class="shot-chip ${chip}">${label || (kind === "mock" ? "Макет" : "Реализация")}</span></div>
-    <img src="${src}" alt="${label || kind}" loading="lazy">
-  </figure>`;
-}
-
-const nav = document.getElementById("nav");
-const tbody = document.getElementById("tbody");
-const main = document.getElementById("sections");
-
-nav.innerHTML = SCREENS.map(s => `<a href="#${s.anchor}">${s.id} ${s.title.split(" (")[0].split(" · ")[0]}</a>`).join("");
-
-tbody.innerHTML = SCREENS.map(s => {
-  const v = VERDICTS[s.verdict];
-  return `<tr><td class="id">${s.id}</td><td><span class="cell-title">${s.title}</span></td><td><span class="tag ${v.cls}">${v.label}</span></td><td>${s.notes}</td></tr>`;
-}).join("");
-
-main.innerHTML = SCREENS.map(s => {
-  const v = VERDICTS[s.verdict];
-  const blocks = s.themes.map(t => {
-    if (t.theme === null) {
-      return `<p class="theme-label">${t.label}</p>
-      <div class="pair">${shotCard("app", t.appFile, "Реализация")}</div>`;
-    }
-    const label = `<p class="theme-label">${THEME_NAME[t.theme]}</p>`;
-    const pair = `<div class="pair">${shotCard("mock", `_mock/${s.file}-${t.theme}.png`)}${shotCard("app", `_app/${s.file}-${t.theme}.png`)}</div>`;
-    return label + pair;
-  }).join("");
-  return `<section id="${s.anchor}">
-    <div class="sec-head">
-      <span class="sec-num">${s.id}</span>
-      <span class="sec-title">${s.title}</span>
-      <span class="tag ${v.cls}">${v.label}</span>
-    </div>
-    <p class="notes">${s.notes}</p>
-    ${blocks}
-  </section>`;
-}).join("");
-</script>
 </body>
 </html>

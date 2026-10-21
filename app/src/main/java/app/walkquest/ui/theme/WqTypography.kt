@@ -80,10 +80,19 @@ class WqTypography(
     val displaySmall: TextStyle,
     /** Заголовок экрана (22, Nunito 800). */
     val headingScreen: TextStyle,
+    /** Заголовок экрана-шага онбординга (24, Nunito 800) — по макету onboarding-duo.html
+     * (.ttl 19px в телефоне 262px ≈ 27sp на эталонном устройстве; верх диапазона
+     * heading DESIGN «16–24px», макетная крупность сохранена максимально близко). */
+    val headingOnboarding: TextStyle,
+    /** Герой-цифра компактная (степпер значения цели в онбординге; макет .val Nunito 1000
+     * 18px в телефоне 262px ≈ 27sp — ближайшая кегль шкалы display). */
+    val displayCompact: TextStyle,
     /** Заголовок секции (18, Nunito 800). */
     val headingSection: TextStyle,
     /** Название карточки (16, Nunito 800). */
     val headingCard: TextStyle,
+    /** Ранг строки лидерборда (макет remaining-screens.html .lb-rank: Nunito 1000, 15px). */
+    val rank: TextStyle,
     /** Основной текст (16/24). */
     val body: TextStyle,
     /** Вторичный текст (14/20). */
@@ -123,6 +132,18 @@ class WqTypography(
                     fontSize = 22.sp,
                     lineHeight = 28.sp,
                 ),
+                headingOnboarding = TextStyle(
+                    fontFamily = WqFonts.nunitoHeading,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 24.sp,
+                    lineHeight = 30.sp,
+                ),
+                displayCompact = TextStyle(
+                    fontFamily = WqFonts.nunitoDisplay,
+                    fontWeight = FontWeight(1000),
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                ),
                 headingSection = TextStyle(
                     fontFamily = WqFonts.nunitoHeading,
                     fontWeight = FontWeight.ExtraBold,
@@ -133,6 +154,12 @@ class WqTypography(
                     fontFamily = WqFonts.nunitoHeading,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 16.sp,
+                    lineHeight = 22.sp,
+                ),
+                rank = TextStyle(
+                    fontFamily = WqFonts.nunitoDisplay,
+                    fontWeight = FontWeight(1000),
+                    fontSize = 18.sp,
                     lineHeight = 22.sp,
                 ),
                 body = TextStyle(

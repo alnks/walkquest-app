@@ -15,6 +15,7 @@ import app.walkquest.data.poi.PoiFilter
 import app.walkquest.data.poi.PoiRepository
 import app.walkquest.data.poi.PoiResult
 import app.walkquest.data.settings.SettingsRepository
+import app.walkquest.data.settings.ThemeMode
 import app.walkquest.domain.ComputeRegionProgress
 import app.walkquest.domain.InstallRegionPackage
 import app.walkquest.domain.OpenResult
@@ -58,6 +59,9 @@ data class RegionSuggestionUi(
     val isInitialHome: Boolean = false,
 )
 
+/** Регион из манифеста для выбора в онбординге («Выбрать другой», история 7.1). */
+data class RegionOptionUi(val regionId: String, val name: String)
+
 /** Сводка завершённой прогулки для финального экрана (2.8, FR-8). */
 data class WalkSummaryUi(
     /** Похвала — готовая строка из domain (WalkPraise), UI только рендерит. */
@@ -70,6 +74,8 @@ data class WalkSummaryUi(
     val progressFraction: Double?,
     /** Новые достижения (порт WalkAchievements; пусто до epic-achievements). */
     val achievements: List<String>,
+    /** Серия прогулок на момент финиша, дней (3.4, FR-13) — для сетки финала (7.2). */
+    val streakDays: Int,
 )
 
 /** Состояние экрана карты (истории 1.6–1.10). */
@@ -125,13 +131,15 @@ data class MapUiState(
     /** Выбранный тапом POI — открытая карточка места; null — карточка закрыта. */
     val selectedPoi: Poi? = null,
     /**
-     * Файл фото выбранного POI из установленного пакета (пакет v2: поле `photo`
-     * в poi.json — относительный путь от корня пакета). null — фото нет в данных
-     * или файла нет на диске: карточка показывается без фото-полосы (fallback).
+     * Файлы фото выбранного POI из установленного пакета (полоса карточки, AL-10):
+     * до [Poi.MAX_PHOTOS] путей — поле `photos` или одиночное `photo` (пакеты v2–v6).
+     * Пусто — фото нет в данных или ни одного файла нет на диске: карточка без полосы.
      */
-    val selectedPoiPhoto: File? = null,
+    val selectedPoiPhotos: List<File> = emptyList(),
     /** Предложение загрузить регион для текущей локации (1.10); null — предложения нет. */
     val suggestion: RegionSuggestionUi? = null,
+    /** Регионы из манифеста (онбординг 7.1, «Выбрать другой»); пусто — манифест не кеширован. */
+    val regionOptions: List<RegionOptionUi> = emptyList(),
     /**
      * Позиция устройства для маркера «я» на карте (токен me-marker из DESIGN).
      * При записи — фиксы из TrackingStateBus (тот же поток, что питает запись, 1.7);
@@ -176,6 +184,12 @@ data class MapUiState(
     val walkState: WalkState? = null,
     /** Дистанция прогулки по принятым фильтром точкам, метры (2.1, AD-4: готовое значение из WalkSession). */
     val walkDistanceMeters: Double = 0.0,
+    /**
+     * Прирост доли открытия активного региона за текущую запись (7.12) — третья
+     * колонка панели прогулки «+0,4% открыто» (макет map-duo). null — запись не
+     * идёт или прогресс не считался (регион не установлен / вне покрытия).
+     */
+    val walkGainFraction: Double? = null,
     /** Чистое (активное) время прогулки без пауз, мс (2.1). Форматирование — только UI. */
     val walkActiveMillis: Long = 0L,
     /** Режим прогулки (2.2, FR-6): выбранный пользователем (персистится) или активный
@@ -185,6 +199,8 @@ data class MapUiState(
     val autoPauseEnabled: Boolean = true,
     /** Напоминание о забытой прогулке (2.5, FR-7); сервис читает на старте записи. */
     val forgottenReminderEnabled: Boolean = true,
+    /** Текущая цель (FR-11; история 7.8 — группа «Цель» на экране Настроек). */
+    val walkGoal: WalkGoal? = null,
     /** Сводка завершённой прогулки (2.8, FR-8); null — экран не показываем. */
     val walkSummary: WalkSummaryUi? = null,
     /** Онбординг первого запуска (3.3, FR-12/FR-11); скрыт после цели. */
@@ -195,6 +211,8 @@ data class MapUiState(
     val questDone: List<QuestUi> = emptyList(),
     /** Кнопка задания видна (настройка, FR-16). */
     val showQuestButton: Boolean = true,
+    /** Режим темы (7.16): системная/светлая/тёмная; применяется в MainActivity. */
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** Диалог выбора из 6 предложенных (4.5). */
     val questPickOptions: List<QuestUi> = emptyList(),
     /** Диалог подтверждения замены активного задания (id нового). */
@@ -240,6 +258,8 @@ class MapViewModel(
     private val lastKnownLocation: () -> Pair<Double, Double>? = { null },
     /** Порт достижений прогулки (2.8): дефолт — пустая выдача до epic-achievements. */
     private val walkAchievements: WalkAchievements = WalkAchievements { _, _ -> emptyList() },
+    /** Серия прогулок для сетки финала (7.2); null — тесты без истории. */
+    private val streakCalculator: app.walkquest.domain.StreakCalculator? = null,
     /** Прочтённые карточки POI (4.1): запись при открытии карточки. */
     private val poiCardStore: app.walkquest.data.poicard.PoiCardStore =
         app.walkquest.data.poicard.PoiCardStore(java.io.File("poicards.json")),
@@ -286,6 +306,13 @@ class MapViewModel(
     private var lastIsRecording = false
 
     /**
+     * Доля открытия активного региона на старте текущей записи (7.12): третья
+     * колонка панели прогулки показывает прирост «+0,4% открыто» — макет map-duo
+     * вместо бывшей «клеток открыто». null — прогресс не считался на старте.
+     */
+    private var walkStartFraction: Double? = null
+
+    /**
      * Регион точки по границам установленных пакетов (AD-9) или null вне всех.
      * Одна точка за раз — дёшево (bbox-префильтр + ray casting одного региона).
      */
@@ -325,11 +352,15 @@ class MapViewModel(
                 autoPauseEnabled = settingsRepository.autoPauseEnabled(),
                 // Напоминание о забытой прогулке (2.5): дефолт — включено.
                 forgottenReminderEnabled = settingsRepository.forgottenWalkReminderEnabled(),
+                // Цель (FR-11): для группы «Цель» на экране Настроек (7.8).
+                walkGoal = settingsRepository.walkGoal(),
                 // Онбординг (3.3): показываем, пока нет флага ИЛИ нет цели
                 // (FR-11: цель обязательна; пропуск обучения её не отменяет).
                 showOnboarding = !settingsRepository.onboardingDone() ||
                     settingsRepository.walkGoal() == null,
                 showQuestButton = settingsRepository.showQuestButton(),
+                // Тема (7.16): сохранённый выбор, дефолт — SYSTEM.
+                themeMode = settingsRepository.themeMode(),
             )
         }
         publishQuestState()
@@ -363,6 +394,15 @@ class MapViewModel(
         val enabled = !_uiState.value.forgottenReminderEnabled
         settingsRepository.setForgottenWalkReminderEnabled(enabled)
         _uiState.update { it.copy(forgottenReminderEnabled = enabled) }
+    }
+
+    /**
+     * Выбор режима темы (7.16): персистится; MainActivity подписан на uiState и
+     * переключает палитру на лету — активность не пересоздаётся.
+     */
+    fun onThemeModeSelected(mode: ThemeMode) {
+        settingsRepository.setThemeMode(mode)
+        _uiState.update { it.copy(themeMode = mode) }
     }
 
     /** «Закрыть» на финальном экране (2.8): сводка убирается до следующего финиша. */
@@ -471,11 +511,13 @@ class MapViewModel(
         _uiState.update { it.copy(showQuestButton = show) }
     }
 
-    /** Онбординг завершён (3.3): цель персистится, флаг поднят, оверлей скрыт. */
+    /** Онбординг завершён (3.3): цель персистится, флаг поднят, оверлей скрыт.
+     * Цель сразу публикуется в состояние — группа «Цель» Настроек (7.8)
+     * читает её отсюда (ViewModel живёт дольше онбординга). */
     fun onOnboardingComplete(goal: WalkGoal) {
         settingsRepository.setWalkGoal(goal)
         settingsRepository.setOnboardingDone(true)
-        _uiState.update { it.copy(showOnboarding = false) }
+        _uiState.update { it.copy(showOnboarding = false, walkGoal = goal) }
     }
 
     /** Домашний регион по правилу domain: сохранённый → первый установленный → null. */
@@ -525,6 +567,18 @@ class MapViewModel(
                 if (snap.isRecording && !lastIsRecording) {
                     ribbonBuilder.startNewChain()
                 }
+                // 7.12: прирост % за прогулку — снимок доли на старте записи;
+                // дельта считается по текущей доле (обновляется на смену fogEpoch).
+                if (snap.isRecording && !lastIsRecording) {
+                    walkStartFraction = fraction ?: _uiState.value.progressFraction
+                }
+                if (!snap.isRecording) walkStartFraction = null
+                val walkGainFraction = if (snap.isRecording) {
+                    val current = fraction ?: _uiState.value.progressFraction
+                    walkStartFraction?.let { start -> current?.minus(start) }
+                } else {
+                    null
+                }
                 lastIsRecording = snap.isRecording
                 if (snap.acceptedCount < lastRibbonAcceptedCount) {
                     lastRibbonAcceptedCount = snap.acceptedCount // новая запись — счётчики шины сброшены
@@ -558,6 +612,9 @@ class MapViewModel(
                             snap.walkDistanceMeters,
                             snap.walkActiveMillis,
                         ),
+                        // Серия для сетки финала (7.2): история уже содержит сегодняшний
+                        // финиш (запись идёт до FINISHED в шине) — день серии засчитан.
+                        streakDays = streakCalculator?.currentStreak(System.currentTimeMillis()) ?: 0,
                     )
                 }
                 if (snap.isRecording) summary = null
@@ -589,6 +646,8 @@ class MapViewModel(
                         walkState = snap.walkState,
                         walkDistanceMeters = snap.walkDistanceMeters,
                         walkActiveMillis = snap.walkActiveMillis,
+                        // Прирост % за прогулку (7.12) — дельта доли от старта записи.
+                        walkGainFraction = walkGainFraction,
                         // Режим из шины (2.2) — во время записи сервис решает.
                         walkMode = snap.walkMode ?: it.walkMode,
                         // Сводка финального экрана (2.8).
@@ -635,6 +694,12 @@ class MapViewModel(
                 val location = lastKnownLocation()
                 suggestInitialRegion(location?.first, location?.second)
             } ?: return@launch
+            // Список для «Выбрать другой» в онбординге (7.1) — из того же кеша манифеста.
+            val options = withContext(Dispatchers.IO) {
+                regionPackageRepository.cachedManifest()?.packages
+                    ?.map { RegionOptionUi(it.regionId, it.name ?: it.regionId) }
+                    .orEmpty()
+            }
             _uiState.update {
                 // Пока шла сеть, регион могли установить другим путём — карточку не показываем.
                 if (it.regionInstalled || it.suggestion != null) {
@@ -646,9 +711,26 @@ class MapViewModel(
                             name = suggestion.name ?: suggestion.regionId,
                             isInitialHome = true,
                         ),
+                        regionOptions = options,
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * Онбординг (7.1): «Выбрать другой» — подменить предложение домашнего региона
+     * выбранным из манифеста; установка происходит тем же CTA (onInstallSuggested).
+     */
+    fun onOnboardingRegionPicked(regionId: String) {
+        val current = _uiState.value.suggestion ?: return
+        if (current.installing) return
+        val name = _uiState.value.regionOptions.firstOrNull { it.regionId == regionId }?.name
+            ?: regionPackageRepository.cachedManifest()
+                ?.packages?.firstOrNull { it.regionId == regionId }?.name
+            ?: regionId
+        _uiState.update {
+            it.copy(suggestion = RegionSuggestionUi(regionId, name, isInitialHome = true))
         }
     }
 
@@ -675,7 +757,7 @@ class MapViewModel(
                         progressFraction = null,
                         visiblePois = emptyList(),
                         selectedPoi = null,
-                        selectedPoiPhoto = null,
+                        selectedPoiPhotos = emptyList(),
                         packageVersion = null,
                         poiTotalCount = 0,
                         fogEpoch = it.fogEpoch + 1,
@@ -741,7 +823,7 @@ class MapViewModel(
                     fogEpoch = it.fogEpoch + 1,
                     visiblePois = initialVisible,
                     selectedPoi = null,
-                    selectedPoiPhoto = null,
+                    selectedPoiPhotos = emptyList(),
                     lastOpenError = null,
                     packageVersion = loaded.packageVersion,
                     poiTotalCount = loaded.pois.size,
@@ -827,30 +909,31 @@ class MapViewModel(
     fun onPoiTapped(osmId: String) {
         val poi = allPois.find { it.osmId == osmId } ?: return
         viewModelScope.launch {
-            val photo = withContext(Dispatchers.IO) { resolvePoiPhoto(poi) }
+            val photos = withContext(Dispatchers.IO) { resolvePoiPhotos(poi) }
             withContext(Dispatchers.IO) { poiCardStore.markRead(osmId) }
-            _uiState.update { it.copy(selectedPoi = poi, selectedPoiPhoto = photo) }
+            _uiState.update { it.copy(selectedPoi = poi, selectedPoiPhotos = photos) }
         }
     }
 
     /**
-     * Фото POI из установленного пакета (пакет v2): поле `photo` — относительный путь
-     * от корня пакета; резолвим в файл на диске. Пути «../» отсекаем (данные не должны
-     * выводить за пределы пакета), отсутствующий файл → null (fallback без полосы).
+     * Фото POI из установленного пакета: [Poi.photoPaths] (`photos` или `photo`) —
+     * относительные пути от корня пакета, резолвим в файлы на диске. Пути «../»
+     * отсекаем (данные не должны выводить за пределы пакета), отсутствующие файлы
+     * пропускаем; пустой итог — карточка без фото-полосы (fallback).
      */
-    private fun resolvePoiPhoto(poi: Poi): File? {
-        val relative = poi.photo?.takeIf { it.isNotBlank() } ?: return null
-        val regionId = _uiState.value.activeRegionId ?: return null
-        val pkg = regionPackageRepository.getInstalled(regionId) ?: return null
+    private fun resolvePoiPhotos(poi: Poi): List<File> {
+        val regionId = _uiState.value.activeRegionId ?: return emptyList()
+        val pkg = regionPackageRepository.getInstalled(regionId) ?: return emptyList()
         val root = pkg.rootDir.canonicalFile
-        val file = File(root, relative).canonicalFile
-        if (!file.toPath().startsWith(root.toPath())) return null
-        return file.takeIf { it.isFile }
+        return poi.photoPaths.mapNotNull { relative ->
+            val file = File(root, relative).canonicalFile
+            file.takeIf { it.toPath().startsWith(root.toPath()) && it.isFile }
+        }
     }
 
-    /** Тап вне карточки / свайп вниз / кнопка закрытия. */
+    /** Тап вне карточки / свайп вниз. */
     fun onPoiCardDismissed() {
-        _uiState.update { it.copy(selectedPoi = null, selectedPoiPhoto = null) }
+        _uiState.update { it.copy(selectedPoi = null, selectedPoiPhotos = emptyList()) }
     }
 
     /**

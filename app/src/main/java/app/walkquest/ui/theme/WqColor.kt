@@ -69,6 +69,11 @@ object WqPrimitive {
     const val FOG_GLOW_DARK = 0xFF6B5A88
     const val CURSOR_LIGHT = 0xFF7A5FC0 // из прототипа (токена cursor-light в DESIGN нет)
 
+    // Пин онбординга (история 7.1, доработка по сверке): розовый маркер-пин из утверждённого
+    // макета onboarding-duo.html (элемент 📍, сэмплирован с рендера макета — #F53871).
+    // В DESIGN.md роли нет; hex допустим только здесь, экраны берут семантическую роль pin.
+    const val ONBOARDING_PIN = 0xFFF53871
+
     // Error — M3-дефолты как примитивы (в DESIGN.md не задан).
     const val ERROR_LIGHT = 0xFFB3261E
     const val ERROR_DARK = 0xFFF2B8B5
@@ -129,12 +134,21 @@ class WqColors(
     val accentSoft: Color,
     /** card-active: рамка accent @ 35% alpha (резолвится от accent темы). */
     val accentSoftBorder: Color,
+    /** Метка-пилюля на card-active (макет .tlabel): заливка accent @ 14% alpha. */
+    val accentLabel: Color,
+    /** Пин онбординга (регион/геолокация) — розовый маркер из макета onboarding-duo.html. */
+    val pin: Color,
+    /** Трек тонких progress-bar'ов (макет progress-tasks-duo.html `.pbar`):
+     * тёмная — surface-nav #141020, светлая — surface-sunken #EFEAF6. */
+    val progressTrack: Color,
+    /** Фон кнопки выдачи задания (макет `.tbtn`): светлая — surfaceRaised
+     * (белая карточка на surface-base), тёмная — surfaceSunken #2C2248. */
+    val taskButtonBg: Color,
 ) {
     /** POI-маяк — акцентом (графика; DESIGN разрешает accent в светлой). */
     val poiMarker: Color get() = accent
     /** Белое ядро маркера «я» и колец — общий для тем. */
     val white: Color get() = Color.White
-
     companion object {
         /** Светлая тема (полноценная вторая, не инверсия тёмной). */
         fun light(): WqColors = WqColors(
@@ -160,6 +174,10 @@ class WqColors(
             fogGlow = Color(WqPrimitive.FOG_GLOW_LIGHT),
             accentSoft = Color(WqPrimitive.ACCENT_LIGHT).copy(alpha = 0.08f),
             accentSoftBorder = Color(WqPrimitive.ACCENT_LIGHT).copy(alpha = 0.35f),
+            accentLabel = Color(WqPrimitive.ACCENT_LIGHT).copy(alpha = 0.14f),
+            pin = Color(WqPrimitive.ONBOARDING_PIN),
+            progressTrack = Color(WqPrimitive.SURFACE_SUNKEN_LIGHT),
+            taskButtonBg = Color(WqPrimitive.SURFACE_RAISED_LIGHT),
         )
 
         /** Тёмная тема — основная (dark-first). */
@@ -186,6 +204,10 @@ class WqColors(
             fogGlow = Color(WqPrimitive.FOG_GLOW_DARK),
             accentSoft = Color(WqPrimitive.ACCENT_DARK).copy(alpha = 0.08f),
             accentSoftBorder = Color(WqPrimitive.ACCENT_DARK).copy(alpha = 0.35f),
+            accentLabel = Color(WqPrimitive.ACCENT_DARK).copy(alpha = 0.14f),
+            pin = Color(WqPrimitive.ONBOARDING_PIN),
+            progressTrack = Color(WqPrimitive.SURFACE_NAV_DARK),
+            taskButtonBg = Color(WqPrimitive.SURFACE_SUNKEN_DARK),
         )
     }
 }

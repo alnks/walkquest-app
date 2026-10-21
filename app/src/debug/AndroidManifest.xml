@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug-only: локальный QA-контур (mock PostgREST / пакет-сервер на
+         10.0.2.2 / localhost через adb reverse) работает по HTTP. Релизный
+         манифест без этого флага: боевой Supabase — только HTTPS (AD-7). -->
+    <application android:usesCleartextTraffic="true" />
+
+</manifest>

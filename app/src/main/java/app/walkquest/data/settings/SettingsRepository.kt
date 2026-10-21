@@ -220,6 +220,17 @@ class SettingsRepository(private val settingsRoot: File) {
     fun setLeaderboardVisible(visible: Boolean): SettingsError? =
         write(read().copy(leaderboardVisible = visible))
 
+    // --- Режим темы (история 7.16, решение владельца 2026-10-17) ---
+
+    /** Режим темы; default SYSTEM — следуем настройкам телефона. */
+    @Synchronized
+    fun themeMode(): ThemeMode = read().themeMode?.let { name ->
+        ThemeMode.entries.firstOrNull { it.name == name }
+    } ?: ThemeMode.SYSTEM
+
+    @Synchronized
+    fun setThemeMode(mode: ThemeMode): SettingsError? = write(read().copy(themeMode = mode.name))
+
     /** Кнопка задания; default true (скрывается в настройках, FR-16). */
     @Synchronized
     fun showQuestButton(): Boolean = read().showQuestButton
@@ -300,6 +311,8 @@ class SettingsRepository(private val settingsRoot: File) {
         val leaderboardNickname: String? = null,
         /** Участие в рейтингах (FR-19: опционально); default true. */
         val leaderboardVisible: Boolean = true,
+        /** Режим темы (7.16), имя ThemeMode; null/неизвестное — SYSTEM. */
+        val themeMode: String? = null,
     )
 
     companion object {

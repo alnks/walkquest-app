@@ -7,9 +7,13 @@ import app.walkquest.data.plans.PlannedWalk
 import app.walkquest.data.plans.PlannedWalksStore
 import app.walkquest.data.settings.SettingsRepository
 import app.walkquest.domain.ComputeRegionProgress
+import app.walkquest.domain.territory.HomeRegionPolicy
 import app.walkquest.domain.PlanPolicy
 import app.walkquest.domain.StreakCalculator
 import app.walkquest.domain.WalkHistory
+import app.walkquest.domain.achievements.AchievementEngine
+import app.walkquest.domain.achievements.AchievementStateFactory
+import app.walkquest.domain.quests.QuestStateStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +53,18 @@ data class StatsUiState(
     /** Описание цели для подзаголовка (3.2/3.4; null — до онбординга). */
     val goalText: String? = null,
     val loading: Boolean = true,
+    // --- Эпик design-alignment 7.4 (сегмент «Статистика» по макету AL-4) ---
+    /** Доля открытия домашнего региона 0..1 — герой-процент экрана;
+     *  null — домашний регион не установлен/пакета нет (герой скрыт). */
+    val homeRegionFraction: Double? = null,
+    /** Число полученных достижений (полная перепроверка, FR-15). */
+    val achievementsEarned: Int = 0,
+    /** Число выполненных заданий (счётчик состояния заданий, 4.5). */
+    val questsCompleted: Int = 0,
+    /** Максимальная серия за всю историю, дней. */
+    val maxStreakDays: Int = 0,
+    /** Суммарное активное время прогулок, мс — для среднего времени. */
+    val totalActiveMillis: Long = 0L,
 )
 
 /**
@@ -64,6 +80,9 @@ class StatsViewModel(
     private val settingsRepository: SettingsRepository,
     private val plannedWalksStore: PlannedWalksStore,
     private val planPolicy: PlanPolicy,
+    private val achievementEngine: AchievementEngine,
+    private val achievementStateFactory: AchievementStateFactory,
+    private val questStateStore: QuestStateStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatsUiState())
@@ -96,6 +115,20 @@ class StatsViewModel(
                         else -> null
                     }
                 }.sortedByDescending { it.fraction }
+                // Герой-процент: домашний регион (HomeRegionPolicy — как у карты).
+                val homeId = HomeRegionPolicy.resolve(
+                    settingsRepository.homeRegionId(),
+                    regionPackageRepository.installedPackages().map { it.regionId },
+                )
+                val homeFraction = homeId?.let { id ->
+                    when (val result = computeRegionProgress.compute(id)) {
+                        is app.walkquest.domain.ProgressResult.Ok -> result.progress.fraction
+                        else -> null
+                    }
+                }
+                // Достижения: полная перепроверка по истории (FR-15, идемпотентно;
+                // догоняет записи, если пользователь не открывал сегмент «Достижения»).
+                achievementEngine.checkAndRecord(achievementStateFactory.build())
                 StatsUiState(
                     totalWalks = walkHistory.totalWalks(),
                     totalDistanceMeters = walkHistory.totalDistanceMeters(),
@@ -114,6 +147,11 @@ class StatsViewModel(
                     },
                     goalText = settingsRepository.walkGoal()?.describe(),
                     loading = false,
+                    homeRegionFraction = homeFraction,
+                    achievementsEarned = achievementEngine.earned().size,
+                    questsCompleted = questStateStore.load().completedCount,
+                    maxStreakDays = streakCalculator.maxStreak(),
+                    totalActiveMillis = walkHistory.totalActiveMillis(),
                 )
             }
             _uiState.value = loaded

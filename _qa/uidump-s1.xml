@@ -1,0 +1,4 @@
+$ C:\Users\Lenovo\AppData\Local\Android\Sdk\platform-tools\adb.exe devices
+$ C:\Users\Lenovo\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 shell uiautomator dump /sdcard/wq-ui.xml
+$ C:\Users\Lenovo\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 pull /sdcard/wq-ui.xml ui.xml
+OK: ui.xml

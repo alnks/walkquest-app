@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review 7.1–7.5 — текущая реализация экранов</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;1000&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --l-bg:#F6F3FA; --l-card:#FFFFFF; --l-sunken:#EFEAF6; --l-soft:#EDECE8;
+  --l-ink:#4A3F66; --l-ink2:#5C506E; --l-dim:#6E6384; --l-line:#E6DFF2; --l-line2:#BCAED9;
+  --l-panel:#D6CBE8; --l-panel2:#C6B7DE; --l-fog:#B29ED1; --l-pin:#F53871;
+  --l-acc:#7A9A1F; --l-acct:#587110; --l-softbr:#CBD8A7;
+  --d-bg:#191423; --d-card:#231B33; --d-sunken:#141020; --d-soft:#272428;
+  --d-ink:#F2EFF8; --d-ink2:#B7AFC6; --d-dim:#8B839E; --d-line:#2E2542; --d-line2:#5A4D78;
+  --d-panel:#4E4363; --d-panel2:#6E5F88; --d-fog:#8F7FB3; --d-pin:#F53871;
+  --d-acc:#C6E26B; --d-acct:#C6E26B; --d-softbr:#5A6B35;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#14101C;font-family:'Manrope',system-ui,sans-serif;color:#D8D2E4;padding:28px}
+h1.page{font-family:'Nunito';font-size:26px;margin-bottom:4px}
+p.sub{color:#8B839E;margin-bottom:28px;max-width:900px}
+section{margin-bottom:44px}
+h2{font-family:'Nunito';font-size:20px;margin-bottom:4px}
+p.note{color:#8B839E;font-size:14px;margin-bottom:16px}
+.grid{display:flex;flex-wrap:wrap;gap:22px}
+.slot{width:242px}
+.cap{font-size:13px;color:#8B839E;margin-top:8px;text-align:center}
+
+/* ---------- phone ---------- */
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;zoom:.62;
+  box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.phone[data-theme=light]{background:var(--l-bg);color:var(--l-ink)}
+.phone[data-theme=dark]{background:var(--d-bg);color:var(--d-ink)}
+.phone[data-theme=light] .card{background:var(--l-card);border:1px solid var(--l-line)}
+.phone[data-theme=dark] .card{background:var(--d-card);border:1px solid var(--d-line)}
+.phone[data-theme=light] .softcard{background:var(--l-soft);border:1.5px solid var(--l-softbr)}
+.phone[data-theme=dark] .softcard{background:var(--d-soft);border:1.5px solid var(--d-softbr)}
+.phone[data-theme=light] .sunken{background:var(--l-sunken)}
+.phone[data-theme=dark] .sunken{background:var(--d-sunken)}
+.phone[data-theme=light] .ink{color:var(--l-ink)} .phone[data-theme=dark] .ink{color:var(--d-ink)}
+.phone[data-theme=light] .ink2{color:var(--l-ink2)} .phone[data-theme=dark] .ink2{color:var(--d-ink2)}
+.phone[data-theme=light] .dim{color:var(--l-dim)} .phone[data-theme=dark] .dim{color:var(--d-dim)}
+.phone[data-theme=light] .acct{color:var(--l-acct)} .phone[data-theme=dark] .acct{color:var(--d-acct)}
+.phone[data-theme=light] .fogc{color:var(--l-fog)} .phone[data-theme=dark] .fogc{color:var(--d-fog)}
+.phone[data-theme=light] .panelbg{background:var(--l-panel)} .phone[data-theme=dark] .panelbg{background:var(--d-panel)}
+.phone[data-theme=light] .panel2bg{background:var(--l-panel2)} .phone[data-theme=dark] .panel2bg{background:var(--d-panel2)}
+
+.sb{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;
+  font-weight:600;font-size:15px}
+.phone[data-theme=light] .sb svg *{fill:#4A3F66;stroke:#4A3F66}
+.phone[data-theme=dark] .sb svg *{fill:#F2EFF8;stroke:#F2EFF8}
+.sb .icons{display:flex;align-items:center;gap:6px}
+
+.nunito{font-family:'Nunito',sans-serif}
+.body{padding:0 16px;display:flex;flex-direction:column;flex:1;min-height:0}
+
+/* buttons */
+.btnP{display:block;text-align:center;font-family:'Nunito';font-weight:800;font-size:18px;
+  padding:16px 0;border-radius:22px;cursor:pointer}
+.phone[data-theme=light] .btnP{border:2px solid var(--l-acc);background:#fff;color:var(--l-acct)}
+.phone[data-theme=dark] .btnP{border:2px solid var(--d-acc);background:transparent;color:var(--d-acct)}
+.btnF{display:block;text-align:center;font-family:'Nunito';font-weight:800;font-size:17px;
+  padding:15px 0;border-radius:22px;cursor:pointer;border:none}
+.phone[data-theme=light] .btnF{background:var(--l-acc);color:#fff}
+.phone[data-theme=dark] .btnF{background:var(--d-acc);color:#191423}
+.link{display:block;text-align:center;font-size:15px;font-weight:500;color:var(--l-ink2);
+  padding:12px 0;cursor:pointer}
+.phone[data-theme=dark] .link{color:var(--d-ink2)}
+.gesture{width:120px;height:5px;border-radius:99px;margin:8px auto 10px}
+.phone[data-theme=light] .gesture{background:#C9C3D4}
+.phone[data-theme=dark] .gesture{background:#4A4458}
+
+/* dots */
+.dots{display:flex;gap:8px;justify-content:center;margin-top:auto;margin-bottom:24px}
+.dots .on{width:22px;height:8px;border-radius:99px;background:var(--l-acc)}
+.dots .off{width:8px;height:8px;border-radius:50%;background:var(--l-line)}
+.phone[data-theme=dark] .dots .on{background:var(--d-acc)}
+.phone[data-theme=dark] .dots .off{background:var(--d-line)}
+
+/* onboarding illustration */
+.illus{width:100%;height:120px;border-radius:28px;position:relative;overflow:hidden}
+.illus .hole{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:96px;height:96px;border-radius:50%;background:var(--l-sunken)}
+.phone[data-theme=dark] .illus .hole{background:var(--d-sunken)}
+
+/* stepper */
+.stepper{display:flex;align-items:center;gap:14px}
+.stepBtn{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700}
+.phone[data-theme=light] .stepBtn{background:var(--l-sunken);color:var(--l-acct)}
+.phone[data-theme=dark] .stepBtn{background:var(--d-sunken);color:var(--d-acct)}
+
+/* bottom nav */
+.nav{display:flex;justify-content:space-around;padding:10px 8px 4px;margin-top:auto}
+.nav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;
+  color:var(--l-dim);padding:6px 14px;border-radius:99px;cursor:pointer}
+.phone[data-theme=dark] .nav .it{color:var(--d-dim)}
+.nav .it.act{font-weight:700}
+.phone[data-theme=light] .nav .it.act{background:var(--l-sunken);color:var(--l-acct)}
+.phone[data-theme=dark] .nav .it.act{background:#2C2248;color:var(--d-acct)}
+.nav .it span{font-size:20px;line-height:1}
+
+/* segments */
+.segs{display:flex;gap:8px;margin:14px 0 18px}
+.seg{flex:1;text-align:center;font-family:'Nunito';font-weight:700;font-size:14px;
+  padding:11px 0;border-radius:99px;cursor:pointer}
+.phone[data-theme=light] .seg{border:1.5px solid var(--l-line2);color:var(--l-ink2)}
+.phone[data-theme=dark] .seg{border:1.5px solid var(--d-line2);color:var(--d-ink2)}
+.phone[data-theme=light] .seg.on{background:var(--l-soft);border-color:var(--l-softbr);color:var(--l-acct)}
+.phone[data-theme=dark] .seg.on{background:rgba(198,226,107,.08);border-color:rgba(198,226,107,.35);color:var(--d-acct)}
+
+/* stat cards */
+.statGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border-radius:16px;padding:12px 12px 10px}
+.stat .v{font-family:'Nunito';font-weight:800;font-size:17px}
+.stat .v small{font-size:12px;font-weight:600}
+.stat .l{font-size:12px;margin-top:2px}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:12px 2px;
+  font-size:14px}
+.phone[data-theme=light] .kv{border-bottom:1px solid var(--l-line)}
+.phone[data-theme=dark] .kv{border-bottom:1px solid var(--d-line)}
+.kv b{font-family:'Nunito';font-weight:800;font-size:15px}
+
+/* rows with pills */
+.row{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;
+  font-size:15px;font-weight:600}
+.phone[data-theme=light] .row{border-bottom:1px solid var(--l-line)}
+.phone[data-theme=dark] .row{border-bottom:1px solid var(--d-line)}
+.row:last-child{border-bottom:none}
+.pill{font-family:'Nunito';font-weight:700;font-size:13px;padding:7px 13px;border-radius:99px;
+  white-space:nowrap}
+.pill.accP{background:var(--l-soft);border:1.5px solid var(--l-softbr);color:var(--l-acct)}
+.phone[data-theme=dark] .pill.accP{background:rgba(198,226,107,.08);border-color:rgba(198,226,107,.35);color:var(--d-acct)}
+.pill.neuP{background:transparent}
+.phone[data-theme=light] .pill.neuP{border:1.5px solid var(--l-line);color:var(--l-ink2)}
+.phone[data-theme=dark] .pill.neuP{border:1.5px solid var(--d-line2);color:var(--d-ink2)}
+
+/* achievements */
+.secl{font-size:12px;letter-spacing:1.5px;font-weight:700;margin:16px 0 10px;display:flex;
+  justify-content:space-between;align-items:center}
+.aitem{border-radius:16px;padding:13px 14px;display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.aitem .ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex:none}
+.phone[data-theme=light] .aitem .ic{background:var(--l-bg)}
+.phone[data-theme=dark] .aitem .ic{background:var(--d-bg)}
+.aitem .tt{font-family:'Nunito';font-weight:800;font-size:15px}
+.aitem .dd{font-size:13px;margin-top:1px}
+.aitem.lock{position:relative}
+.aitem.lock .ic{opacity:.45}
+.phone[data-theme=light] .aitem.lock{border:1.5px dashed var(--l-line);background:var(--l-card)}
+.phone[data-theme=dark] .aitem.lock{border:1.5px dashed var(--d-line2);background:var(--d-card)}
+.pbar{height:4px;border-radius:99px;margin-top:7px;overflow:hidden}
+.phone[data-theme=light] .pbar{background:var(--l-sunken)}
+.phone[data-theme=dark] .pbar{background:var(--d-sunken)}
+.pbar i{display:block;height:100%;border-radius:99px;background:var(--l-acc)}
+.phone[data-theme=dark] .pbar i{background:var(--d-acc)}
+</style>
+</head>
+<body>
+
+<h1 class="page">Review 7.1–7.5 — экраны текущей реализации</h1>
+<p class="sub">HTML-реплики исправленных экранов (эпик design-alignment). Цвета сэмплированы
+со скриншотов эмулятора (<code>_qa\emulator-run\compare-verify\</code>). Шрифты — Nunito/Manrope.</p>
+
+<!-- ===================== 7.1 ONBOARDING ===================== -->
+<section>
+<h2>7.1 · Онбординг — 4 шага</h2>
+<p class="note">3 итерации: раскладка/кегли/иконки → 7 замечаний сверки → контраст иллюстрации шага 1 (светлая).</p>
+<div class="grid">
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>9:36</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="link" style="text-align:right;padding:12px 28px 0">Пропустить</div>
+  <div class="body" style="align-items:center">
+    <svg width="52" height="42" viewBox="0 0 52 42" fill="none" stroke="#B29ED1" stroke-width="4.6" stroke-linecap="round" style="margin-top:34px"><path d="M6 8c6-5 12 4 20-1s14 3 20-1"/><path d="M6 21c6-5 12 4 20-1s14 3 20-1"/><path d="M6 34c6-5 12 4 20-1s14 3 20-1"/></svg>
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:26px">Город под туманом</div>
+    <div class="illus panelbg" style="margin-top:26px"><div class="hole"></div></div>
+    <p class="ink2" style="margin-top:30px;text-align:center;font-size:16px;line-height:1.5;max-width:320px">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</p>
+    <div class="dots"><span class="on"></span><span class="off"></span><span class="off"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Дальше</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 1 · Приветствие · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>9:17</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="link" style="text-align:right;padding:12px 28px 0">Пропустить</div>
+  <div class="body" style="align-items:center">
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:44px">Где вы живёте?</div>
+    <p class="ink2" style="margin-top:16px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</p>
+    <div class="panel2bg" style="margin-top:26px;width:100%;height:118px;border-radius:28px;display:flex;align-items:center;justify-content:center"><span style="font-size:44px">📍</span></div>
+    <div class="softcard" style="margin-top:14px;width:100%;border-radius:20px;padding:16px"><div class="nunito ink" style="font-weight:800;font-size:17px">Санкт-Петербург</div><div class="ink2" style="font-size:14px;margin-top:2px">определено по геолокации</div></div>
+    <div class="dots"><span class="off"></span><span class="on"></span><span class="off"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 8px"><div class="btnP">Это мой регион</div><div class="link">Выбрать другой</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 2 · Регион · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>9:18</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center">
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:70px">Ваша цель</div>
+    <p class="ink2" style="margin-top:14px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</p>
+    <div class="softcard" style="margin-top:24px;width:100%;border-radius:20px;padding:16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px">🚶</span><span class="nunito ink" style="font-weight:800;font-size:16px">Прогулок в неделю</span>
+      <div class="stepper" style="margin-left:auto"><div class="stepBtn">−</div><div class="nunito ink" style="font-weight:1000;font-size:26px">3</div><div class="stepBtn">+</div></div>
+    </div>
+    <div class="card" style="width:100%;border-radius:20px;padding:18px 16px;display:flex;align-items:center;gap:12px;margin-top:10px"><span style="font-size:20px">🕐</span><span class="nunito ink" style="font-weight:700;font-size:16px">Минут в день</span></div>
+    <div class="card" style="width:100%;border-radius:20px;padding:18px 16px;display:flex;align-items:center;gap:12px;margin-top:10px"><span style="font-size:20px">📏</span><span class="nunito ink" style="font-weight:700;font-size:16px">Километров в день</span></div>
+    <div class="dots"><span class="off"></span><span class="off"></span><span class="on"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Выбрать</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 3 · Цель · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>9:18</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center">
+    <span style="font-size:46px;margin-top:56px">📍</span>
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:22px">Доступ к геолокации</div>
+    <p class="ink2" style="margin-top:22px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».</p>
+    <p class="acct nunito" style="margin-top:20px;text-align:center;font-weight:800;font-size:16px;line-height:1.45;max-width:330px">Информация о ваших передвижениях не покидает телефон.</p>
+    <p class="ink2" style="margin-top:14px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</p>
+    <div class="dots"><span class="off"></span><span class="off"></span><span class="off"></span><span class="on"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Разрешить и открыть карту</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 4 · Геолокация · светлая</div></div>
+
+<!-- DARK onboarding -->
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>9:13</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="link" style="text-align:right;padding:12px 28px 0">Пропустить</div>
+  <div class="body" style="align-items:center">
+    <svg width="52" height="42" viewBox="0 0 52 42" fill="none" stroke="#8F7FB3" stroke-width="4.6" stroke-linecap="round" style="margin-top:34px"><path d="M6 8c6-5 12 4 20-1s14 3 20-1"/><path d="M6 21c6-5 12 4 20-1s14 3 20-1"/><path d="M6 34c6-5 12 4 20-1s14 3 20-1"/></svg>
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:26px">Город под туманом</div>
+    <div class="illus panelbg" style="margin-top:26px"><div class="hole"></div></div>
+    <p class="ink2" style="margin-top:30px;text-align:center;font-size:16px;line-height:1.5;max-width:320px">Карта скрыта завесой. Она расступается там, где вы прошли пешком или проехали на велосипеде или самокате. На другом транспорте прогресс не засчитывается.</p>
+    <div class="dots"><span class="on"></span><span class="off"></span><span class="off"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Дальше</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 1 · Приветствие · тёмная</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>9:13</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="link" style="text-align:right;padding:12px 28px 0">Пропустить</div>
+  <div class="body" style="align-items:center">
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:44px">Где вы живёте?</div>
+    <p class="ink2" style="margin-top:16px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Это ваш домашний регион. При смене региона подгрузится нужная карта, и прогулки можно будет продолжить там.</p>
+    <div class="panel2bg" style="margin-top:26px;width:100%;height:118px;border-radius:28px;display:flex;align-items:center;justify-content:center"><span style="font-size:44px">📍</span></div>
+    <div class="softcard" style="margin-top:14px;width:100%;border-radius:20px;padding:16px"><div class="nunito ink" style="font-weight:800;font-size:17px">Санкт-Петербург</div><div class="ink2" style="font-size:14px;margin-top:2px">определено по геолокации</div></div>
+    <div class="dots"><span class="off"></span><span class="on"></span><span class="off"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 8px"><div class="btnP">Это мой регион</div><div class="link">Выбрать другой</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 2 · Регион · тёмная</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>9:16</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center">
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:70px">Ваша цель</div>
+    <p class="ink2" style="margin-top:14px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Выберите, от чего отталкиваться — число настраивается и всегда меняется в настройках.</p>
+    <div class="softcard" style="margin-top:24px;width:100%;border-radius:20px;padding:16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px">🚶</span><span class="nunito ink" style="font-weight:800;font-size:16px">Прогулок в неделю</span>
+      <div class="stepper" style="margin-left:auto"><div class="stepBtn">−</div><div class="nunito ink" style="font-weight:1000;font-size:26px">3</div><div class="stepBtn">+</div></div>
+    </div>
+    <div class="card" style="width:100%;border-radius:20px;padding:18px 16px;display:flex;align-items:center;gap:12px;margin-top:10px"><span style="font-size:20px">🕐</span><span class="nunito ink" style="font-weight:700;font-size:16px">Минут в день</span></div>
+    <div class="card" style="width:100%;border-radius:20px;padding:18px 16px;display:flex;align-items:center;gap:12px;margin-top:10px"><span style="font-size:20px">📏</span><span class="nunito ink" style="font-weight:700;font-size:16px">Километров в день</span></div>
+    <div class="dots"><span class="off"></span><span class="off"></span><span class="on"></span><span class="off"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Выбрать</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 3 · Цель · тёмная</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>9:17</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center">
+    <span style="font-size:46px;margin-top:56px">📍</span>
+    <div class="nunito ink" style="font-weight:800;font-size:26px;margin-top:22px">Доступ к геолокации</div>
+    <p class="ink2" style="margin-top:22px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">Чтобы туман расступался, пока телефон в кармане, нужен доступ к геолокации «всегда».</p>
+    <p class="acct nunito" style="margin-top:20px;text-align:center;font-weight:800;font-size:16px;line-height:1.45;max-width:330px">Информация о ваших передвижениях не покидает телефон.</p>
+    <p class="ink2" style="margin-top:14px;text-align:center;font-size:16px;line-height:1.5;max-width:330px">На сервер уходят только ник и статистика для рейтинга, если вы захотите в нём участвовать.</p>
+    <div class="dots"><span class="off"></span><span class="off"></span><span class="off"></span><span class="on"></span></div>
+  </div>
+  <div style="padding:0 16px 14px"><div class="btnP">Разрешить и открыть карту</div></div>
+  <div class="gesture"></div>
+</div><div class="cap">Шаг 4 · Геолокация · тёмная</div></div>
+
+</div>
+</section>
+
+<!-- ===================== 7.2 WALK FINAL ===================== -->
+<section>
+<h2>7.2 · Финал прогулки</h2>
+<p class="note">Hero-процент, сетка 3 карточек, карточки новых достижений (может быть несколько),
+TOMORROW_NOTE, «На карту» вместо «Закрыть», нижняя навигация скрыта. Честные данные replay-прогона.</p>
+<div class="grid">
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>10:12</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center;padding-top:56px">
+    <div class="nunito ink" style="font-weight:700;font-size:18px;text-align:center">Прогулка состоялась. Это главное.</div>
+    <div class="nunito acct" style="font-weight:1000;font-size:38px;margin-top:34px">&lt;0,1%</div>
+    <div class="ink2" style="font-size:14px;margin-top:2px">территории открыто</div>
+    <div class="statGrid" style="width:100%;margin-top:28px">
+      <div class="stat card"><div class="v ink">0,1 <small>км</small></div><div class="l dim">расстояние</div></div>
+      <div class="stat card"><div class="v ink">0 <small>мин</small></div><div class="l dim">время</div></div>
+      <div class="stat card"><div class="v ink">1 <small>день</small></div><div class="l dim">серия</div></div>
+    </div>
+    <div class="softcard" style="width:100%;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:14px"><span style="font-size:22px">🏆</span><span class="nunito ink" style="font-weight:800;font-size:15px">Новое достижение: «Первый шаг»</span></div>
+    <div class="softcard" style="width:100%;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:8px"><span style="font-size:22px">🏆</span><span class="nunito ink" style="font-weight:800;font-size:15px">Новое достижение: «Полуночник»</span></div>
+    <p class="ink2" style="margin-top:26px;font-size:15px;line-height:1.5;align-self:flex-start">Завтра город расступится чуть больше. До встречи на маршруте.</p>
+    <div style="width:100%;margin-top:auto;padding-bottom:10px"><div class="btnP">Поделиться результатом</div><div class="link">На карту</div></div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Финал прогулки · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>10:12</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="align-items:center;padding-top:56px">
+    <div class="nunito ink" style="font-weight:700;font-size:18px;text-align:center">Прогулка состоялась. Это главное.</div>
+    <div class="nunito acct" style="font-weight:1000;font-size:38px;margin-top:34px">&lt;0,1%</div>
+    <div class="ink2" style="font-size:14px;margin-top:2px">территории открыто</div>
+    <div class="statGrid" style="width:100%;margin-top:28px">
+      <div class="stat card"><div class="v ink">0,1 <small>км</small></div><div class="l dim">расстояние</div></div>
+      <div class="stat card"><div class="v ink">0 <small>мин</small></div><div class="l dim">время</div></div>
+      <div class="stat card"><div class="v ink">1 <small>день</small></div><div class="l dim">серия</div></div>
+    </div>
+    <div class="softcard" style="width:100%;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:14px"><span style="font-size:22px">🏆</span><span class="nunito ink" style="font-weight:800;font-size:15px">Новое достижение: «Первый шаг»</span></div>
+    <div class="softcard" style="width:100%;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:8px"><span style="font-size:22px">🏆</span><span class="nunito ink" style="font-weight:800;font-size:15px">Новое достижение: «Полуночник»</span></div>
+    <p class="ink2" style="margin-top:26px;font-size:15px;line-height:1.5;align-self:flex-start">Завтра город расступится чуть больше. До встречи на маршруте.</p>
+    <div style="width:100%;margin-top:auto;padding-bottom:10px"><div class="btnF">Поделиться результатом</div><div class="link">На карту</div></div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Финал прогулки · тёмная</div></div>
+
+</div>
+</section>
+
+<!-- ===================== 7.3 PROFILE ===================== -->
+<section>
+<h2>7.3 · Профиль</h2>
+<p class="note">Шапка без карточки, 5 строк с пилюлями, блоки спеки §8 (предупреждение о локальности
+данных + перенос прогресса) сохранены под группой. Тапы проверены на устройстве.</p>
+<div class="grid">
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>10:56</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Профиль</div>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:16px">
+      <div class="sunken" style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px">🚶</div>
+      <div><div class="nunito ink" style="font-weight:800;font-size:18px">olya_walks</div><div class="dim" style="font-size:13px">в рейтинге · участие вкл</div></div>
+    </div>
+    <div class="card" style="border-radius:20px;margin-top:18px;overflow:hidden">
+      <div class="row"><span class="ink">Ник в рейтинге</span><span class="pill accP">olya_walks</span></div>
+      <div class="row"><span class="ink">Участие в рейтинге</span><span class="pill accP">вкл</span></div>
+      <div class="row"><span class="ink">Моя цель</span><span class="pill neuP">3 прогулки в неделю →</span></div>
+      <div class="row"><span class="ink">Мои регионы</span><span class="pill neuP">1 →</span></div>
+      <div class="row"><span class="ink">Перенос прогресса</span><span class="pill neuP">экспорт →</span></div>
+    </div>
+    <div class="card" style="border-radius:20px;margin-top:14px;padding:16px;font-size:14px;line-height:1.5" ><span class="ink2">Данные живут только на этом устройстве: удаление приложения без экспорта безвозвратно удалит весь прогресс.</span></div>
+    <div class="card" style="border-radius:20px;margin-top:14px;padding:16px">
+      <div class="nunito ink" style="font-weight:800;font-size:16px">Перенос прогресса</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span class="dim" style="font-size:14px">Экспорт / импорт копии</span><span><span class="acct nunito" style="font-weight:700;font-size:14px">Экспорт</span><span class="ink2" style="font-size:14px;margin-left:16px">Импорт</span></span></div>
+    </div>
+    <div class="dim nunito" style="font-size:12px;letter-spacing:1.5px;margin-top:18px">О ПРИЛОЖЕНИИ</div>
+    <div class="card" style="border-radius:20px;margin-top:8px;overflow:hidden">
+      <div class="row"><span class="ink">Обратная связь</span><span class="pill neuP">→</span></div>
+      <div class="row"><span class="ink">Политика конфиденциальности</span><span class="pill neuP">→</span></div>
+      <div class="row"><span class="ink">Версия</span><span class="pill neuP">1.0</span></div>
+    </div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it act"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Профиль · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>10:54</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Профиль</div>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:16px">
+      <div class="sunken" style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px">🚶</div>
+      <div><div class="nunito ink" style="font-weight:800;font-size:18px">olya_walks</div><div class="dim" style="font-size:13px">в рейтинге · участие вкл</div></div>
+    </div>
+    <div class="card" style="border-radius:20px;margin-top:18px;overflow:hidden">
+      <div class="row"><span class="ink">Ник в рейтинге</span><span class="pill accP">olya_walks</span></div>
+      <div class="row"><span class="ink">Участие в рейтинге</span><span class="pill accP">вкл</span></div>
+      <div class="row"><span class="ink">Моя цель</span><span class="pill neuP">3 прогулки в неделю →</span></div>
+      <div class="row"><span class="ink">Мои регионы</span><span class="pill neuP">1 →</span></div>
+      <div class="row"><span class="ink">Перенос прогресса</span><span class="pill neuP">экспорт →</span></div>
+    </div>
+    <div class="card" style="border-radius:20px;margin-top:14px;padding:16px;font-size:14px;line-height:1.5"><span class="ink2">Данные живут только на этом устройстве: удаление приложения без экспорта безвозвратно удалит весь прогресс.</span></div>
+    <div class="card" style="border-radius:20px;margin-top:14px;padding:16px">
+      <div class="nunito ink" style="font-weight:800;font-size:16px">Перенос прогресса</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span class="dim" style="font-size:14px">Экспорт / импорт копии</span><span><span class="acct nunito" style="font-weight:700;font-size:14px">Экспорт</span><span class="ink2" style="font-size:14px;margin-left:16px">Импорт</span></span></div>
+    </div>
+    <div class="dim nunito" style="font-size:12px;letter-spacing:1.5px;margin-top:18px">О ПРИЛОЖЕНИИ</div>
+    <div class="card" style="border-radius:20px;margin-top:8px;overflow:hidden">
+      <div class="row"><span class="ink">Обратная связь</span><span class="pill neuP">→</span></div>
+      <div class="row"><span class="ink">Политика конфиденциальности</span><span class="pill neuP">→</span></div>
+      <div class="row"><span class="ink">Версия</span><span class="pill neuP">1.0</span></div>
+    </div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it act"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Профиль · тёмная</div></div>
+
+</div>
+</section>
+
+<!-- ===================== 7.4 STATS ===================== -->
+<section>
+<h2>7.4 · Прогресс → Статистика</h2>
+<p class="note">Hero + сетка 6 карточек + средние метрики + планировщик. Итерация 2: активная
+сегмент-пилюля стала контурной (accentSoft + рамка), как в макете. Снято на чистой установке (нули/прочерки).</p>
+<div class="grid">
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>12:23</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg on">Статистика</div><div class="seg">Достижения</div><div class="seg">Задания</div></div>
+    <div style="display:flex;align-items:baseline;gap:12px"><span class="nunito acct" style="font-weight:1000;font-size:36px">0,0%</span><span class="ink2" style="font-size:14px">домашнего региона<br>открыто</span></div>
+    <div class="statGrid" style="margin-top:16px">
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">прогулок всего</div></div>
+      <div class="stat card"><div class="v ink">0,0 <small>км</small></div><div class="l dim">пройдено всего</div></div>
+      <div class="stat card"><div class="v ink">0 <small>дней</small></div><div class="l dim">текущая серия</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">достижений</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">заданий выполнено</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">региона посещено</div></div>
+    </div>
+    <div style="margin-top:22px">
+      <div class="kv"><span class="ink2">Максимальная серия</span><b class="ink">0 дней</b></div>
+      <div class="kv"><span class="ink2">В среднем за прогулку</span><b class="ink">—</b></div>
+      <div class="kv"><span class="ink2">Среднее время прогулки</span><b class="ink">—</b></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:auto;margin-bottom:8px"><span class="nunito ink" style="font-weight:800;font-size:17px">Планы</span><span class="acct nunito" style="font-weight:700;font-size:14px">Запланировать</span></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Статистика · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>12:24</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg on">Статистика</div><div class="seg">Достижения</div><div class="seg">Задания</div></div>
+    <div style="display:flex;align-items:baseline;gap:12px"><span class="nunito acct" style="font-weight:1000;font-size:36px">0,0%</span><span class="ink2" style="font-size:14px">домашнего региона<br>открыто</span></div>
+    <div class="statGrid" style="margin-top:16px">
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">прогулок всего</div></div>
+      <div class="stat card"><div class="v ink">0,0 <small>км</small></div><div class="l dim">пройдено всего</div></div>
+      <div class="stat card"><div class="v ink">0 <small>дней</small></div><div class="l dim">текущая серия</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">достижений</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">заданий выполнено</div></div>
+      <div class="stat card"><div class="v ink">0</div><div class="l dim">региона посещено</div></div>
+    </div>
+    <div style="margin-top:22px">
+      <div class="kv"><span class="ink2">Максимальная серия</span><b class="ink">0 дней</b></div>
+      <div class="kv"><span class="ink2">В среднем за прогулку</span><b class="ink">—</b></div>
+      <div class="kv"><span class="ink2">Среднее время прогулки</span><b class="ink">—</b></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:auto;margin-bottom:8px"><span class="nunito ink" style="font-weight:800;font-size:17px">Планы</span><span class="acct nunito" style="font-weight:700;font-size:14px">Запланировать</span></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Статистика · тёмная</div></div>
+
+</div>
+</section>
+
+<!-- ===================== 7.5 ACHIEVEMENTS ===================== -->
+<section>
+<h2>7.5 · Прогресс → Достижения</h2>
+<p class="note">Две сворачиваемые секции, пунктирная рамка и приглушение у неполученных,
+полоска прогресса только у «близких» (≥1% цели). Итерация 2 убрала пустые треки у суб-пороговых.</p>
+<div class="grid">
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>3:02</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg">Статистика</div><div class="seg on">Достижения</div><div class="seg">Задания</div></div>
+    <div class="secl dim"><span>ПОЛУЧЕННЫЕ · 2 ▾</span></div>
+    <div class="aitem card"><div class="ic">🌱</div><div><div class="tt ink">Первый шаг</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="aitem card"><div class="ic">🥪</div><div><div class="tt ink">Обеденный перерыв</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="secl dim"><span>НЕПОЛУЧЕННЫЕ · 38 ▾</span></div>
+    <div class="aitem lock"><div class="ic">🧭</div><div><div class="tt ink">Картограф</div><div class="dd dim">Откройте 10% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🗺</div><div><div class="tt ink">Знаток района</div><div class="dd dim">Откройте 25% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏘</div><div><div class="tt ink">Свой человек</div><div class="dd dim">Откройте 50% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏰</div><div><div class="tt ink">Почти весь город</div><div class="dd dim">Откройте 70% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">👑</div><div><div class="tt ink">Хозяин города <span class="acct">✦</span></div><div class="dd dim">Откройте 90% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🌳</div><div><div class="tt ink">Исследователь пригорода</div><div class="dd dim">Прогулки в 2+ населённых пунктах области кроме домашнего</div></div></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Достижения · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="dark">
+  <div class="sb"><span>3:04</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg">Статистика</div><div class="seg on">Достижения</div><div class="seg">Задания</div></div>
+    <div class="secl dim"><span>ПОЛУЧЕННЫЕ · 2 ▾</span></div>
+    <div class="aitem card"><div class="ic">🌱</div><div><div class="tt ink">Первый шаг</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="aitem card"><div class="ic">🥪</div><div><div class="tt ink">Обеденный перерыв</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="secl dim"><span>НЕПОЛУЧЕННЫЕ · 38 ▾</span></div>
+    <div class="aitem lock"><div class="ic">🧭</div><div><div class="tt ink">Картограф</div><div class="dd dim">Откройте 10% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🗺</div><div><div class="tt ink">Знаток района</div><div class="dd dim">Откройте 25% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏘</div><div><div class="tt ink">Свой человек</div><div class="dd dim">Откройте 50% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏰</div><div><div class="tt ink">Почти весь город</div><div class="dd dim">Откройте 70% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">👑</div><div><div class="tt ink">Хозяин города <span class="acct">✦</span></div><div class="dd dim">Откройте 90% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🌳</div><div><div class="tt ink">Исследователь пригорода</div><div class="dd dim">Прогулки в 2+ населённых пунктах области кроме домашнего</div></div></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Достижения · тёмная</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>1:37</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg">Статистика</div><div class="seg on">Достижения</div><div class="seg">Задания</div></div>
+    <div class="secl dim"><span>ПОЛУЧЕННЫЕ · 0 ▾</span></div>
+    <div class="ink2" style="font-size:14px;margin:-4px 0 4px">Пока ни одного — первая прогулка его откроет</div>
+    <div class="secl dim"><span>НЕПОЛУЧЕННЫЕ · 40 ▾</span></div>
+    <div class="aitem lock"><div class="ic">🌱</div><div><div class="tt ink">Первый шаг</div><div class="dd dim">Откройте первый участок тумана</div></div></div>
+    <div class="aitem lock"><div class="ic">🧭</div><div><div class="tt ink">Картограф</div><div class="dd dim">Откройте 10% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🗺</div><div><div class="tt ink">Знаток района</div><div class="dd dim">Откройте 25% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏘</div><div><div class="tt ink">Свой человек</div><div class="dd dim">Откройте 50% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">🏰</div><div><div class="tt ink">Почти весь город</div><div class="dd dim">Откройте 70% своего города</div></div></div>
+    <div class="aitem lock"><div class="ic">👑</div><div><div class="tt ink">Хозяин города <span class="acct">✦</span></div><div class="dd dim">Откройте 90% своего города</div></div></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Пустое состояние · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>2:18</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:14px">
+    <div class="nunito ink" style="font-weight:800;font-size:26px">Прогресс</div>
+    <div class="segs"><div class="seg">Статистика</div><div class="seg on">Достижения</div><div class="seg">Задания</div></div>
+    <div class="secl dim"><span>ПОЛУЧЕННЫЕ · 2 ▾</span></div>
+    <div class="aitem card"><div class="ic">🌱</div><div><div class="tt ink">Первый шаг</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="aitem card"><div class="ic">🥪</div><div><div class="tt ink">Обеденный перерыв</div><div class="dd dim">Получено 14.10.2026</div></div></div>
+    <div class="secl dim"><span>НЕПОЛУЧЕННЫЕ · 38 ▸</span></div>
+    <div class="nav" style="margin-top:auto">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Свёрнутые неполученные · светлая</div></div>
+
+<div class="slot"><div class="phone" data-theme="light">
+  <div class="sb"><span>2:58</span><span class="icons"><span style="font-size:12px;font-weight:700">5G</span><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg></span></div>
+  <div class="body" style="padding-top:2px">
+    <div class="segs" style="margin-top:8px"><div class="seg">Статистика</div><div class="seg on">Достижения</div><div class="seg">Задания</div></div>
+    <div class="aitem card" style="margin-top:2px"><div class="ic">🌲</div><div style="flex:1"><div class="tt ink">Частичка природы</div><div class="dd dim">Посетите 1 парк</div></div></div>
+    <div class="aitem card"><div class="ic">🌲</div><div style="flex:1"><div class="tt ink">Натуралист</div><div class="dd dim">Посетите 3 разных парка</div></div></div>
+    <div class="aitem card"><div class="ic">🔥</div><div style="flex:1"><div class="tt ink">Три подряд</div><div class="dd dim">Серия 3 дня</div><div class="pbar"><i style="width:33%"></i></div></div></div>
+    <div class="aitem card"><div class="ic">📅</div><div style="flex:1"><div class="tt ink">Неделька</div><div class="dd dim">Серия 7 дней</div><div class="pbar"><i style="width:14%"></i></div></div></div>
+    <div class="aitem card"><div class="ic">🗓</div><div style="flex:1"><div class="tt ink">Две недели</div><div class="dd dim">Серия 14 дней</div><div class="pbar"><i style="width:7%"></i></div></div></div>
+    <div class="aitem card"><div class="ic">🌟</div><div style="flex:1"><div class="tt ink">Месяц в строю <span class="acct">✦</span></div><div class="dd dim">Серия 30 дней</div><div class="pbar"><i style="width:3%"></i></div></div></div>
+    <div class="aitem card"><div class="ic">🌅</div><div style="flex:1"><div class="tt ink">Ранняя птица</div><div class="dd dim">Прогулка, начатая до 8:00</div></div></div>
+    <div class="aitem card"><div class="ic">🦉</div><div style="flex:1"><div class="tt ink">Полуночник</div><div class="dd dim">Прогулка, начатая после 22:00</div></div></div>
+    <div class="aitem card"><div class="ic">👟</div><div style="flex:1"><div class="tt ink">Первые пять</div><div class="dd dim">5 км суммарно</div></div></div>
+    <div class="aitem card"><div class="ic">🏃</div><div style="flex:1"><div class="tt ink">Марафонец</div><div class="dd dim">42 км суммарно</div></div></div>
+    <div class="aitem card"><div class="ic">💯</div><div style="flex:1"><div class="tt ink">Сотня <span class="acct">✦</span></div><div class="dd dim">100 км суммарно</div></div></div>
+    <div class="nav">
+      <div class="it"><span>📍</span>Карта</div><div class="it act"><span>📊</span>Прогресс</div><div class="it"><span>🏛</span>Рейтинг</div><div class="it"><span>👤</span>Профиль</div>
+    </div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="cap">Прогресс-бары серий · светлая</div></div>
+
+</div>
+</section>
+
+</body>
+</html>

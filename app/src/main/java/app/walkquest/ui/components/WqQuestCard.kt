@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,11 +43,19 @@ fun WqQuestCard(
     val content: @Composable ColumnScope.() -> Unit = {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             badge?.let {
-                Text(
-                    text = it,
-                    color = WqTheme.colors.inkDim,
-                    style = WqTheme.typography.meta,
-                )
+                // Метка-пилюля по макету (.tlabel): заливка accentSoft, текст
+                // accentText, радиус full (DESIGN: пилюли — rounded.full).
+                Surface(
+                    color = WqTheme.colors.accentLabel,
+                    shape = WqTheme.shapes.full,
+                ) {
+                    Text(
+                        text = it.uppercase(),
+                        color = WqTheme.colors.accentText,
+                        style = WqTheme.typography.meta,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                    )
+                }
             }
             Text(
                 text = title,

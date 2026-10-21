@@ -13,7 +13,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -80,6 +88,54 @@ fun WqCardActive(
         Surface(modifier = spec, shape = shape, color = color, border = border) {
             Column(content = content)
         }
+    }
+}
+
+/**
+ * Карточка заблокированного (неполученного) элемента — по макету
+ * progress-tasks-duo.html (`.aitem.lock`): заливка и тональность [WqCard],
+ * но рамка пунктирная (border-hairline, штрих 4dp/пропуск 4dp). Скругление —
+ * из [WqTheme.shapes], цвет рамки — токен; hex нет.
+ */
+@Composable
+fun WqLockedCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = WqTheme.shapes.medium
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier)
+            .wqDashedBorder(WqTheme.colors.borderHairline, shape),
+        shape = shape,
+        color = WqTheme.colors.surfaceRaised,
+    ) {
+        Column(content = content)
+    }
+}
+
+/** Пунктирная рамка по контуру [shape] (токенный стиль `.aitem.lock`). */
+private fun Modifier.wqDashedBorder(color: Color, shape: Shape): Modifier = drawBehind {
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val stroke = Stroke(
+        width = 1.dp.toPx(),
+        pathEffect = PathEffect.dashPathEffect(
+            floatArrayOf(4.dp.toPx(), 4.dp.toPx()),
+            0f,
+        ),
+    )
+    when (outline) {
+        is Outline.Rounded -> drawRoundRect(
+            color = color,
+            topLeft = Offset(outline.roundRect.left, outline.roundRect.top),
+            size = Size(outline.roundRect.width, outline.roundRect.height),
+            cornerRadius = outline.roundRect.topLeftCornerRadius,
+            style = stroke,
+        )
+        is Outline.Rectangle -> drawRect(color = color, style = stroke)
+        is Outline.Generic -> drawPath(outline.path, color = color, style = stroke)
+        else -> Unit
     }
 }
 

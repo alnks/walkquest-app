@@ -36,6 +36,10 @@ fun WqChip(
     modifier: Modifier = Modifier,
     /** Точка-индикатор слева; null — без точки. Акцент = активность, dim = пауза. */
     dotColor: Color? = null,
+    /** Мягкое свечение точки — только акцентные индикаторы (DESIGN Elevation: свечение — привилегия акцентных точек; «На паузе» — без свечения). */
+    dotGlow: Boolean = false,
+    /** Цвет текста; по умолчанию ink-secondary, чип записи — акцентом (макет .live). */
+    textColor: Color = WqTheme.colors.inkSecondary,
     /** Опциональная иконка слева вместо/вместе с точкой. */
     leadingIcon: ImageVector? = null,
     leadingIconContentDescription: String? = null,
@@ -53,7 +57,12 @@ fun WqChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (dotColor != null) {
-                Surface(shape = CircleShape, color = dotColor, modifier = Modifier.size(8.dp)) {}
+                Surface(
+                    shape = CircleShape,
+                    color = dotColor,
+                    shadowElevation = if (dotGlow) 6.dp else 0.dp,
+                    modifier = Modifier.size(8.dp),
+                ) {}
             }
             if (leadingIcon != null) {
                 Icon(
@@ -65,7 +74,7 @@ fun WqChip(
             }
             Text(
                 text = text,
-                color = WqTheme.colors.inkSecondary,
+                color = textColor,
                 style = WqTheme.typography.meta,
             )
         }

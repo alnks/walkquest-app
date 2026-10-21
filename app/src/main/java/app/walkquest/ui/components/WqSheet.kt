@@ -44,8 +44,10 @@ fun WqSheet(
     }
 }
 
-@Preview(name = "Светлая", showBackground = true, backgroundColor = 0xFFB29ED1)
-@Preview(name = "Тёмная", showBackground = true, backgroundColor = 0xFF514568, uiMode = Configuration.UI_MODE_NIGHT_YES)
+// backgroundColor не задаём: @Preview требует compile-time константу и не может
+// взять токен WqTheme — подложка превью идёт фоном темы, hex вне ui/theme запрещён.
+@Preview(name = "Светлая")
+@Preview(name = "Тёмная", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun WqSheetPreview() {
     WalkQuestTheme {

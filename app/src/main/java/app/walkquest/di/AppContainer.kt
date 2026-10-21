@@ -300,6 +300,8 @@ class AppContainer(
                 lastKnownLocation,
                 // Ачивки прогулки (2.8/4.6): новые достижения последней прогулки.
                 walkAchievementsPort,
+                // Серия прогулок для сетки финала (7.2).
+                streakCalculator,
                 // Прочтённые карточки POI (4.1).
                 poiCardStore,
                 // Задания прогулки (4.5).
@@ -331,7 +333,8 @@ class AppContainer(
         }
     }
 
-    /** Экран статистики (3.4, FR-13): история + серия + проценты регионов. */
+    /** Экран статистики (3.4, FR-13; 7.4: герой-процент домашнего региона,
+     *  сетка 6 карточек, средние метрики — агрегаты достижений/заданий/серий). */
     val statsViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
         initializer {
             StatsViewModel(
@@ -342,6 +345,9 @@ class AppContainer(
                 settingsRepository,
                 plannedWalksStore,
                 planPolicy,
+                achievementEngine,
+                achievementStateFactory,
+                questStateStore,
             )
         }
     }

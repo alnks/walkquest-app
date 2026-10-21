@@ -4,16 +4,23 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,8 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.walkquest.ui.components.WqCard
+import app.walkquest.ui.components.WqValuePill
+import app.walkquest.ui.components.WqValueRow
+import app.walkquest.ui.theme.WalkQuestIcons
 import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.ImportState
 import app.walkquest.viewmodel.ProfileViewModel
@@ -36,11 +47,11 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 /**
- * Вкладка «Профиль» (история 6.3, FR-20/FR-21; макет remaining-screens «Профиль»):
- * перенос прогресса (SAF: экспорт в выбранное место, импорт с подтверждением),
- * постоянное предупреждение о безвозвратной потере при удалении (Done when 2),
- * докачка недостающих регионов после импорта, «О приложении».
- * Спецификация: screens-spec.md §8.
+ * Вкладка «Профиль» (история 7.3 эпика design-alignment; макет remaining-screens «Профиль»):
+ * шапка с аватаром/ником/статусом участия, группы строк со значениями-пилюлями
+ * (WqValueRow/WqValuePill — токены WqTheme, без hex), секция «О приложении».
+ * Сохранены и работают действия спеки §8: регионы, экспорт/импорт (SAF), докачка
+ * регионов копии, политика (браузер), постоянное предупреждение о локальности данных.
  *
  * SAF и ContentResolver живут здесь; viewmodel принимает потоки — логика тестируется на JVM.
  */
@@ -49,12 +60,16 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     /** «Мои регионы» (EXPERIENCE: Регионы — Профиль → «Мои регионы»). */
     onOpenRegions: () -> Unit = {},
+    /** «Ник в рейтинге» → вкладка Рейтинг (ник задаётся при её первом открытии). */
+    onOpenRating: () -> Unit = {},
+    /** «Моя цель» → Настройки (второй намеренный вход, EXPERIENCE; редактор цели — там). */
+    onOpenSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Возврат на вкладку → свежие ник/цель (могли измениться в других местах).
+    // Возврат на вкладку → свежие ник/цель/регионы (могли измениться в других местах).
     LaunchedEffect(Unit) { viewModel.reload() }
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -114,12 +129,42 @@ fun ProfileScreen(
             ),
         )
 
-        // Шапка: ник и участие (по макету). Без ника — предложение открыть Рейтинг.
-        WqCard(
-            tonalElevation = 1.dp,
-            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
+        // Шапка (макет: без карточки) — аватар, ник, статус участия.
+        // Эмодзи 🚶 макета — плейсхолдер: в продукте векторная иконка (DESIGN Shapes).
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = WqTheme.spacing.lg,
+                    end = WqTheme.spacing.lg,
+                    bottom = 10.dp,
+                ),
         ) {
-            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = 10.dp)) {
+            Surface(
+                shape = CircleShape,
+                color = if (isSystemInDarkTheme()) {
+                    WqTheme.colors.surfaceSunken
+                } else {
+                    WqTheme.colors.surfaceRaised
+                },
+                border = if (isSystemInDarkTheme()) {
+                    null
+                } else {
+                    BorderStroke(1.dp, WqTheme.colors.borderHairline)
+                },
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = WalkQuestIcons.Walk,
+                        contentDescription = "Аватар",
+                        tint = WqTheme.colors.inkSecondary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            Column(modifier = Modifier.padding(start = WqTheme.spacing.md)) {
                 Text(
                     text = uiState.nickname ?: "Ник не задан",
                     color = WqTheme.colors.inkHeadline,
@@ -134,38 +179,54 @@ fun ProfileScreen(
                     color = WqTheme.colors.inkDim,
                     style = WqTheme.typography.meta,
                 )
-                uiState.goalText?.let {
-                    Text(
-                        text = "Моя цель: $it",
-                        color = WqTheme.colors.inkSecondary,
-                        style = WqTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 6.dp),
+            }
+        }
+
+        // Группа 1 (макет): ник/участие/цель/регионы/перенос — значения в пилюлях.
+        WqCard(
+            tonalElevation = 1.dp,
+            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md)) {
+                WqValueRow(
+                    label = "Ник в рейтинге",
+                    onClick = onOpenRating,
+                    showDivider = false,
+                ) {
+                    WqValuePill(
+                        text = uiState.nickname ?: "не задан",
+                        accent = uiState.nickname != null,
                     )
+                }
+                WqValueRow(
+                    label = "Участие в рейтинге",
+                    onClick = { viewModel.toggleLeaderboardVisible() },
+                ) {
+                    WqValuePill(
+                        text = if (uiState.leaderboardVisible) "вкл" else "выкл",
+                        accent = true,
+                    )
+                }
+                WqValueRow(label = "Моя цель", onClick = onOpenSettings) {
+                    WqValuePill(text = (uiState.goalText ?: "не задана") + " →")
+                }
+                WqValueRow(label = "Мои регионы", onClick = onOpenRegions) {
+                    WqValuePill(text = "${uiState.regionCount} →")
+                }
+                WqValueRow(
+                    label = "Перенос прогресса",
+                    onClick = {
+                        exportLauncher.launch("walkquest-export-${todayStamp()}.zip")
+                    },
+                    enabled = !uiState.exportBusy,
+                ) {
+                    WqValuePill(text = if (uiState.exportBusy) "Сохранение…" else "экспорт →")
                 }
             }
         }
 
-        // Мои регионы (1.10; EXPERIENCE: Регионы живут здесь, а не во вкладках).
-        WqCard(
-            onClick = onOpenRegions,
-            tonalElevation = 1.dp,
-            modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.md),
-            ) {
-                Text(
-                    text = "Мои регионы",
-                    color = WqTheme.colors.inkSecondary,
-                    style = WqTheme.typography.body,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(text = "→", color = WqTheme.colors.accentText)
-            }
-        }
-
-        // Предупреждение о потере — постоянная карточка (Done when 2).
+        // Предупреждение о потере — постоянная карточка (спека §8-3, Done when 2;
+        // в макете отсутствует — спина важнее, зафиксировано в отчёте 7.3).
         WqCard(
             tonalElevation = 1.dp,
             modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
@@ -179,7 +240,7 @@ fun ProfileScreen(
             )
         }
 
-        // Перенос прогресса.
+        // Перенос прогресса (спека §8-4): экспорт/импорт — оба действия сохранены.
         WqCard(
             tonalElevation = 1.dp,
             modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
@@ -276,48 +337,40 @@ fun ProfileScreen(
             )
         }
 
-        // О приложении.
+        // О приложении (макет: подзаголовок-секция + группа строк с пилюлями).
         Text(
             text = "О приложении",
             color = WqTheme.colors.inkDim,
-            style = WqTheme.typography.meta,
-            modifier = Modifier.padding(start = WqTheme.spacing.lg, end = WqTheme.spacing.lg, top = WqTheme.spacing.md, bottom = 4.dp),
+            style = WqTheme.typography.meta.copy(letterSpacing = 1.2.sp),
+            modifier = Modifier.padding(
+                start = WqTheme.spacing.lg,
+                end = WqTheme.spacing.lg,
+                top = WqTheme.spacing.md,
+                bottom = 4.dp,
+            ),
         )
         WqCard(
             tonalElevation = 1.dp,
             modifier = Modifier.padding(horizontal = WqTheme.spacing.lg, vertical = 6.dp),
         ) {
-            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md, vertical = WqTheme.spacing.sm)) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Версия",
-                        color = WqTheme.colors.inkSecondary,
-                        style = WqTheme.typography.body,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = uiState.appVersion,
-                        color = WqTheme.colors.inkDim,
-                        style = WqTheme.typography.meta,
-                    )
+            Column(modifier = Modifier.padding(horizontal = WqTheme.spacing.md)) {
+                WqValueRow(
+                    label = "Обратная связь",
+                    onClick = { viewModel.noticeFeedback() },
+                    showDivider = false,
+                ) {
+                    WqValuePill(text = "→")
                 }
-                WqCard(onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uiState.privacyUrl)))
-                }, modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                    ) {
-                        Text(
-                            text = "Политика конфиденциальности",
-                            color = WqTheme.colors.inkSecondary,
-                            style = WqTheme.typography.body,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(text = "→", color = WqTheme.colors.accentText)
-                    }
+                WqValueRow(
+                    label = "Политика конфиденциальности",
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uiState.privacyUrl)))
+                    },
+                ) {
+                    WqValuePill(text = "→")
+                }
+                WqValueRow(label = "Версия", onClick = null) {
+                    WqValuePill(text = uiState.appVersion)
                 }
             }
         }

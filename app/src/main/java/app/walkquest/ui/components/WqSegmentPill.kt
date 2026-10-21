@@ -2,7 +2,6 @@ package app.walkquest.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,10 +22,14 @@ import app.walkquest.ui.theme.WqTheme
  * Сегмент-контроль WalkQuest (DESIGN: сегмент-контрол ≥48dp, шрифт ≥13px).
  *
  * Используется на вкладке Прогресс (Статистика / Достижения / Задания).
- * Выбранный сегмент: тёмная тема — заливка accent + текст accentInk;
- * светлая — заливка accent-text #587110 + белый текст (залитая #7A9A1F с белым
- * запрещена контрастом 2.96:1). Невыбранный — прозрачный, рамка border-strong,
- * текст ink-dim. Текст metaLarge (13sp), одна строка с многоточием.
+ * Выбранный сегмент (макет progress-tasks-duo.html .seg span.on, обе темы):
+ * заливка accent @ 8% (токен accentSoft), рамка accent @ 35% (accentSoftBorder),
+ * текст accentText (светлая — #587110 5.05:1; тёмная — accent-dark) — тот же
+ * паттерн, что card-active (DESIGN Components). Сплошная заливка акцентом
+ * отвергнута: в светлой залитая #7A9A1F с белым даёт 2.96:1 (запрещена
+ * DESIGN Colors), а заливка accentText с белым не соответствует макету.
+ * Невыбранный — прозрачный, рамка border-strong, текст ink-dim.
+ * Текст metaLarge (13sp), одна строка с многоточием.
  */
 
 @Composable
@@ -40,20 +43,13 @@ fun WqSegmentPill(
         Surface(
             onClick = onClick,
             shape = WqTheme.shapes.full,
-            color = if (isSystemInDarkTheme()) {
-                WqTheme.colors.accent
-            } else {
-                WqTheme.colors.accentText
-            },
+            color = WqTheme.colors.accentSoft,
+            border = BorderStroke(1.dp, WqTheme.colors.accentSoftBorder),
             modifier = modifier.heightIn(min = 48.dp),
         ) {
             Text(
                 text = label,
-                color = if (isSystemInDarkTheme()) {
-                    WqTheme.colors.accentInk
-                } else {
-                    WqTheme.colors.white
-                },
+                color = WqTheme.colors.accentText,
                 style = WqTheme.typography.metaLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

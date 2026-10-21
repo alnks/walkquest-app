@@ -5,16 +5,22 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.walkquest.ui.theme.WalkQuestIcons
 import app.walkquest.ui.theme.WalkQuestTheme
 import app.walkquest.ui.theme.WqTheme
 
@@ -91,6 +97,50 @@ fun WqGhostButton(
     )
 }
 
+/**
+ * Кнопка выдачи задания (сегмент «Задания», макет progress-tasks-duo.html
+ * `.tbtn`): иконка над подписью в колонке, заливка taskButtonBg (светлая —
+ * белая surfaceRaised, тёмная — surfaceSunken), рамка border-strong 1.5dp,
+ * радиус md; в ряду две такие кнопки weight(1f).
+ * Высота ≥48dp (тач-зона), в макете ~64dp с учётом иконки. Эмодзи 🎲/🃏
+ * макета — плейсхолдеры: в продукте векторные иконки (WalkQuestIcons),
+ * tint — токен inkHeadline. Не акцентная заливка (Do: одна акцентная
+ * кнопка на экран; раздача — поверхностное действие).
+ */
+@Composable
+fun WqTaskActionButton(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 64.dp),
+        shape = WqTheme.shapes.medium,
+        color = WqTheme.colors.taskButtonBg,
+        border = BorderStroke(1.5.dp, WqTheme.colors.borderStrong),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = WqTheme.colors.inkHeadline,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+            Text(
+                text = label,
+                color = WqTheme.colors.inkHeadline,
+                style = WqTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
 @Preview(name = "Светлая", showBackground = true)
 @Preview(name = "Тёмная", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -100,6 +150,20 @@ private fun WqButtonsPreview() {
             WqPrimaryButton(onClick = {}) { Text("Начать прогулку") }
             WqGhostButton(onClick = {}) { Text("Завершить") }
             WqPrimaryButton(onClick = {}, enabled = false) { Text("Загружается…") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WqTaskActionButton(
+                    onClick = {},
+                    icon = WalkQuestIcons.Cards,
+                    label = "Вытянуть карту",
+                    modifier = Modifier.weight(1f),
+                )
+                WqTaskActionButton(
+                    onClick = {},
+                    icon = WalkQuestIcons.GridSix,
+                    label = "Выбрать из 6",
+                    modifier = Modifier.weight(1f),
+                )
+            }
             // Стиль текста кнопок M3 тоже из токенов (label/metaLarge ≥13px).
             Text("Контроль текста: Прогулка 17,4%", style = WqTheme.typography.metaLarge)
         }

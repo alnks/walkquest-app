@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Город под туманом — онбординг шаг 1 (текущая реализация)</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;1000&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F3FA; --panel:#D6CBE8; --hole:#EFEAF6;
+    --ink:#4A3F66; --ink2:#5C506E;
+    --fog:#B29ED1;
+    --accent:#7A9A1F; --accent-text:#587110;
+    --dot-off:#E6DFF2; --card:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+       background:#1B1526;font-family:'Manrope',system-ui,sans-serif;padding:24px}
+  .phone{width:390px;height:844px;background:var(--bg);border-radius:44px;overflow:hidden;
+         position:relative;box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.08);
+         display:flex;flex-direction:column}
+  /* status bar */
+  .statusbar{display:flex;justify-content:space-between;align-items:center;
+             padding:14px 28px 0;font-family:'Manrope',sans-serif;color:var(--ink);
+             font-weight:600;font-size:15px}
+  .statusbar .icons{display:flex;align-items:center;gap:6px}
+  /* skip */
+  .skip{text-align:right;padding:14px 28px 0;color:var(--ink2);font-size:15px;font-weight:500;cursor:pointer}
+  /* content */
+  .content{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 16px}
+  .fog{margin-top:34px}
+  h1{font-family:'Nunito',sans-serif;font-weight:800;font-size:26px;color:var(--ink);
+     margin-top:26px;text-align:center;letter-spacing:.2px}
+  .illustration{margin-top:26px;width:100%;height:120px;background:var(--panel);
+                border-radius:28px;position:relative;overflow:hidden}
+  .illustration .hole{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+                      width:96px;height:96px;border-radius:50%;background:var(--hole)}
+  .desc{margin-top:30px;text-align:center;color:var(--ink2);font-size:16px;line-height:1.5;
+        max-width:320px;font-weight:500}
+  /* dots */
+  .dots{display:flex;gap:8px;align-items:center;margin-top:auto;margin-bottom:26px}
+  .dots .on{width:22px;height:8px;border-radius:99px;background:var(--accent)}
+  .dots .off{width:8px;height:8px;border-radius:50%;background:var(--dot-off)}
+  /* button */
+  .cta{margin:0 16px 14px}
+  .btn{display:block;width:100%;padding:17px 0;text-align:center;background:var(--card);
+       border:2px solid var(--accent);border-radius:22px;color:var(--accent-text);
+       font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;cursor:pointer}
+  .gesture{width:120px;height:5px;border-radius:99px;background:#C9C3D4;margin:8px auto 10px}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:36</span>
+      <span class="icons">
+        <!-- 5G -->
+        <span style="font-size:12px;font-weight:700">5G</span>
+        <!-- signal -->
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="#4A3F66">
+          <rect x="0" y="7" width="3" height="5" rx="1"/>
+          <rect x="4.5" y="5" width="3" height="7" rx="1"/>
+          <rect x="9" y="2.5" width="3" height="9.5" rx="1"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="1"/>
+        </svg>
+        <!-- battery -->
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#4A3F66" opacity=".5"/>
+          <rect x="2" y="2" width="15" height="8" rx="2" fill="#4A3F66"/>
+          <path d="M23 4v4c1-.3 1.6-1 1.6-2S24 4.3 23 4z" fill="#4A3F66" opacity=".5"/>
+        </svg>
+      </span>
+    </div>
+
+    <div class="skip">Пропустить</div>
+
+    <div class="content">
+      <!-- иконка тумана -->
+      <svg class="fog" width="52" height="42" viewBox="0 0 52 42" fill="none" stroke="#B29ED1" stroke-width="4.6" stroke-linecap="round">
+        <path d="M6 8c6-5 12 4 20-1s14 3 20-1"/>
+        <path d="M6 21c6-5 12 4 20-1s14 3 20-1"/>
+        <path d="M6 34c6-5 12 4 20-1s14 3 20-1"/>
+      </svg>
+
+      <h1>Город под туманом</h1>
+
+      <div class="illustration"><div class="hole"></div></div>
+
+      <p class="desc">Карта скрыта завесой. Она расступается там, где вы прошли пешком
+        или проехали на велосипеде или самокате. На другом транспорте прогресс
+        не засчитывается.</p>
+
+      <div class="dots">
+        <span class="on"></span><span class="off"></span><span class="off"></span><span class="off"></span>
+      </div>
+    </div>
+
+    <div class="cta"><div class="btn">Дальше</div></div>
+    <div class="gesture"></div>
+  </div>
+</body>
+</html>

@@ -63,21 +63,37 @@ class ProfileViewModel(
         // Чтение настроек — дисковый IO: только IO-поток (паттерн StatsViewModel).
         viewModelScope.launch {
             val snapshot = withContext(ioDispatcher) {
-                Triple(
-                    settingsRepository.leaderboardNickname(),
-                    settingsRepository.leaderboardVisible(),
-                    settingsRepository.walkGoal()?.describe(),
+                HeaderSnapshot(
+                    nickname = settingsRepository.leaderboardNickname(),
+                    leaderboardVisible = settingsRepository.leaderboardVisible(),
+                    goalText = settingsRepository.walkGoal()?.describe(),
+                    regionCount = regionPackageRepository.installedPackages().size,
                 )
             }
             _uiState.update {
                 it.copy(
-                    nickname = snapshot.first,
-                    leaderboardVisible = snapshot.second,
-                    goalText = snapshot.third,
+                    nickname = snapshot.nickname,
+                    leaderboardVisible = snapshot.leaderboardVisible,
+                    goalText = snapshot.goalText,
+                    regionCount = snapshot.regionCount,
                     lastError = null,
                 )
             }
         }
+    }
+
+    /** Тоггл «Участие в рейтинге» (строка-пилюля профиля, 7.3): запись → свежий снимок. */
+    fun toggleLeaderboardVisible() {
+        viewModelScope.launch {
+            val next = !uiState.value.leaderboardVisible
+            withContext(ioDispatcher) { settingsRepository.setLeaderboardVisible(next) }
+            reload()
+        }
+    }
+
+    /** «Обратная связь» — форма в разработке (прототип: toast «в разработке»). */
+    fun noticeFeedback() {
+        _uiState.update { it.copy(message = FEEDBACK_NOTICE, lastError = null) }
     }
 
     /** Экспорт прогресса в поток (SAF uri из Compose-слоя). suspend: поток
@@ -167,13 +183,26 @@ class ProfileViewModel(
     companion object {
         /** Подсказка после импорта: in-memory биткарты MapViewModel обновляются перезапуском (v1). */
         internal const val RESTART_HINT = "\nПерезапустите приложение, чтобы обновилась карта."
+
+        /** Копия из утверждённого прототипа (prototype/index.html, строка «Обратная связь»). */
+        internal const val FEEDBACK_NOTICE = "Форма обратной связи — в разработке"
     }
 }
+
+/** Снимок шапки профиля для reload (ник/участие/цель/число регионов). */
+private data class HeaderSnapshot(
+    val nickname: String?,
+    val leaderboardVisible: Boolean,
+    val goalText: String?,
+    val regionCount: Int,
+)
 
 data class ProfileUiState(
     val nickname: String? = null,
     val leaderboardVisible: Boolean = true,
     val goalText: String? = null,
+    /** Число установленных регионов — значение-пилюля «Мои регионы» (7.3). */
+    val regionCount: Int = 0,
     val appVersion: String = "",
     val privacyUrl: String = "",
     val missingRegions: List<String> = emptyList(),

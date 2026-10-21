@@ -23,16 +23,32 @@ import kotlinx.coroutines.withContext
 data class RatingUiState(
     /** Ник задан — показываем рейтинг; null — показываем запрос ника. */
     val nickname: String? = null,
+    /**
+     * Первый вход закрыт выбором «Остаться невидимым» (EXPERIENCE: участие
+     * опционально, «можно закрыть и не участвовать»): ника нет, но форму не
+     * показываем — видим пустой лидерборд. Персистентность — косвенная:
+     * ник не задан + участие выкл (settings).
+     */
+    val declined: Boolean = false,
     /** Участие (невидимый режим отключает отправку). */
     val visible: Boolean = true,
     /** Запрос ника: ошибка валидации или сети. */
     val nicknameError: String? = null,
     /** Вкладка: true — «Город», false — «Друзья». */
     val cityTab: Boolean = true,
-    val top: List<LeaderboardApi.TopEntry> = emptyList(),
+    val top: List<RatingEntryUi> = emptyList(),
     val loading: Boolean = false,
     val inviteCode: String? = null,
     val notice: String? = null,
+)
+
+/** Строка топа для экрана: агрегаты (AD-3) + флаг «текущий пользователь»
+ *  (подсветка строки WqCardActive, DESIGN leaderboard-row). */
+data class RatingEntryUi(
+    val nickname: String,
+    val distanceMeters: Double,
+    val fraction: Double,
+    val isCurrentUser: Boolean,
 )
 
 /**
@@ -52,7 +68,11 @@ class RatingViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        RatingUiState(nickname = settings.leaderboardNickname(), visible = settings.leaderboardVisible()),
+        RatingUiState(
+            nickname = settings.leaderboardNickname(),
+            visible = settings.leaderboardVisible(),
+            declined = settings.leaderboardNickname() == null && !settings.leaderboardVisible(),
+        ),
     )
     val uiState: StateFlow<RatingUiState> = _uiState.asStateFlow()
 
@@ -73,7 +93,7 @@ class RatingViewModel(
             if (ok) {
                 settings.setLeaderboardNickname(nickname)
                 settings.setLeaderboardVisible(true)
-                _uiState.update { it.copy(nickname = nickname, visible = true, nicknameError = null) }
+                _uiState.update { it.copy(nickname = nickname, visible = true, declined = false, nicknameError = null) }
                 onJoined() // D4
                 refresh()
             } else {
@@ -85,7 +105,8 @@ class RatingViewModel(
     /** Отказ от участия: невидимый режим (FR-19: участие опционально). */
     fun onInvisibleMode() {
         settings.setLeaderboardVisible(false)
-        _uiState.update { it.copy(visible = false, nicknameError = null) }
+        _uiState.update { it.copy(visible = false, declined = true, nicknameError = null) }
+        refresh()
     }
 
     fun onTabSelected(city: Boolean) {
@@ -96,11 +117,14 @@ class RatingViewModel(
     /** Ручное обновление (FR-19): outbox-flush + перечитать топ. */
     fun refresh() {
         val client = api ?: return
-        val nickname = _uiState.value.nickname ?: return
+        val state = _uiState.value
+        // Топ читаем и без ника (пользователь «невидим»/не вступал), публикация
+        // — только при заданном нике и включённом участии.
+        val nickname = state.nickname ?: if (state.declined) "" else return
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true) }
             withContext(Dispatchers.IO) {
-                if (_uiState.value.visible) {
+                if (state.visible && nickname.isNotBlank()) {
                     for (snapshot in outbox.pending()) {
                         if (client.publishAggregates(snapshot)) outbox.clear()
                     }
@@ -112,7 +136,23 @@ class RatingViewModel(
                 withContext(Dispatchers.IO) { client.cityTop(it, "distance") }
             }
             when (result) {
-                is LeaderboardApi.Result.Ok -> _uiState.update { it.copy(top = result.top, loading = false) }
+                is LeaderboardApi.Result.Ok -> _uiState.update {
+                    it.copy(
+                        top = result.top.map { entry ->
+                            RatingEntryUi(
+                                entry.nickname,
+                                entry.distanceMeters,
+                                entry.fraction,
+                                isCurrentUser = entry.nickname == state.nickname,
+                            )
+                        },
+                        // 7.13: успешное обновление снимает прошлый notice —
+                        // иначе «Рейтинг недоступен» висел после восстановления сети,
+                        // пока пользователь не нажмёт «Понятно».
+                        notice = null,
+                        loading = false,
+                    )
+                }
                 else -> _uiState.update { it.copy(loading = false, notice = "Рейтинг недоступен (сеть/проект)") }
             }
         }

@@ -29,6 +29,12 @@ class WalkHistory(
     /** Суммарная дистанция по принятым точкам, метры. */
     fun totalDistanceMeters(): Double = records().sumOf { it.distanceMeters }
 
+    /**
+     * Суммарное чистое (активное, без пауз) время прогулок, мс —
+     * для среднего времени прогулки (эпик design-alignment 7.4).
+     */
+    fun totalActiveMillis(): Long = records().sumOf { it.activeMillis }
+
     /** Прогулки, СТАРТОВАВШИЕ в локальную дату [date]. */
     fun walksOn(date: LocalDate): List<WalkRecord> =
         records().filter { it.startedAtLocalDate() == date }

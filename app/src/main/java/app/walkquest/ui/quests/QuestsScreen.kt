@@ -17,9 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import app.walkquest.ui.components.WqCard
-import app.walkquest.ui.components.WqGhostButton
-import app.walkquest.ui.components.WqPrimaryButton
 import app.walkquest.ui.components.WqQuestCard
+import app.walkquest.ui.components.WqTaskActionButton
+import app.walkquest.ui.theme.WalkQuestIcons
 import app.walkquest.ui.theme.WqTheme
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,9 +69,22 @@ fun QuestsContent(viewModel: MapViewModel, onClose: (() -> Unit)? = null) {
                 Text("Включить", color = WqTheme.colors.accentText)
             }
         } else {
+            // Инструкция — плашка task-note из макета (показывается всегда,
+            // и с активным заданием тоже).
+            WqCard {
+                Text(
+                    text = "Задания помогут разнообразить вашу прогулку. " +
+                        "Их выполнение необязательно :)",
+                    color = WqTheme.colors.inkSecondary,
+                    style = WqTheme.typography.bodySmall,
+                    modifier = Modifier.padding(WqTheme.spacing.md),
+                )
+            }
+
             val active = uiState.questActive
             if (active != null) {
-                // card-task (DESIGN): WqQuestCard(active) + метка «Активное задание».
+                // card-task (DESIGN): WqQuestCard(active) — WqCardActive
+                // (accentSoft-заливка/рамка) + метка-пилюля «Активное задание».
                 WqQuestCard(
                     title = "${active.icon} ${active.name}",
                     description = active.description,
@@ -83,27 +96,35 @@ fun QuestsContent(viewModel: MapViewModel, onClose: (() -> Unit)? = null) {
                         TextButton(onClick = viewModel::onQuestDeclined) {
                             Text("Отказаться", color = WqTheme.colors.inkSecondary)
                         }
-                        TextButton(onClick = { viewModel.onQuestRandom() }) {
-                            Text("Другое", color = WqTheme.colors.inkSecondary)
+                        // «Другое» — только в сегменте вкладки (screens-spec §6);
+                        // на оверлее прогулки действий два.
+                        if (onClose == null) {
+                            TextButton(onClick = { viewModel.onQuestRandom() }) {
+                                Text("Другое", color = WqTheme.colors.inkSecondary)
+                            }
                         }
                     },
                 )
-            } else {
-                Text(
-                    text = "Задания помогут разнообразить вашу прогулку. " +
-                        "Их выполнение необязательно :)",
-                    color = WqTheme.colors.inkSecondary,
-                    style = WqTheme.typography.body,
-                )
-                // «Вытянуть карту» — акцентная CTA в нижней зоне пальца.
-                WqPrimaryButton(
+            }
+
+            // Кнопки выдачи — пара .tbtn из макета; видны и с активным
+            // заданием (новое берётся через диалог подтверждения замены).
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(WqTheme.spacing.sm),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                WqTaskActionButton(
                     onClick = viewModel::onQuestRandom,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(text = "Вытянуть карту") }
-                WqGhostButton(
+                    icon = WalkQuestIcons.Cards,
+                    label = "Вытянуть карту",
+                    modifier = Modifier.weight(1f),
+                )
+                WqTaskActionButton(
                     onClick = viewModel::onQuestPickRequested,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(text = "Выбрать из 6") }
+                    icon = WalkQuestIcons.GridSix,
+                    label = "Выбрать из 6",
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
 
