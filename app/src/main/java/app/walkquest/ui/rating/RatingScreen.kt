@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqLeaderboardRow
 import app.walkquest.ui.components.WqPrimaryButton
@@ -46,6 +47,7 @@ import java.util.Locale
  */
 @Composable
 fun RatingScreen(viewModel: RatingViewModel) {
+    ScreenLogEffect("RatingScreen")
     val ui by viewModel.uiState.collectAsState()
 
     // Топ подгружаем при первом показе вкладки (честное loading-состояние §7).

@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqQuestCard
 import app.walkquest.ui.components.WqTaskActionButton
@@ -37,6 +38,7 @@ import app.walkquest.viewmodel.MapViewModel
  */
 @Composable
 fun QuestsContent(viewModel: MapViewModel, onClose: (() -> Unit)? = null) {
+    ScreenLogEffect("QuestsScreen")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(

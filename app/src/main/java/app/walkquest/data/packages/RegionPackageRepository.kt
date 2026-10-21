@@ -1,5 +1,7 @@
 package app.walkquest.data.packages
 
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -106,10 +108,16 @@ class RegionPackageRepository(
      */
     fun cachedManifest(): PackageManifest? {
         val file = File(packagesRoot, MANIFEST_CACHE_FILE)
-        if (!file.isFile) return null
+        if (!file.isFile) {
+            WqLog.v(WqLayer.CACHE) { "manifest MISS (no cache file)" }
+            return null
+        }
         return try {
-            PackageJson.decodeFromString<PackageManifest>(file.readText())
+            PackageJson.decodeFromString<PackageManifest>(file.readText()).also {
+                WqLog.v(WqLayer.CACHE) { "manifest HIT (disk) packages=${it.packages.size}" }
+            }
         } catch (e: Exception) {
+            WqLog.w(WqLayer.CACHE) { "manifest cache parse FAILED: ${e.message}" }
             null
         }
     }
@@ -131,14 +139,18 @@ class RegionPackageRepository(
     /** Скачивает и парсит манифест пакетов. */
     private fun fetchManifest(tempFile: File): ManifestFetch {
         val url = PackageSource.manifestUrl(baseUrl)
+        val started = System.nanoTime()
+        WqLog.d(WqLayer.NET) { "→ GET manifest $url" }
         try {
             downloader.download(url, tempFile)
         } catch (e: IOException) {
+            WqLog.e(WqLayer.NET, e) { "← GET manifest FAILED (${elapsedMs(started)} ms)" }
             return ManifestFetch.Err(PackageError.NetworkError(url, e.message ?: e.toString()))
         }
         return try {
             val manifest = PackageJson.decodeFromString<PackageManifest>(tempFile.readText())
             if (manifest.packages.isEmpty()) {
+                WqLog.w(WqLayer.NET) { "← GET manifest → пустой список packages" }
                 ManifestFetch.Err(PackageError.ManifestInvalid("список packages пуст"))
             } else {
                 // Кэш манифеста рядом с пакетами (1.10): детект чужого региона офлайн.
@@ -146,12 +158,20 @@ class RegionPackageRepository(
                 try {
                     packagesRoot.mkdirs()
                     File(packagesRoot, MANIFEST_CACHE_FILE).writeText(tempFile.readText())
+                    WqLog.d(WqLayer.CACHE) {
+                        "manifest cache WRITE packages=${manifest.packages.size} (${elapsedMs(started)} ms)"
+                    }
                 } catch (e: Exception) {
                     // Кэш перезапишется при следующем успешном скачивании манифеста.
+                    WqLog.w(WqLayer.CACHE) { "manifest cache WRITE failed: ${e.message}" }
+                }
+                WqLog.d(WqLayer.NET) {
+                    "← GET manifest → OK packages=${manifest.packages.size} (${elapsedMs(started)} ms)"
                 }
                 ManifestFetch.Ok(manifest)
             }
         } catch (e: Exception) {
+            WqLog.e(WqLayer.NET, e) { "← GET manifest → parse FAILED (${elapsedMs(started)} ms)" }
             ManifestFetch.Err(PackageError.ManifestInvalid(e.message ?: e.toString()))
         }
     }
@@ -168,3 +188,7 @@ class RegionPackageRepository(
         }
     }
 }
+
+/** Миллисекунды от метки System.nanoTime() для логов запрос-ответ. */
+private fun elapsedMs(startedNanos: Long): Long =
+    (System.nanoTime() - startedNanos) / 1_000_000

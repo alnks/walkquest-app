@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqGhostButton
 import app.walkquest.ui.theme.WqTheme
@@ -44,6 +45,7 @@ fun RegionsScreen(
     onOpenRegion: (String) -> Unit,
     onClose: (() -> Unit)? = null,
 ) {
+    ScreenLogEffect("RegionsScreen")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Возврат на вкладку (например, после установки региона с карты) → свежие проценты.

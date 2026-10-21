@@ -2,6 +2,8 @@ package app.walkquest.data.leaderboard
 
 import app.walkquest.domain.leaderboard.LeaderboardSnapshot
 import app.walkquest.domain.leaderboard.RegionAggregate
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -51,6 +53,7 @@ class LeaderboardApi(
     /** Топ региона по метрике (distance | fraction). */
     fun cityTop(regionId: String, metric: String): Result {
         val column = if (metric == "fraction") "fraction" else "distance_meters"
+        val started = System.nanoTime()
         return try {
             val conn = URL("$baseUrl/top?region_id=eq.$regionId&order=$column.desc&limit=50").openConnection()
                 as HttpURLConnection
@@ -59,11 +62,21 @@ class LeaderboardApi(
             conn.connectTimeout = 15_000
             conn.readTimeout = 15_000
             val code = conn.responseCode
-            if (code !in 200..299) return Result.Failure("HTTP $code")
+            if (code !in 200..299) {
+                WqLog.w(WqLayer.NET) {
+                    "← GET /top region=$regionId metric=$column → HTTP $code (${elapsedMs(started)} ms)"
+                }
+                return Result.Failure("HTTP $code")
+            }
             val text = conn.inputStream.use { it.readBytes().decodeToString() }
             val parsed = TopJson.decodeFromString<List<TopRow>>(text)
+            WqLog.d(WqLayer.NET) {
+                "→ GET /top region=$regionId metric=$column → HTTP $code, ${parsed.size} rows " +
+                    "(${elapsedMs(started)} ms)"
+            }
             Result.Ok(parsed.map { TopEntry(it.nickname, it.distance_meters, it.fraction) })
         } catch (e: Exception) {
+            WqLog.e(WqLayer.NET, e) { "← GET /top region=$regionId FAILED (${elapsedMs(started)} ms)" }
             Result.Failure(e.message ?: e.toString())
         }
     }
@@ -88,6 +101,10 @@ class LeaderboardApi(
     }
 
     private fun post(url: String, json: String, upsert: Boolean): Int {
+        val started = System.nanoTime()
+        WqLog.d(WqLayer.NET) {
+            "→ POST ${url.removePrefix(baseUrl)} body=${json.toByteArray(Charsets.UTF_8).size}B upsert=$upsert"
+        }
         return try {
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
@@ -99,8 +116,15 @@ class LeaderboardApi(
             conn.connectTimeout = 15_000
             conn.readTimeout = 15_000
             conn.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
-            conn.responseCode
+            val code = conn.responseCode
+            WqLog.d(WqLayer.NET) {
+                "← POST ${url.removePrefix(baseUrl)} → HTTP $code (${elapsedMs(started)} ms)"
+            }
+            code
         } catch (e: Exception) {
+            WqLog.e(WqLayer.NET, e) {
+                "← POST ${url.removePrefix(baseUrl)} → FAILED (${elapsedMs(started)} ms)"
+            }
             -1
         }
     }
@@ -116,6 +140,10 @@ class LeaderboardApi(
         private val TopJson = Json { ignoreUnknownKeys = true }
     }
 }
+
+/** Миллисекунды от метки System.nanoTime() для логов запрос-ответ. */
+private fun elapsedMs(startedNanos: Long): Long =
+    (System.nanoTime() - startedNanos) / 1_000_000
 
 /** Офлайн-очередь снимков (FR-19: отложенная отправка при появлении сети). */
 class LeaderboardOutbox(private val file: File) {

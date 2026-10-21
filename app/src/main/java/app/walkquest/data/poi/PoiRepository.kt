@@ -2,6 +2,8 @@ package app.walkquest.data.poi
 
 import app.walkquest.data.packages.InstalledPackage
 import app.walkquest.data.packages.PackageJson
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 
 /** Типизированные ошибки слоя POI (Consistency Conventions: sealed-результаты через границы). */
 sealed class PoiError {
@@ -38,13 +40,18 @@ class PoiRepository {
     /** Читает и парсит poi.json установленного пакета; повторные вызовы — из кэша. */
     fun loadPois(pkg: InstalledPackage): PoiResult {
         val key = "${pkg.regionId}@${pkg.packageVersion}"
-        cache[key]?.let { return PoiResult.Ok(it) }
+        cache[key]?.let {
+            WqLog.v(WqLayer.CACHE) { "poi HIT (memory) key=$key count=${it.size}" }
+            return PoiResult.Ok(it)
+        }
         return try {
             val parsed = PackageJson.decodeFromString<PoiFile>(pkg.poiFile.readText())
             val pois = parsed.pois.map { it.toPoi() }
             cache[key] = pois
+            WqLog.d(WqLayer.CACHE) { "poi MISS → disk parse key=$key count=${pois.size}" }
             PoiResult.Ok(pois)
         } catch (e: Exception) {
+            WqLog.w(WqLayer.CACHE) { "poi MISS → parse FAILED key=$key: ${e.message}" }
             PoiResult.Err(PoiError.Invalid(pkg.regionId, e.message ?: e.toString()))
         }
     }

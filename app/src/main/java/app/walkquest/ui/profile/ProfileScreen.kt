@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqValuePill
 import app.walkquest.ui.components.WqValueRow
@@ -65,6 +66,7 @@ fun ProfileScreen(
     /** «Моя цель» → Настройки (второй намеренный вход, EXPERIENCE; редактор цели — там). */
     onOpenSettings: () -> Unit = {},
 ) {
+    ScreenLogEffect("ProfileScreen")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

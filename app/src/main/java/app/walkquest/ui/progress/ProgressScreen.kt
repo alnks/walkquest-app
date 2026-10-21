@@ -16,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.achievements.AchievementsScreen
 import app.walkquest.ui.components.WqSegmentPill
 import app.walkquest.ui.quests.QuestsContent
@@ -38,6 +39,7 @@ fun ProgressScreen(
     achievementsViewModel: AchievementsViewModel,
     mapViewModel: MapViewModel,
 ) {
+    ScreenLogEffect("ProgressScreen")
     var segment by rememberSaveable { mutableIntStateOf(0) }
 
     Column(

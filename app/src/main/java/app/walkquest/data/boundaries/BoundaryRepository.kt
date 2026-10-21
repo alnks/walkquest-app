@@ -5,6 +5,8 @@ import app.walkquest.data.packages.PackageJson
 import app.walkquest.data.packages.PackageMeta
 import app.walkquest.domain.territory.GeoPolygon
 import app.walkquest.domain.territory.RegionBoundary
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.double
@@ -33,9 +35,21 @@ class BoundaryRepository {
     /** Границы пакета (кэшируются); [BoundaryResult.Err] — только когда нет даже bbox. */
     @Synchronized
     fun load(pkg: InstalledPackage): BoundaryResult {
-        cache[pkg.rootDir.absolutePath]?.let { return it }
+        cache[pkg.rootDir.absolutePath]?.let {
+            WqLog.v(WqLayer.CACHE) { "boundaries HIT (memory) region=${pkg.regionId}" }
+            return it
+        }
         val result = loadFromDisk(pkg)
         if (result is BoundaryResult.Ok) cache[pkg.rootDir.absolutePath] = result
+        WqLog.d(WqLayer.CACHE) {
+            when (result) {
+                is BoundaryResult.Ok ->
+                    "boundaries MISS → disk region=${pkg.regionId} " +
+                        "polygons=${result.boundary.polygons.size} degraded=${result.polygonsDegraded}"
+                is BoundaryResult.Err ->
+                    "boundaries MISS → disk FAILED region=${pkg.regionId}: ${result.error.message}"
+            }
+        }
         return result
     }
 
@@ -47,13 +61,19 @@ class BoundaryRepository {
      */
     @Synchronized
     fun loadDistricts(pkg: InstalledPackage): List<DistrictBoundary> {
-        districtsCache[pkg.rootDir.absolutePath]?.let { return it }
+        districtsCache[pkg.rootDir.absolutePath]?.let {
+            WqLog.v(WqLayer.CACHE) { "districts HIT (memory) region=${pkg.regionId}" }
+            return it
+        }
         val districts = try {
             parseDistricts(pkg.boundariesFile.readText(), pkg.regionId)
         } catch (e: Exception) {
             emptyList()
         }
         districtsCache[pkg.rootDir.absolutePath] = districts
+        WqLog.d(WqLayer.CACHE) {
+            "districts MISS → disk region=${pkg.regionId} count=${districts.size}"
+        }
         return districts
     }
 

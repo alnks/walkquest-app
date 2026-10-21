@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.walkquest.logging.wqLogGestures
 import app.walkquest.ui.theme.WalkQuestIcons
 import app.walkquest.ui.theme.WalkQuestTheme
 import app.walkquest.ui.theme.WqTheme
@@ -49,7 +50,7 @@ fun WqPrimaryButton(
     if (isSystemInDarkTheme()) {
         Button(
             onClick = onClick,
-            modifier = modifier.heightIn(min = 48.dp),
+            modifier = modifier.heightIn(min = 48.dp).wqLogGestures("primary-button"),
             enabled = enabled,
             shape = WqTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(
@@ -63,7 +64,7 @@ fun WqPrimaryButton(
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = modifier.heightIn(min = 48.dp),
+            modifier = modifier.heightIn(min = 48.dp).wqLogGestures("primary-button"),
             enabled = enabled,
             shape = WqTheme.shapes.large,
             border = BorderStroke(1.5.dp, WqTheme.colors.accentText),

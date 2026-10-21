@@ -22,6 +22,9 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
+import app.walkquest.logging.wqLogLayout
 import app.walkquest.ui.components.WqBottomNav
 import app.walkquest.ui.components.WqNavItem
 import app.walkquest.ui.map.MapScreen
@@ -164,13 +167,14 @@ private fun ComponentActivity.WalkQuestTabs(mapViewModel: MapViewModel) {
     // Перечитываем статистику и награды при каждом входе на вкладку Прогресс:
     // прогулка могла завершиться, пока вкладка была неактивна (FR-13/FR-15).
     androidx.compose.runtime.LaunchedEffect(tab) {
+        WqLog.d(WqLayer.SCREEN) { "tab → ${AppTab.valueOf(tab).title}" }
         if (tab == AppTab.Progress.name) {
             statsViewModel.reload()
             achievementsViewModel.reload()
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().wqLogLayout("main-column")) {
         Box(modifier = Modifier.weight(1f)) {
             when (AppTab.valueOf(tab)) {
                 AppTab.Map -> MapScreen(

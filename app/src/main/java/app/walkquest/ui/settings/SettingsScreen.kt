@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.walkquest.data.settings.ThemeMode
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.tracking.WalkMode
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqPrimaryButton
@@ -55,6 +56,7 @@ import app.walkquest.viewmodel.MapViewModel
  */
 @Composable
 fun SettingsScreen(viewModel: MapViewModel, onClose: () -> Unit) {
+    ScreenLogEffect("SettingsScreen")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var themePickerVisible by remember { mutableStateOf(false) }
 

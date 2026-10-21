@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.theme.WqTheme
 import app.walkquest.viewmodel.StatsViewModel
@@ -44,6 +45,7 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun StatsScreen(viewModel: StatsViewModel, embedded: Boolean = false) {
+    ScreenLogEffect("StatsScreen")
     val ui by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     var showPlanPicker by remember { mutableStateOf(false) }

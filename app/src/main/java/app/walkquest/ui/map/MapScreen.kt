@@ -84,6 +84,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.walkquest.WalkQuestApplication
+import app.walkquest.logging.ScreenLogEffect
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
+import app.walkquest.logging.wqLogLayout
 import app.walkquest.data.fog.FogGrid
 import app.walkquest.data.poi.Poi
 import app.walkquest.data.poi.PoiBounds
@@ -183,6 +187,7 @@ fun MapScreen(
     /** Шестерёнка справа сверху (панель настроек показывает Activity-оверлей). */
     onOpenSettings: () -> Unit = {},
 ) {
+    ScreenLogEffect("MapScreen")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -343,7 +348,7 @@ fun MapScreen(
             nowMillis,
         )
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().wqLogLayout("map-screen-root")) {
         FogMap(
             uiState = uiState,
             meFixVisible = meFixVisible,
@@ -1543,8 +1548,7 @@ private fun FogMap(
                     // Слоя может ещё/уже не быть (стиль не загружен, пакет не установлен):
                     // запрос по несуществующему слою пропускаем — это тап вне маркера.
                     val hasPoiLayer = map.style?.getLayer(POI_LAYER_ID) != null
-                    val hit = if (hasPoiLayer) {
-                        val p = map.projection.toScreenLocation(latLng)
+                    val hit = if (hasPoiLayer) {                        val p = map.projection.toScreenLocation(latLng)
                         map.queryRenderedFeatures(
                             RectF(
                                 p.x - POI_TAP_TOLERANCE_PX, p.y - POI_TAP_TOLERANCE_PX,
@@ -1556,9 +1560,15 @@ private fun FogMap(
                         null
                     }
                     if (hit != null) {
+                        WqLog.d(WqLayer.GESTURE) {
+                            "map tap → POI hit osmId=$hit @ (${latLng.latitude}, ${latLng.longitude})"
+                        }
                         currentOnPoiTapped(hit)
                         true
                     } else {
+                        WqLog.d(WqLayer.GESTURE) {
+                            "map tap → outside @ (${latLng.latitude}, ${latLng.longitude})"
+                        }
                         currentOnOutsideTap()
                         false
                     }

@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import app.walkquest.logging.ScreenLogEffect
 import app.walkquest.ui.components.WqCard
 import app.walkquest.ui.components.WqLockedCard
 import app.walkquest.ui.theme.WqTheme
@@ -54,6 +55,7 @@ import java.util.Locale
  */
 @Composable
 fun AchievementsScreen(viewModel: AchievementsViewModel, embedded: Boolean = false) {
+    ScreenLogEffect("AchievementsScreen")
     val rows by viewModel.uiState.collectAsState()
     val earned = rows.filter { it.earnedAt != null }
     val locked = rows.filter { it.earnedAt == null }

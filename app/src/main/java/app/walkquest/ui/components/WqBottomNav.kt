@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.walkquest.logging.wqLogGestures
+import app.walkquest.logging.wqLogLayout
 import app.walkquest.ui.theme.WalkQuestIcons
 import app.walkquest.ui.theme.WalkQuestTheme
 import app.walkquest.ui.theme.WqTheme
@@ -45,13 +47,14 @@ fun WqBottomNav(
     modifier: Modifier = Modifier,
 ) {
     NavigationBar(
-        modifier = modifier,
+        modifier = modifier.wqLogLayout("bottom-nav"),
         containerColor = WqTheme.colors.surfaceNav,
     ) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
                 selected = selectedIndex == index,
                 onClick = { onSelect(index) },
+                modifier = Modifier.wqLogGestures("nav:${item.label}"),
                 icon = {
                     Icon(
                         imageVector = item.icon,

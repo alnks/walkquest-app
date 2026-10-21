@@ -6,6 +6,13 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import app.walkquest.di.AppContainer
+import app.walkquest.logging.WQ_DEBUG
+import app.walkquest.logging.WQ_ERROR
+import app.walkquest.logging.WQ_INFO
+import app.walkquest.logging.WQ_VERBOSE
+import app.walkquest.logging.WQ_WARN
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 import org.maplibre.android.MapLibre
 
 /**
@@ -19,12 +26,26 @@ class WalkQuestApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MapLibre.getInstance(this)
+        // Разноуровневое debug-логирование (WQ/*): sink живёт только в
+        // debuggable-сборке; release — WqLog отключён, вызовы из data/UI — no-op.
+        val debug = applicationInfo.flags and
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+        WqLog.plant(debug) { priority, tag, message, throwable ->
+            when (priority) {
+                WQ_VERBOSE -> android.util.Log.v(tag, message, throwable)
+                WQ_DEBUG -> android.util.Log.d(tag, message, throwable)
+                WQ_INFO -> android.util.Log.i(tag, message, throwable)
+                WQ_WARN -> android.util.Log.w(tag, message, throwable)
+                WQ_ERROR -> android.util.Log.e(tag, message, throwable)
+                else -> android.util.Log.d(tag, message, throwable)
+            }
+        }
         container = AppContainer(
             filesDir,
             lastKnownLocation = ::lastKnownLocationOrNull,
-            debugEnabled = applicationInfo.flags and
-                android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0,
+            debugEnabled = debug,
         )
+        WqLog.i(WqLayer.SCREEN) { "Application.onCreate (debug=$debug)" }
     }
 
     /**

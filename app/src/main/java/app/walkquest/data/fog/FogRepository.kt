@@ -3,6 +3,8 @@ package app.walkquest.data.fog
 import app.walkquest.data.packages.InstalledPackage
 import app.walkquest.data.packages.PackageJson
 import app.walkquest.data.packages.PackageMeta
+import app.walkquest.logging.WqLayer
+import app.walkquest.logging.WqLog
 import java.io.File
 import java.io.IOException
 import java.util.BitSet
@@ -106,7 +108,10 @@ class FogRepository(private val fogRoot: File) {
     fun load(regionId: String, grid: FogGrid): BitmapResult {
         // Кэш валиден только против той же сетки: обновление пакета с другой
         // размерностью в середине сессии не должно работать со старой биткартой.
-        cache[regionId]?.takeIf { it.grid.sameGridAs(grid) }?.let { return BitmapResult.Ok(it) }
+        cache[regionId]?.takeIf { it.grid.sameGridAs(grid) }?.let {
+            WqLog.v(WqLayer.CACHE) { "fog bitmap HIT (memory) region=$regionId" }
+            return BitmapResult.Ok(it)
+        }
         val file = fileFor(regionId)
         val loaded = readBitmap(file, regionId, grid)
         val bitmap: FogBitmap
@@ -114,9 +119,16 @@ class FogRepository(private val fogRoot: File) {
         if (loaded != null) {
             bitmap = loaded
             recovered = false
+            WqLog.d(WqLayer.CACHE) {
+                "fog bitmap MISS (memory) → disk region=$regionId tiles=${bitmap.grid.tileCount}"
+            }
         } else {
             bitmap = FogBitmap(regionId, grid, BitSet(grid.tileCount), file)
             recovered = file.exists() // файл был, но не прочитался → сброшен в закрытое
+            WqLog.d(WqLayer.CACHE) {
+                "fog bitmap MISS (memory+disk) region=$regionId " +
+                    if (recovered) "corrupt file → reset to closed" else "new closed bitmap"
+            }
             if (!recovered) {
                 // Первый запуск: материализуем закрытую биткарту, чтобы формат жил на диске сразу.
                 persist(bitmap)?.let { return BitmapResult.Err(it) }
