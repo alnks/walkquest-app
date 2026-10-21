@@ -116,7 +116,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 
-    testImplementation(libs.junit)
-    // Диспетчер Main для JVM-тестов viewmodel (регрессия обновления пакета v1→v2).
-    testImplementation(libs.kotlinx.coroutines.test)
+    // Тестовых зависимостей нет и не будет: юнит- и UI-тесты в проекте запрещены
+    // (см. AGENTS.md). Проверка — только через эмулятор/телефон, см. _qa/wq.py.
 }
